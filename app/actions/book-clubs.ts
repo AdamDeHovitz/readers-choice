@@ -331,3 +331,50 @@ export async function removeMember(bookClubId: string, userId: string) {
     return { error: "Failed to remove member" };
   }
 }
+
+export async function deleteBookClub(bookClubId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if current user is an admin
+    const { data: currentMember } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!currentMember?.is_admin) {
+      return { error: "Only admins can delete book clubs" };
+    }
+
+    // Delete the book club (cascading deletes will handle related data)
+    const { error } = await supabase
+      .from("book_clubs")
+      .delete()
+      .eq("id", bookClubId);
+
+    if (error) throw error;
+
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting book club:", error);
+    return { error: "Failed to delete book club" };
+  }
+}

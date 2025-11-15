@@ -3,6 +3,7 @@ import { getBookClubDetails } from "@/app/actions/book-clubs";
 import { getBookClubMeetings } from "@/app/actions/meetings";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberList } from "@/components/book-clubs/member-list";
+import { DeleteBookClubDialog } from "@/components/book-clubs/delete-book-club-dialog";
 import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
 import { LogPastMeetingDialog } from "@/components/meetings/log-past-meeting-dialog";
 import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
@@ -147,6 +148,23 @@ export default async function BookClubPage({
                 />
               </CardContent>
             </Card>
+
+            {bookClub.currentUserIsAdmin && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Danger Zone</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-600 mb-4">
+                    Permanently delete this book club and all associated data.
+                  </p>
+                  <DeleteBookClubDialog
+                    bookClubId={bookClub.id}
+                    bookClubName={bookClub.name}
+                  />
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
