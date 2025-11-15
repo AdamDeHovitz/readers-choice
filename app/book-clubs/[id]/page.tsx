@@ -4,6 +4,7 @@ import { getBookClubMeetings } from "@/app/actions/meetings";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { MemberList } from "@/components/book-clubs/member-list";
 import { DeleteBookClubDialog } from "@/components/book-clubs/delete-book-club-dialog";
+import { EditDescriptionDialog } from "@/components/book-clubs/edit-description-dialog";
 import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
 import { LogPastMeetingDialog } from "@/components/meetings/log-past-meeting-dialog";
 import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
@@ -64,7 +65,15 @@ export default async function BookClubPage({
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>About</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>About</CardTitle>
+                  {bookClub.currentUserIsAdmin && (
+                    <EditDescriptionDialog
+                      bookClubId={bookClub.id}
+                      currentDescription={bookClub.description}
+                    />
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
                 {bookClub.description ? (

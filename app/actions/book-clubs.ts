@@ -332,6 +332,56 @@ export async function removeMember(bookClubId: string, userId: string) {
   }
 }
 
+export async function updateBookClubDescription(
+  bookClubId: string,
+  description: string
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if current user is an admin
+    const { data: currentMember } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!currentMember?.is_admin) {
+      return { error: "Only admins can edit book club details" };
+    }
+
+    // Update the description
+    const { error } = await supabase
+      .from("book_clubs")
+      .update({ description: description.trim() || null })
+      .eq("id", bookClubId);
+
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating book club description:", error);
+    return { error: "Failed to update description" };
+  }
+}
+
 export async function deleteBookClub(bookClubId: string) {
   const session = await auth();
 
