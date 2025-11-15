@@ -24,7 +24,11 @@
       "Bash(git remote set-url:*)",
       "Bash(npx next lint:*)",
       "Bash(npx eslint .)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "mcp__vercel-readers-choice__get_project",
+      "mcp__vercel-readers-choice__get_deployment",
+      "mcp__vercel-readers-choice__get_deployment_build_logs",
+      "Bash(mv:*)"
     ],
     "deny": [],
     "ask": []
