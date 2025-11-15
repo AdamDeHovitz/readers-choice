@@ -28,7 +28,11 @@
       "mcp__vercel-readers-choice__get_project",
       "mcp__vercel-readers-choice__get_deployment",
       "mcp__vercel-readers-choice__get_deployment_build_logs",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nRename middleware.ts to proxy.ts for Next.js 16\n\n- Fixes MIDDLEWARE_INVOCATION_FAILED error on Vercel\n- Next.js 16 requires proxy.ts instead of deprecated middleware.ts\n- No functionality changes, just file rename\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "mcp__vercel-readers-choice__list_deployments",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
