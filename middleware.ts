@@ -21,14 +21,14 @@ export default auth((req) => {
 
   // If not authenticated and trying to access protected route, redirect to login
   if (!req.auth && !isPublicRoute) {
-    const loginUrl = new URL("/login", req.url);
+    const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   // If authenticated and trying to access login, redirect to dashboard
   if (req.auth && pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
   }
 
   return NextResponse.next();
