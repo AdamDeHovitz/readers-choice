@@ -152,10 +152,17 @@ export async function getInviteLinkDetails(code: string) {
       return null;
     }
 
+    // TypeScript doesn't know book_clubs is a single object, so we need to cast it
+    const bookClub = inviteLink.book_clubs as unknown as {
+      id: string;
+      name: string;
+      description: string | null;
+    };
+
     return {
-      bookClubId: inviteLink.book_clubs.id,
-      bookClubName: inviteLink.book_clubs.name,
-      bookClubDescription: inviteLink.book_clubs.description,
+      bookClubId: bookClub.id,
+      bookClubName: bookClub.name,
+      bookClubDescription: bookClub.description,
     };
   } catch (error) {
     console.error("Error fetching invite link:", error);

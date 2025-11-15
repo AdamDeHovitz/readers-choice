@@ -6,6 +6,12 @@ rules. Also please conform with the style guide in STYLE.md and that tests still
 
 Project details are available in project.md
 
+# Development Workflow
+**REQUIRED**: Before committing and pushing any changes:
+1. Run `npm run build` to ensure the TypeScript build passes
+2. Fix any type errors or build failures
+3. Only commit and push after a successful build
+
 # Current Status
 
 ## Phase 1: Foundation & Setup ✅ COMPLETED
