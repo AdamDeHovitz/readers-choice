@@ -17,7 +17,14 @@
       "mcp__supabase__execute_sql",
       "Bash(pkill:*)",
       "mcp__supabase__apply_migration",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nAdd Phase 1 & 2: Foundation and core book club features\n\n- Set up Next.js 15, TypeScript, Tailwind CSS v4, shadcn/ui\n- Configure Supabase with PostgreSQL and RLS policies\n- Implement NextAuth.js v5 with Google OAuth\n- Build book club creation, list view, and detail pages\n- Update server actions to use service role key (bypassing RLS)\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push)",
+      "Bash(gh auth login:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(npx next lint:*)",
+      "Bash(npx eslint .)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

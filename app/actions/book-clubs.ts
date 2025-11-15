@@ -202,3 +202,132 @@ export async function getBookClubDetails(bookClubId: string) {
     return null;
   }
 }
+
+export async function toggleMemberAdmin(
+  bookClubId: string,
+  userId: string,
+  isAdmin: boolean
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if current user is an admin
+    const { data: currentMember } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!currentMember?.is_admin) {
+      return { error: "Only admins can manage member roles" };
+    }
+
+    // Can't demote yourself if you're the only admin
+    if (userId === session.user.id && !isAdmin) {
+      const { data: adminCount } = await supabase
+        .from("members")
+        .select("user_id", { count: "exact" })
+        .eq("book_club_id", bookClubId)
+        .eq("is_admin", true);
+
+      if ((adminCount?.length || 0) <= 1) {
+        return { error: "Cannot remove the last admin" };
+      }
+    }
+
+    // Update member admin status
+    const { error } = await supabase
+      .from("members")
+      .update({ is_admin: isAdmin })
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating member role:", error);
+    return { error: "Failed to update member role" };
+  }
+}
+
+export async function removeMember(bookClubId: string, userId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if current user is an admin or removing themselves
+    const { data: currentMember } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    const isSelfRemoval = userId === session.user.id;
+    const isAdmin = currentMember?.is_admin;
+
+    if (!isSelfRemoval && !isAdmin) {
+      return { error: "Only admins can remove other members" };
+    }
+
+    // If removing yourself as admin, check you're not the last admin
+    if (isSelfRemoval && isAdmin) {
+      const { data: adminCount } = await supabase
+        .from("members")
+        .select("user_id", { count: "exact" })
+        .eq("book_club_id", bookClubId)
+        .eq("is_admin", true);
+
+      if ((adminCount?.length || 0) <= 1) {
+        return { error: "Cannot remove the last admin" };
+      }
+    }
+
+    // Remove member
+    const { error } = await supabase
+      .from("members")
+      .delete()
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", userId);
+
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error removing member:", error);
+    return { error: "Failed to remove member" };
+  }
+}

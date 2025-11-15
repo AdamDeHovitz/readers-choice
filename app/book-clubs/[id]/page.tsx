@@ -1,6 +1,11 @@
 import { auth } from "@/auth";
 import { getBookClubDetails } from "@/app/actions/book-clubs";
+import { getBookClubMeetings } from "@/app/actions/meetings";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { MemberList } from "@/components/book-clubs/member-list";
+import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
+import { LogPastMeetingDialog } from "@/components/meetings/log-past-meeting-dialog";
+import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,7 +22,10 @@ export default async function BookClubPage({
     redirect("/login");
   }
 
-  const bookClub = await getBookClubDetails(id);
+  const [bookClub, meetings] = await Promise.all([
+    getBookClubDetails(id),
+    getBookClubMeetings(id),
+  ]);
 
   if (!bookClub) {
     redirect("/dashboard");
@@ -68,14 +76,51 @@ export default async function BookClubPage({
               </CardContent>
             </Card>
 
+            {/* Quick Links */}
             <Card>
               <CardHeader>
-                <CardTitle>Meetings</CardTitle>
+                <CardTitle>Quick Links</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-slate-400 italic">
-                  No meetings scheduled yet
-                </p>
+                <div className="flex flex-col gap-2">
+                  <Link
+                    href={`/book-clubs/${bookClub.id}/themes`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <span className="font-medium text-slate-900">Themes</span>
+                    <span className="text-sm text-slate-500">
+                      View and suggest →
+                    </span>
+                  </Link>
+                  <Link
+                    href={`/book-clubs/${bookClub.id}/rankings`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <span className="font-medium text-slate-900">
+                      Personal Rankings
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      Rank your favorites →
+                    </span>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Meetings</CardTitle>
+                  {bookClub.currentUserIsAdmin && (
+                    <div className="flex gap-2">
+                      <LogPastMeetingDialog bookClubId={bookClub.id} />
+                      <CreateMeetingDialog bookClubId={bookClub.id} />
+                    </div>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <MeetingTimeline meetings={meetings} />
               </CardContent>
             </Card>
           </div>
@@ -94,43 +139,12 @@ export default async function BookClubPage({
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {bookClub.members.map((member: any) => (
-                    <div
-                      key={member.id}
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50"
-                    >
-                      <div className="flex-shrink-0">
-                        {member.avatarUrl ? (
-                          <img
-                            src={member.avatarUrl}
-                            alt={member.name}
-                            className="w-10 h-10 rounded-full"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
-                            {member.name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p className="text-sm font-medium text-slate-900 truncate">
-                            {member.name}
-                          </p>
-                          {member.isAdmin && (
-                            <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
-                              Admin
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500 truncate">
-                          {member.email}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <MemberList
+                  members={bookClub.members}
+                  currentUserId={session.user.id!}
+                  currentUserIsAdmin={bookClub.currentUserIsAdmin}
+                  bookClubId={bookClub.id}
+                />
               </CardContent>
             </Card>
           </div>
