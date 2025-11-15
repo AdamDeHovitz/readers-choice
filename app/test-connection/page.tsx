@@ -9,21 +9,21 @@ export default async function TestConnectionPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-8">
       <div className="max-w-md w-full space-y-4">
-        <h1 className="text-2xl font-bold">Connection Test</h1>
+        <h1 className="text-2xl font-bold font-inria">Connection Test</h1>
 
         <div className="border rounded-lg p-4 space-y-2">
-          <h2 className="font-semibold">Supabase Connection</h2>
+          <h2 className="font-semibold font-inria">Supabase Connection</h2>
           {error ? (
             <div className="text-red-600">
-              <p className="font-medium">❌ Connection Failed</p>
+              <p className="font-medium font-inria">❌ Connection Failed</p>
               <p className="text-sm mt-2">Error: {error.message}</p>
               <p className="text-xs mt-2 text-gray-500">
                 This is expected if you haven&apos;t created the tables yet.
               </p>
             </div>
           ) : (
-            <div className="text-green-600">
-              <p className="font-medium">✅ Connection Successful</p>
+            <div className="text-rust-700">
+              <p className="font-medium font-inria">✅ Connection Successful</p>
               <p className="text-sm mt-2">
                 Supabase is connected and working!
               </p>
@@ -32,7 +32,7 @@ export default async function TestConnectionPage() {
         </div>
 
         <div className="border rounded-lg p-4 space-y-2">
-          <h2 className="font-semibold">Environment Variables</h2>
+          <h2 className="font-semibold font-inria">Environment Variables</h2>
           <div className="text-sm space-y-1">
             <p>
               SUPABASE_URL:{" "}

@@ -6,10 +6,10 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-bold font-inria text-dark-900">
               Readers&apos; Choice
             </h1>
-            <p className="text-slate-600">
+            <p className="text-dark-600">
               Your joyful book club community awaits
             </p>
           </div>
@@ -18,7 +18,7 @@ export default function LoginPage() {
             <SignInButton />
           </div>
 
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-dark-500">
             Sign in to create or join book clubs, vote on books, and rank your
             favorites
           </p>

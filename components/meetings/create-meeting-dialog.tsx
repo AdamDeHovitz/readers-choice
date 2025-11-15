@@ -80,7 +80,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               placeholder="e.g., Science Fiction, Historical Fiction..."
               disabled={isSubmitting}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-dark-500">
               Choose a theme for this meeting
             </p>
           </div>
@@ -93,7 +93,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               type="datetime-local"
               disabled={isSubmitting}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-dark-500">
               When should voting close? You can finalize manually later.
             </p>
           </div>

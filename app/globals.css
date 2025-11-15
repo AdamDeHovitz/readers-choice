@@ -1,25 +1,86 @@
 @import "tailwindcss";
 
+@theme {
+  /* Custom color palette - Readers' Choice Design System */
+  --color-rust-50: #fdf5f3;
+  --color-rust-100: #f9e7e3;
+  --color-rust-200: #f3cfc6;
+  --color-rust-300: #e9a995;
+  --color-rust-400: #d17b60;
+  --color-rust-500: #b96548;
+  --color-rust-600: #994636;
+  --color-rust-700: #7d3729;
+  --color-rust-800: #632c21;
+
+  --color-gold-50: #fafaf3;
+  --color-gold-100: #f5f5e3;
+  --color-gold-200: #e9e9c6;
+  --color-gold-300: #d8d89a;
+  --color-gold-400: #c0c06b;
+  --color-gold-500: #a19748;
+  --color-gold-600: #917730;
+  --color-gold-700: #75602a;
+  --color-gold-800: #5e4d22;
+
+  --color-cream-50: #fdfcf7;
+  --color-cream-100: #efecde;
+  --color-cream-200: #e5e1d0;
+
+  --color-dark-500: #8a8776;
+  --color-dark-600: #4d4a3d;
+  --color-dark-700: #373420;
+  --color-dark-900: #1d1a05;
+
+  /* Font families */
+  --font-inria: var(--font-inria-serif);
+  --font-voga: var(--font-voga-display);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Semantic color tokens */
+  --background: var(--color-cream-100);
+  --foreground: var(--color-dark-900);
+  --primary: var(--color-rust-600);
+  --primary-foreground: var(--color-cream-100);
+  --secondary: var(--color-gold-600);
+  --secondary-foreground: var(--color-dark-900);
+  --accent: var(--color-gold-600);
+  --accent-foreground: var(--color-dark-900);
+  --muted: var(--color-cream-200);
+  --muted-foreground: var(--color-dark-600);
+  --card: #ffffff;
+  --card-foreground: var(--color-dark-900);
+  --border: var(--color-gold-200);
+  --input: var(--color-dark-200);
+  --ring: var(--color-rust-600);
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Keep light theme for now - dark mode can be added later */
+    --background: var(--color-cream-100);
+    --foreground: var(--color-dark-900);
   }
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inria), Georgia, serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .font-voga {
+    font-family: var(--font-voga), Georgia, serif;
+  }
+
+  .font-inria {
+    font-family: var(--font-inria), Georgia, serif;
   }
 }

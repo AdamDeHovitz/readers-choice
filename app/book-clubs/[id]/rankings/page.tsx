@@ -61,20 +61,20 @@ export default async function RankingsPage({
 
   if (years.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50">
-        <nav className="bg-white border-b border-slate-200">
+      <div className="min-h-screen bg-cream-100">
+        <nav className="bg-white border-b border-gold-600/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center gap-4">
                 <Link
                   href={`/book-clubs/${bookClubId}`}
-                  className="text-slate-600 hover:text-slate-900"
+                  className="text-dark-600 hover:text-dark-900"
                 >
                   ← Back to {bookClub.name}
                 </Link>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-dark-600">
                   {session.user.name}
                 </span>
                 <SignOutButton />
@@ -89,7 +89,7 @@ export default async function RankingsPage({
               <CardTitle>No Books to Rank Yet</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-slate-600">
+              <p className="text-dark-600">
                 This book club doesn&apos;t have any finalized meetings yet. Check
                 back once some meetings have been completed!
               </p>
@@ -105,20 +105,20 @@ export default async function RankingsPage({
   const initialBooks = await getYearBooks(bookClubId, initialYear);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link
                 href={`/book-clubs/${bookClubId}`}
-                className="text-slate-600 hover:text-slate-900"
+                className="text-dark-600 hover:text-dark-900"
               >
                 ← Back to {bookClub.name}
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">{session.user.name}</span>
+              <span className="text-sm text-dark-600">{session.user.name}</span>
               <SignOutButton />
             </div>
           </div>

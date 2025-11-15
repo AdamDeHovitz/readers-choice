@@ -84,7 +84,7 @@ export function MemberList({
         return (
           <div
             key={member.id}
-            className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50"
+            className="flex items-start gap-3 p-3 rounded-lg hover:bg-cream-100"
           >
             <div className="flex-shrink-0">
               {member.avatarUrl ? (
@@ -96,7 +96,7 @@ export function MemberList({
                   className="w-10 h-10 rounded-full"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-medium">
+                <div className="w-10 h-10 rounded-full bg-cream-200 flex items-center justify-center text-dark-600 font-medium font-inria">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -104,26 +104,26 @@ export function MemberList({
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-slate-900 truncate">
+                <p className="text-sm font-medium font-inria text-dark-900 truncate">
                   {member.name}
                   {isSelf && (
-                    <span className="text-slate-500 font-normal"> (You)</span>
+                    <span className="text-dark-500 font-normal"> (You)</span>
                   )}
                 </p>
                 {member.isAdmin && (
-                  <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-full">
+                  <span className="text-xs bg-cream-200 text-dark-600 px-2 py-0.5 rounded-full">
                     Admin
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 truncate">{member.email}</p>
+              <p className="text-xs text-dark-500 truncate">{member.email}</p>
 
               {currentUserIsAdmin && (
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => handleToggleAdmin(member)}
                     disabled={isActioning}
-                    className="text-xs text-slate-600 hover:text-slate-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="text-xs text-dark-600 hover:text-dark-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {member.isAdmin ? "Remove admin" : "Make admin"}
                   </button>

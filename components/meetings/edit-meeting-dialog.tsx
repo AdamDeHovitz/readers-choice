@@ -165,11 +165,11 @@ export function EditMeetingDialog({
             {currentBook && (
               <div className="space-y-2">
                 <Label>Current Book</Label>
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                  <p className="text-sm font-medium text-slate-900">
+                <div className="p-3 bg-cream-100 border border-gold-600/20 rounded-lg">
+                  <p className="text-sm font-medium font-inria text-dark-900">
                     {currentBook.title}
                   </p>
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-dark-600">
                     by {currentBook.author}
                   </p>
                 </div>
@@ -218,9 +218,9 @@ export function EditMeetingDialog({
 
         {step === "book" && (
           <div className="space-y-4">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <p className="text-sm text-slate-700">
-                <span className="font-medium">Date:</span>{" "}
+            <div className="p-3 bg-cream-100 border border-gold-600/20 rounded-lg">
+              <p className="text-sm text-dark-600">
+                <span className="font-medium font-inria">Date:</span>{" "}
                 {new Date(meetingDate).toLocaleDateString("en-US", {
                   weekday: "long",
                   year: "numeric",
@@ -229,8 +229,8 @@ export function EditMeetingDialog({
                 })}
               </p>
               {themeName && (
-                <p className="text-sm text-slate-700 mt-1">
-                  <span className="font-medium">Theme:</span> {themeName}
+                <p className="text-sm text-dark-600 mt-1">
+                  <span className="font-medium font-inria">Theme:</span> {themeName}
                 </p>
               )}
             </div>
@@ -244,11 +244,11 @@ export function EditMeetingDialog({
             </div>
 
             {selectedBook && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 mb-1">
+              <div className="p-4 bg-gold-50 border border-gold-600 rounded-lg">
+                <p className="text-sm font-medium font-inria text-dark-900 mb-1">
                   Selected: {selectedBook.title}
                 </p>
-                <p className="text-sm text-blue-700">
+                <p className="text-sm text-gold-700">
                   by {selectedBook.author}
                 </p>
               </div>

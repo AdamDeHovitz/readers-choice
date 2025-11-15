@@ -26,7 +26,7 @@ interface MeetingTimelineProps {
 export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
   if (meetings.length === 0) {
     return (
-      <p className="text-slate-400 italic text-center py-8">
+      <p className="text-dark-500 italic text-center py-8">
         No meetings scheduled yet
       </p>
     );
@@ -49,18 +49,18 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                     <div
                       className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
                         isUpcoming
-                          ? "bg-blue-100 text-blue-900"
+                          ? "bg-gold-100 text-dark-900"
                           : isPast && meeting.isFinalized
-                            ? "bg-green-100 text-green-900"
-                            : "bg-slate-100 text-slate-900"
+                            ? "bg-rust-100 text-cream-100"
+                            : "bg-cream-200 text-dark-900"
                       }`}
                     >
-                      <div className="text-xs font-medium uppercase">
+                      <div className="text-xs font-medium font-inria uppercase">
                         {meetingDate.toLocaleDateString("en-US", {
                           month: "short",
                         })}
                       </div>
-                      <div className="text-2xl font-bold">
+                      <div className="text-2xl font-bold font-inria">
                         {meetingDate.getDate()}
                       </div>
                     </div>
@@ -70,12 +70,12 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium text-slate-900 mb-1">
+                        <h3 className="font-medium font-inria text-dark-900 mb-1">
                           {meeting.theme
                             ? meeting.theme.name
                             : "Meeting " + meetingDate.toLocaleDateString()}
                         </h3>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-dark-600">
                           {meetingDate.toLocaleDateString("en-US", {
                             weekday: "long",
                             year: "numeric",
@@ -93,15 +93,15 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                       {/* Status Badge */}
                       <div className="flex-shrink-0">
                         {meeting.isFinalized ? (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">
+                          <span className="text-xs bg-rust-100 text-cream-100 px-2 py-1 rounded-full font-medium font-inria">
                             Finalized
                           </span>
                         ) : isUpcoming ? (
-                          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium">
+                          <span className="text-xs bg-gold-100 text-dark-900 px-2 py-1 rounded-full font-medium font-inria">
                             Voting Open
                           </span>
                         ) : (
-                          <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-medium">
+                          <span className="text-xs bg-cream-200 text-dark-600 px-2 py-1 rounded-full font-medium font-inria">
                             Past
                           </span>
                         )}
@@ -110,7 +110,7 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
 
                     {/* Selected Book */}
                     {meeting.selectedBook && (
-                      <div className="flex items-center gap-3 mt-3 p-2 bg-slate-50 rounded-lg">
+                      <div className="flex items-center gap-3 mt-3 p-2 bg-cream-100 rounded-lg">
                         {meeting.selectedBook.coverUrl ? (
                           <Image
                             src={meeting.selectedBook.coverUrl}
@@ -120,9 +120,9 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                             className="w-8 h-12 object-cover rounded shadow-sm"
                           />
                         ) : (
-                          <div className="w-8 h-12 bg-slate-200 rounded flex items-center justify-center">
+                          <div className="w-8 h-12 bg-cream-200 rounded flex items-center justify-center">
                             <svg
-                              className="w-4 h-4 text-slate-400"
+                              className="w-4 h-4 text-dark-500"
                               fill="none"
                               stroke="currentColor"
                               viewBox="0 0 24 24"
@@ -137,10 +137,10 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">
+                          <p className="text-sm font-medium font-inria text-dark-900 truncate">
                             {meeting.selectedBook.title}
                           </p>
-                          <p className="text-xs text-slate-600 truncate">
+                          <p className="text-xs text-dark-600 truncate">
                             by {meeting.selectedBook.author}
                           </p>
                         </div>

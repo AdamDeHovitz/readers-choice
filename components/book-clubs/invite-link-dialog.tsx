@@ -111,12 +111,12 @@ export function InviteLinkDialog({
         <div className="space-y-4">
           {isLoading && !inviteCode ? (
             <div className="text-center py-8">
-              <p className="text-sm text-slate-600">Generating invite link...</p>
+              <p className="text-sm text-dark-600">Generating invite link...</p>
             </div>
           ) : inviteCode ? (
             <>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700">
+                <label className="text-sm font-medium font-inria text-dark-600">
                   Invite Link
                 </label>
                 <div className="flex gap-2">
@@ -138,12 +138,12 @@ export function InviteLinkDialog({
                   </Button>
                 </div>
                 {copied && (
-                  <p className="text-sm text-green-700">Copied to clipboard!</p>
+                  <p className="text-sm text-rust-700">Copied to clipboard!</p>
                 )}
               </div>
 
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="p-3 bg-gold-50 border border-gold-600 rounded-lg">
+                <p className="text-sm text-dark-900">
                   This link never expires and can be used multiple times. You can
                   deactivate it at any time.
                 </p>

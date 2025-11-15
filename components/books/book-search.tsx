@@ -41,7 +41,7 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
           className="w-full"
         />
         {isSearching && (
-          <p className="text-sm text-slate-500 mt-2">Searching...</p>
+          <p className="text-sm text-dark-500 mt-2">Searching...</p>
         )}
       </div>
 
@@ -62,7 +62,7 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
       )}
 
       {query.trim().length >= 2 && results.length === 0 && !isSearching && (
-        <p className="text-sm text-slate-500 text-center py-8">
+        <p className="text-sm text-dark-500 text-center py-8">
           No books found. Try a different search term.
         </p>
       )}

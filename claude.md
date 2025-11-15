@@ -2,7 +2,7 @@
 You are making a beautiful mobile-first website that sparks joy. The website is used for organizing a community around a book club.
 
 While developing this site it is important to write clean, reusable code and to make sure we pass linter
-rules. Also please conform with the style guide in STYLE.md and that tests still pass
+rules. Also please conform with the style guide in STYLE.md and the design system in DESIGN_GUIDE.md. Ensure tests still pass.
 
 Project details are available in project.md
 

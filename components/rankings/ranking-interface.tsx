@@ -60,7 +60,7 @@ function SortableBookItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-lg"
+      className="flex items-center gap-3 p-4 bg-white border border-gold-600/20 rounded-lg"
     >
       {/* Drag handle */}
       <div
@@ -68,11 +68,11 @@ function SortableBookItem({
         {...listeners}
         className="cursor-grab active:cursor-grabbing touch-none"
       >
-        <GripVertical className="h-5 w-5 text-slate-400" />
+        <GripVertical className="h-5 w-5 text-dark-500" />
       </div>
 
       {/* Rank badge */}
-      <div className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-800 font-bold rounded-full shrink-0">
+      <div className="flex items-center justify-center w-8 h-8 bg-gold-100 text-dark-900 font-bold font-inria rounded-full shrink-0">
         {rank}
       </div>
 
@@ -89,9 +89,9 @@ function SortableBookItem({
 
       {/* Book info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-slate-900 truncate">{book.title}</h3>
-        <p className="text-sm text-slate-600 truncate">{book.author}</p>
-        <p className="text-xs text-slate-500 mt-1">
+        <h3 className="font-semibold font-inria text-dark-900 truncate">{book.title}</h3>
+        <p className="text-sm text-dark-600 truncate">{book.author}</p>
+        <p className="text-xs text-dark-500 mt-1">
           {new Date(book.meetingDate).toLocaleDateString("en-US", {
             month: "short",
             year: "numeric",
@@ -120,7 +120,7 @@ function UnreadBookItem({
   onMarkRead: (bookId: string) => void;
 }) {
   return (
-    <div className="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg opacity-60">
+    <div className="flex items-center gap-3 p-4 bg-cream-100 border border-gold-600/20 rounded-lg opacity-60">
       {/* Book cover */}
       {book.coverUrl && (
         <Image
@@ -134,9 +134,9 @@ function UnreadBookItem({
 
       {/* Book info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-slate-700 truncate">{book.title}</h3>
-        <p className="text-sm text-slate-600 truncate">{book.author}</p>
-        <p className="text-xs text-slate-500 mt-1">
+        <h3 className="font-semibold font-inria text-dark-600 truncate">{book.title}</h3>
+        <p className="text-sm text-dark-600 truncate">{book.author}</p>
+        <p className="text-xs text-dark-500 mt-1">
           {new Date(book.meetingDate).toLocaleDateString("en-US", {
             month: "short",
             year: "numeric",
@@ -299,23 +299,23 @@ export function RankingInterface({
       {/* Ranked books section */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-slate-900">
+          <h3 className="text-lg font-semibold font-inria text-dark-900">
             Your Ranking
             {rankedBooks.length > 0 && (
-              <span className="ml-2 text-base font-normal text-slate-500">
+              <span className="ml-2 text-base font-normal text-dark-500">
                 ({rankedBooks.length} {rankedBooks.length === 1 ? "book" : "books"})
               </span>
             )}
           </h3>
           {/* Auto-save status */}
-          <div className="text-sm text-slate-600">
+          <div className="text-sm text-dark-600">
             {isSaving ? (
               <span className="flex items-center gap-2">
-                <span className="inline-block w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                <span className="inline-block w-2 h-2 bg-gold-500 rounded-full animate-pulse"></span>
                 Saving...
               </span>
             ) : lastSaved ? (
-              <span className="text-green-700">
+              <span className="text-rust-700">
                 ✓ Saved {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             ) : null}
@@ -329,8 +329,8 @@ export function RankingInterface({
         )}
 
         {rankedBooks.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 border border-slate-200 rounded-lg">
-            <p className="text-slate-600">
+          <div className="text-center py-12 bg-cream-100 border border-gold-600/20 rounded-lg">
+            <p className="text-dark-600">
               No books in your ranking yet. Add books from below to get started!
             </p>
           </div>
@@ -362,9 +362,9 @@ export function RankingInterface({
       {/* Unread books section */}
       {unreadBooks.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-slate-900 mb-4">
+          <h3 className="text-lg font-semibold font-inria text-dark-900 mb-4">
             Not Read
-            <span className="ml-2 text-base font-normal text-slate-500">
+            <span className="ml-2 text-base font-normal text-dark-500">
               ({unreadBooks.length} {unreadBooks.length === 1 ? "book" : "books"})
             </span>
           </h3>

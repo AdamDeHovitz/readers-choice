@@ -42,7 +42,7 @@ export function BookOptionsList({
 
   if (bookOptions.length === 0) {
     return (
-      <p className="text-slate-400 italic text-center py-8">
+      <p className="text-dark-500 italic text-center py-8">
         No book options added yet
       </p>
     );
@@ -89,7 +89,7 @@ export function BookOptionsList({
           <Card
             key={option.id}
             className={`${
-              isWinner ? "ring-2 ring-green-500 bg-green-50" : ""
+              isWinner ? "ring-2 ring-green-500 bg-rust-50" : ""
             }`}
           >
             <CardContent className="p-4">
@@ -98,10 +98,10 @@ export function BookOptionsList({
                 {!isFinalized && (
                   <div className="flex-shrink-0">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
+                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold font-inria ${
                         index === 0
                           ? "bg-yellow-100 text-yellow-900"
-                          : "bg-slate-100 text-slate-600"
+                          : "bg-cream-200 text-dark-600"
                       }`}
                     >
                       #{index + 1}
@@ -120,9 +120,9 @@ export function BookOptionsList({
                       className="w-20 h-30 object-cover rounded shadow-md"
                     />
                   ) : (
-                    <div className="w-20 h-30 bg-slate-200 rounded flex items-center justify-center">
+                    <div className="w-20 h-30 bg-cream-200 rounded flex items-center justify-center">
                       <svg
-                        className="w-10 h-10 text-slate-400"
+                        className="w-10 h-10 text-dark-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -142,28 +142,28 @@ export function BookOptionsList({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 mb-1">
+                      <h3 className="font-semibold font-inria text-dark-900 mb-1">
                         {option.book.title}
                       </h3>
-                      <p className="text-sm text-slate-600 mb-1">
+                      <p className="text-sm text-dark-600 mb-1">
                         by {option.book.author}
                       </p>
                       {option.book.publishedYear && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-dark-500">
                           Published {option.book.publishedYear}
                         </p>
                       )}
                     </div>
 
                     {isWinner && (
-                      <span className="flex-shrink-0 text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                      <span className="flex-shrink-0 text-sm bg-rust-100 text-cream-100 px-3 py-1 rounded-full font-medium font-inria">
                         Selected
                       </span>
                     )}
                   </div>
 
                   {option.book.description && (
-                    <p className="text-sm text-slate-600 line-clamp-2 mb-3">
+                    <p className="text-sm text-dark-600 line-clamp-2 mb-3">
                       {option.book.description}
                     </p>
                   )}
@@ -172,7 +172,7 @@ export function BookOptionsList({
                     {/* Vote Count */}
                     <div className="flex items-center gap-2">
                       <svg
-                        className="w-5 h-5 text-slate-400"
+                        className="w-5 h-5 text-dark-500"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -184,7 +184,7 @@ export function BookOptionsList({
                           d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
                         />
                       </svg>
-                      <span className="text-sm font-medium text-slate-700">
+                      <span className="text-sm font-medium font-inria text-dark-600">
                         {option.voteCount}{" "}
                         {option.voteCount === 1 ? "vote" : "votes"}
                       </span>

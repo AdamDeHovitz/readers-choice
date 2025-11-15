@@ -38,9 +38,9 @@ export function BookCard({
                 className="w-16 h-24 object-cover rounded shadow-sm"
               />
             ) : (
-              <div className="w-16 h-24 bg-slate-200 rounded flex items-center justify-center">
+              <div className="w-16 h-24 bg-cream-200 rounded flex items-center justify-center">
                 <svg
-                  className="w-8 h-8 text-slate-400"
+                  className="w-8 h-8 text-dark-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -58,12 +58,12 @@ export function BookCard({
 
           {/* Book Info */}
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-slate-900 line-clamp-2 mb-1">
+            <h3 className="font-medium font-inria text-dark-900 line-clamp-2 mb-1">
               {title}
             </h3>
-            <p className="text-sm text-slate-600 mb-1">{author}</p>
+            <p className="text-sm text-dark-600 mb-1">{author}</p>
             {publishedYear && (
-              <p className="text-xs text-slate-500">{publishedYear}</p>
+              <p className="text-xs text-dark-500">{publishedYear}</p>
             )}
           </div>
         </div>

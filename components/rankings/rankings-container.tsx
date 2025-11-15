@@ -51,7 +51,7 @@ export function RankingsContainer({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <CardTitle className="text-2xl">Personal Rankings</CardTitle>
-              <p className="text-slate-600 mt-1">
+              <p className="text-dark-600 mt-1">
                 Rank your favorite books from {selectedYear}
               </p>
             </div>
@@ -61,10 +61,10 @@ export function RankingsContainer({
                   key={year}
                   onClick={() => setSelectedYear(year)}
                   disabled={isLoading}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg font-medium font-inria transition-colors ${
                     year === selectedYear
-                      ? "bg-blue-600 text-white"
-                      : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50"
+                      ? "bg-gold-600 text-white"
+                      : "bg-white text-dark-600 border border-gold-600/20 hover:bg-cream-100"
                   } ${isLoading ? "opacity-50" : ""}`}
                 >
                   {year}
@@ -80,7 +80,7 @@ export function RankingsContainer({
         <CardHeader>
           <div className="space-y-2">
             <CardTitle>Drag to Reorder</CardTitle>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-dark-600">
               Drag books to change their ranking. Mark books as &quot;Not Read&quot; if
               you didn&apos;t attend that meeting.
             </p>
@@ -89,11 +89,11 @@ export function RankingsContainer({
         <CardContent>
           {isLoading ? (
             <div className="text-center py-12">
-              <p className="text-slate-600">Loading books...</p>
+              <p className="text-dark-600">Loading books...</p>
             </div>
           ) : books.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-slate-600">
+              <p className="text-dark-600">
                 No books were finalized for {selectedYear}.
               </p>
             </div>

@@ -59,7 +59,7 @@ export function ThemesList({ themes }: ThemesListProps) {
   if (themes.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-slate-600">
+        <p className="text-dark-600">
           No themes suggested yet. Be the first to suggest one!
         </p>
       </div>
@@ -71,7 +71,7 @@ export function ThemesList({ themes }: ThemesListProps) {
       {sortedThemes.map((theme) => (
         <div
           key={theme.id}
-          className="flex items-start gap-4 p-4 bg-white border border-slate-200 rounded-lg hover:shadow-sm transition-shadow"
+          className="flex items-start gap-4 p-4 bg-white border border-gold-600/20 rounded-lg hover:shadow-sm transition-shadow"
         >
           {/* Upvote button */}
           <div className="flex flex-col items-center gap-1 min-w-[48px]">
@@ -84,7 +84,7 @@ export function ThemesList({ themes }: ThemesListProps) {
             >
               <ArrowUpIcon className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium font-inria text-dark-600">
               {theme.upvoteCount}
             </span>
           </div>
@@ -92,11 +92,11 @@ export function ThemesList({ themes }: ThemesListProps) {
           {/* Theme details */}
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3 mb-2">
-              <h3 className="text-lg font-semibold text-slate-900">
+              <h3 className="text-lg font-semibold font-inria text-dark-900">
                 {theme.name}
               </h3>
               {theme.timesUsed > 0 && (
-                <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium shrink-0">
+                <span className="text-sm bg-rust-100 text-cream-100 px-2 py-1 rounded-full font-medium font-inria shrink-0">
                   Used {theme.timesUsed}x
                 </span>
               )}
@@ -113,11 +113,11 @@ export function ThemesList({ themes }: ThemesListProps) {
                   className="rounded-full"
                 />
               )}
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-dark-600">
                 Suggested by {theme.submittedBy.name}
               </p>
-              <span className="text-slate-400">•</span>
-              <p className="text-sm text-slate-500">
+              <span className="text-dark-500">•</span>
+              <p className="text-sm text-dark-500">
                 {new Date(theme.createdAt).toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -129,7 +129,7 @@ export function ThemesList({ themes }: ThemesListProps) {
             {/* Meetings using this theme */}
             {theme.meetings.length > 0 && (
               <div className="mt-2">
-                <p className="text-xs text-slate-500 mb-1">Used in meetings:</p>
+                <p className="text-xs text-dark-500 mb-1">Used in meetings:</p>
                 <div className="flex flex-wrap gap-1">
                   {theme.meetings
                     .sort(
@@ -141,7 +141,7 @@ export function ThemesList({ themes }: ThemesListProps) {
                       <a
                         key={meeting.id}
                         href={`/meetings/${meeting.id}`}
-                        className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded hover:bg-slate-200 transition-colors"
+                        className="text-xs bg-cream-200 text-dark-600 px-2 py-1 rounded hover:bg-cream-200 transition-colors"
                       >
                         {new Date(meeting.meetingDate).toLocaleDateString(
                           "en-US",

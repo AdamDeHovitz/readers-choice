@@ -15,15 +15,15 @@ export default async function DashboardPage() {
   const bookClubs = await getMyBookClubs();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold font-inria text-dark-900">
               Readers&apos; Choice
             </h1>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-dark-600">
                 {session.user.name}
               </span>
               <SignOutButton />
@@ -35,8 +35,8 @@ export default async function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-slate-900">My Book Clubs</h2>
-            <p className="text-slate-600 mt-1">
+            <h2 className="text-3xl font-bold font-inria text-dark-900">My Book Clubs</h2>
+            <p className="text-dark-600 mt-1">
               Manage your reading communities
             </p>
           </div>
@@ -45,10 +45,10 @@ export default async function DashboardPage() {
 
         {bookClubs.length === 0 ? (
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <h3 className="text-xl font-semibold text-slate-900 mb-2">
+            <h3 className="text-xl font-semibold font-inria text-dark-900 mb-2">
               No book clubs yet
             </h3>
-            <p className="text-slate-600 mb-6">
+            <p className="text-dark-600 mb-6">
               Create your first book club to get started!
             </p>
             <CreateBookClubDialog />

@@ -45,23 +45,23 @@ export default async function GlobalRankingsPage({
   const globalRankings = await getGlobalRankings(id, selectedYear);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link
                 href={`/book-clubs/${id}`}
-                className="text-slate-600 hover:text-slate-900"
+                className="text-dark-600 hover:text-dark-900"
               >
                 ← Back
               </Link>
-              <h1 className="text-xl font-bold text-slate-900">
+              <h1 className="text-xl font-bold font-inria text-dark-900">
                 {bookClub.name}
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">{session.user.name}</span>
+              <span className="text-sm text-dark-600">{session.user.name}</span>
               <SignOutButton />
             </div>
           </div>
@@ -71,10 +71,10 @@ export default async function GlobalRankingsPage({
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-slate-900">
+            <CardTitle className="text-2xl font-bold font-inria text-dark-900">
               Global Rankings
             </CardTitle>
-            <p className="text-sm text-slate-600 mt-2">
+            <p className="text-sm text-dark-600 mt-2">
               Rankings based on all members' votes using Borda Count scoring.
               Books ranked higher by members earn more points.
             </p>

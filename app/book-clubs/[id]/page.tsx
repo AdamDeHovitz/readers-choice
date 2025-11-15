@@ -35,23 +35,23 @@ export default async function BookClubPage({
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link
                 href="/dashboard"
-                className="text-slate-600 hover:text-slate-900"
+                className="text-dark-600 hover:text-dark-900"
               >
                 ← Back
               </Link>
-              <h1 className="text-xl font-bold text-slate-900">
+              <h1 className="text-xl font-bold font-inria text-dark-900">
                 {bookClub.name}
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-dark-600">
                 {session.user.name}
               </span>
               <SignOutButton />
@@ -78,9 +78,9 @@ export default async function BookClubPage({
               </CardHeader>
               <CardContent>
                 {bookClub.description ? (
-                  <p className="text-slate-600">{bookClub.description}</p>
+                  <p className="text-dark-600">{bookClub.description}</p>
                 ) : (
-                  <p className="text-slate-400 italic">
+                  <p className="text-dark-500 italic">
                     No description provided
                   </p>
                 )}
@@ -96,32 +96,32 @@ export default async function BookClubPage({
                 <div className="flex flex-col gap-2">
                   <Link
                     href={`/book-clubs/${bookClub.id}/themes`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-cream-100 hover:bg-cream-200 transition-colors"
                   >
-                    <span className="font-medium text-slate-900">Themes</span>
-                    <span className="text-sm text-slate-500">
+                    <span className="font-medium font-inria text-dark-900">Themes</span>
+                    <span className="text-sm text-dark-500">
                       View and suggest →
                     </span>
                   </Link>
                   <Link
                     href={`/book-clubs/${bookClub.id}/rankings`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-cream-100 hover:bg-cream-200 transition-colors"
                   >
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium font-inria text-dark-900">
                       Personal Rankings
                     </span>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-dark-500">
                       Rank your favorites →
                     </span>
                   </Link>
                   <Link
                     href={`/book-clubs/${bookClub.id}/global-rankings`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg bg-cream-100 hover:bg-cream-200 transition-colors"
                   >
-                    <span className="font-medium text-slate-900">
+                    <span className="font-medium font-inria text-dark-900">
                       Global Rankings
                     </span>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-dark-500">
                       See group favorites →
                     </span>
                   </Link>
@@ -177,7 +177,7 @@ export default async function BookClubPage({
                   <CardTitle>Danger Zone</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-slate-600 mb-4">
+                  <p className="text-sm text-dark-600 mb-4">
                     Permanently delete this book club and all associated data.
                   </p>
                   <DeleteBookClubDialog

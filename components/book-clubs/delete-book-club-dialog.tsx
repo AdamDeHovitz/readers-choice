@@ -60,13 +60,13 @@ export function DeleteBookClubDialog({
         <DialogHeader>
           <DialogTitle className="text-red-700">Delete Book Club</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <strong className="text-slate-900">{bookClubName}</strong>?
+            Are you sure you want to delete <strong className="text-dark-900">{bookClubName}</strong>?
             This action cannot be undone and will permanently delete:
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 py-4">
-          <ul className="list-disc list-inside text-sm text-slate-600 space-y-1 ml-2">
+          <ul className="list-disc list-inside text-sm text-dark-600 space-y-1 ml-2">
             <li>All meetings and their voting data</li>
             <li>All themes and their votes</li>
             <li>All personal rankings</li>

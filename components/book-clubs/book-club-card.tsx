@@ -34,7 +34,7 @@ export function BookClubCard({
           <div className="flex items-start justify-between">
             <CardTitle className="text-xl">{name}</CardTitle>
             {isAdmin && (
-              <span className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full font-medium">
+              <span className="text-xs bg-cream-200 text-dark-600 px-2 py-1 rounded-full font-medium font-inria">
                 Admin
               </span>
             )}
@@ -46,7 +46,7 @@ export function BookClubCard({
           )}
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-slate-500">Joined {joinDate}</p>
+          <p className="text-sm text-dark-500">Joined {joinDate}</p>
         </CardContent>
       </Card>
     </Link>

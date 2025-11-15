@@ -57,20 +57,20 @@ export default async function ThemesPage({
   const themes = await getBookClubThemes(bookClubId);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link
                 href={`/book-clubs/${bookClubId}`}
-                className="text-slate-600 hover:text-slate-900"
+                className="text-dark-600 hover:text-dark-900"
               >
                 ← Back to {bookClub.name}
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">{session.user.name}</span>
+              <span className="text-sm text-dark-600">{session.user.name}</span>
               <SignOutButton />
             </div>
           </div>
@@ -85,7 +85,7 @@ export default async function ThemesPage({
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-2xl">Themes</CardTitle>
-                  <p className="text-slate-600 mt-1">
+                  <p className="text-dark-600 mt-1">
                     Suggest themes for future meetings and vote on your
                     favorites
                   </p>
@@ -101,7 +101,7 @@ export default async function ThemesPage({
               <CardTitle>
                 All Themes
                 {themes.length > 0 && (
-                  <span className="ml-2 text-base font-normal text-slate-500">
+                  <span className="ml-2 text-base font-normal text-dark-500">
                     ({themes.length})
                   </span>
                 )}

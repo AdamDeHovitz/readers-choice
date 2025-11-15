@@ -78,11 +78,11 @@ export function AddBookOptionDialog({ meetingId }: AddBookOptionDialogProps) {
           />
 
           {selectedBook && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-blue-900 mb-1">
+            <div className="p-4 bg-gold-50 border border-gold-600 rounded-lg">
+              <p className="text-sm font-medium font-inria text-dark-900 mb-1">
                 Selected: {selectedBook.title}
               </p>
-              <p className="text-sm text-blue-700">by {selectedBook.author}</p>
+              <p className="text-sm text-gold-700">by {selectedBook.author}</p>
             </div>
           )}
 

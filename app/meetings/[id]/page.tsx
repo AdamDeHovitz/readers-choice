@@ -30,20 +30,20 @@ export default async function MeetingPage({
   const isPast = meetingDate < new Date();
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200">
+    <div className="min-h-screen bg-cream-100">
+      <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-4">
               <Link
                 href={`/book-clubs/${meeting.bookClub.id}`}
-                className="text-slate-600 hover:text-slate-900"
+                className="text-dark-600 hover:text-dark-900"
               >
                 ← Back to {meeting.bookClub.name}
               </Link>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-slate-600">
+              <span className="text-sm text-dark-600">
                 {session.user.name}
               </span>
               <SignOutButton />
@@ -75,7 +75,7 @@ export default async function MeetingPage({
                     )}
                   </div>
                   <div className="space-y-1">
-                    <p className="text-slate-600">
+                    <p className="text-dark-600">
                       {meetingDate.toLocaleDateString("en-US", {
                         weekday: "long",
                         year: "numeric",
@@ -89,7 +89,7 @@ export default async function MeetingPage({
                       })}
                     </p>
                     {meeting.votingDeadline && !meeting.isFinalized && (
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-dark-500">
                         Voting closes:{" "}
                         {new Date(meeting.votingDeadline).toLocaleDateString(
                           "en-US",
@@ -106,15 +106,15 @@ export default async function MeetingPage({
                 </div>
                 <div>
                   {meeting.isFinalized ? (
-                    <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                    <span className="text-sm bg-rust-100 text-cream-100 px-3 py-1 rounded-full font-medium font-inria">
                       Finalized
                     </span>
                   ) : isPast ? (
-                    <span className="text-sm bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-medium">
+                    <span className="text-sm bg-cream-200 text-dark-600 px-3 py-1 rounded-full font-medium font-inria">
                       Past
                     </span>
                   ) : (
-                    <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                    <span className="text-sm bg-gold-100 text-dark-900 px-3 py-1 rounded-full font-medium font-inria">
                       Voting Open
                     </span>
                   )}
@@ -130,7 +130,7 @@ export default async function MeetingPage({
                 <CardTitle>
                   Book Options
                   {meeting.bookOptions.length > 0 && (
-                    <span className="ml-2 text-base font-normal text-slate-500">
+                    <span className="ml-2 text-base font-normal text-dark-500">
                       ({meeting.bookOptions.length})
                     </span>
                   )}
