@@ -514,7 +514,8 @@ export async function voteForBook(bookOptionId: string) {
       return { error: "Book option not found" };
     }
 
-    if (bookOption.meetings.is_finalized) {
+    const meeting = bookOption.meetings as any;
+    if (meeting.is_finalized) {
       return { error: "Voting has closed" };
     }
 
@@ -522,7 +523,7 @@ export async function voteForBook(bookOptionId: string) {
     const { data: member } = await supabase
       .from("members")
       .select("user_id")
-      .eq("book_club_id", bookOption.meetings.book_club_id)
+      .eq("book_club_id", meeting.book_club_id)
       .eq("user_id", session.user.id)
       .single();
 

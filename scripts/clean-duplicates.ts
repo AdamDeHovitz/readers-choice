@@ -88,11 +88,11 @@ async function main() {
     console.log(`📅 ${date.toLocaleDateString()} - ${dup.meetings.length} meetings:`);
 
     // Sort by created_at to keep the oldest
-    const sorted = dup.meetings.sort((a, b) =>
+    const sorted = dup.meetings.sort((a: any, b: any) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
-    sorted.forEach((meeting, index) => {
+    sorted.forEach((meeting: any, index: number) => {
       const book = Array.isArray(meeting.books) ? meeting.books[0] : meeting.books;
       const bookTitle = book?.title || "No book";
       const isKeeping = index === 0;
@@ -110,13 +110,13 @@ async function main() {
   let deleteCount = 0;
 
   for (const dup of duplicates) {
-    const sorted = dup.meetings.sort((a, b) =>
+    const sorted = dup.meetings.sort((a: any, b: any) =>
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     );
 
     // Delete all except the first (oldest)
     for (let i = 1; i < sorted.length; i++) {
-      const meeting = sorted[i];
+      const meeting: any = sorted[i];
       const { error } = await supabase
         .from("meetings")
         .delete()

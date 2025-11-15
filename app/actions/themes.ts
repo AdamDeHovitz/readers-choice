@@ -198,10 +198,10 @@ export async function getBookClubThemes(bookClubId: string) {
         name,
         created_at,
         submitted_by,
-        users!themes_submitted_by_fkey (
+        users (
           id,
           name,
-          image
+          avatar_url
         ),
         theme_votes (
           user_id
@@ -216,7 +216,10 @@ export async function getBookClubThemes(bookClubId: string) {
       .eq("book_club_id", bookClubId)
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase error details:", error);
+      throw error;
+    }
 
     return (
       themes?.map((theme: any) => ({
@@ -226,7 +229,7 @@ export async function getBookClubThemes(bookClubId: string) {
         submittedBy: {
           id: theme.users.id,
           name: theme.users.name,
-          image: theme.users.image,
+          image: theme.users.avatar_url,
         },
         upvoteCount: theme.theme_votes?.length || 0,
         userHasUpvoted: theme.theme_votes?.some(
