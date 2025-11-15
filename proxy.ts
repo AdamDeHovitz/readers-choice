@@ -7,8 +7,8 @@ export default auth((req) => {
   // Public routes that don't require authentication
   const publicRoutes = ["/", "/login", "/test-connection"];
   const isPublicRoute = publicRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
+    pathname === route || pathname.startsWith(route + "/")
+  ) || pathname.startsWith("/join/");
 
   // API routes and static files - always allow
   if (
