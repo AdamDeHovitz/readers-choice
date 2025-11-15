@@ -34,7 +34,8 @@
       "mcp__vercel-readers-choice__list_deployments",
       "Bash(git commit:*)",
       "Bash(node scripts/update-design-tokens.js:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(gh issue view:*)"
     ],
     "deny": [],
     "ask": []
