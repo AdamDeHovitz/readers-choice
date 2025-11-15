@@ -44,12 +44,12 @@ Project details are available in project.md
 - ✅ Log past meetings (for historical data)
 - ✅ Edit meeting details (date, theme, book)
 
-## Phase 4: Theme Management & Rankings 🚧 IN PROGRESS
+## Phase 4: Theme Management & Rankings ✅ COMPLETED
 - ✅ Theme suggestion interface
 - ✅ Theme voting/upvoting
 - ✅ Themes list page showing usage and votes
 - ✅ Personal year rankings (drag and drop)
-- ⏳ Global year rankings calculation
+- ✅ Global year rankings calculation using Borda Count
 
 ## Available Routes
 - `/` - Home page (public)
@@ -58,7 +58,9 @@ Project details are available in project.md
 - `/book-clubs/[id]` - Book club detail page with members and meetings (requires auth)
 - `/book-clubs/[id]/themes` - Themes page with suggestion and voting (requires auth)
 - `/book-clubs/[id]/rankings` - Personal rankings page with drag-and-drop (requires auth)
+- `/book-clubs/[id]/global-rankings` - Global rankings page with Borda Count scoring (requires auth)
 - `/meetings/[id]` - Meeting detail page with book options and voting (requires auth)
+- `/join/[code]` - Join a book club via invite link (public, redirects to login if needed)
 - `/test-connection` - Database connection test (public)
 
 ## Features Working Now
@@ -82,6 +84,13 @@ Project details are available in project.md
 - Members can rank their favorite books by year using drag-and-drop
 - Books can be marked as "not read" if member didn't attend
 - Rankings automatically organized by year with year selector
+- Optimistic auto-save for personal rankings (no manual save needed)
+- Global rankings calculated using Borda Count algorithm
+- Global rankings show points, number of rankings, and average rank
+- Medal display for top 3 books in global rankings
+- Admins can generate shareable invite links for their book clubs
+- Invite links show book club preview before joining
+- New users can join via invite link (with login redirect if needed)
 - Google Books API integration for book search and metadata
 - Server actions use service role key to bypass RLS (auth handled at action level)
 

@@ -114,6 +114,17 @@ export default async function BookClubPage({
                       Rank your favorites →
                     </span>
                   </Link>
+                  <Link
+                    href={`/book-clubs/${bookClub.id}/global-rankings`}
+                    className="flex items-center justify-between p-3 rounded-lg bg-slate-50 hover:bg-slate-100 transition-colors"
+                  >
+                    <span className="font-medium text-slate-900">
+                      Global Rankings
+                    </span>
+                    <span className="text-sm text-slate-500">
+                      See group favorites →
+                    </span>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
