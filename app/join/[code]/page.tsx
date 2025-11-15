@@ -77,7 +77,7 @@ export default async function JoinPage({
       <main className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">
+            <CardTitle className="text-2xl font-bold text-slate-900">
               Join {inviteDetails.bookClubName}
             </CardTitle>
           </CardHeader>

@@ -38,7 +38,7 @@ export function JoinBookClubButton({
       <Button
         onClick={handleJoin}
         disabled={isJoining}
-        className="w-full"
+        className="w-full bg-blue-600 text-white hover:bg-blue-700 font-semibold"
         size="lg"
       >
         {isJoining ? "Joining..." : `Join ${bookClubName}`}
