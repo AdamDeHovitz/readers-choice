@@ -118,7 +118,7 @@ export async function toggleThemeUpvote(themeId: string) {
 
     // Check if user has already upvoted
     const { data: existingUpvote } = await supabase
-      .from("theme_upvotes")
+      .from("theme_votes")
       .select("id")
       .eq("theme_id", themeId)
       .eq("user_id", session.user.id)
@@ -127,7 +127,7 @@ export async function toggleThemeUpvote(themeId: string) {
     if (existingUpvote) {
       // Remove upvote
       const { error: deleteError } = await supabase
-        .from("theme_upvotes")
+        .from("theme_votes")
         .delete()
         .eq("id", existingUpvote.id);
 
@@ -138,7 +138,7 @@ export async function toggleThemeUpvote(themeId: string) {
     } else {
       // Add upvote
       const { error: insertError } = await supabase
-        .from("theme_upvotes")
+        .from("theme_votes")
         .insert({
           theme_id: themeId,
           user_id: session.user.id,
@@ -203,7 +203,7 @@ export async function getBookClubThemes(bookClubId: string) {
           name,
           image
         ),
-        theme_upvotes (
+        theme_votes (
           user_id
         ),
         meetings (
@@ -228,8 +228,8 @@ export async function getBookClubThemes(bookClubId: string) {
           name: theme.users.name,
           image: theme.users.image,
         },
-        upvoteCount: theme.theme_upvotes?.length || 0,
-        userHasUpvoted: theme.theme_upvotes?.some(
+        upvoteCount: theme.theme_votes?.length || 0,
+        userHasUpvoted: theme.theme_votes?.some(
           (upvote: any) => upvote.user_id === session.user.id
         ),
         timesUsed: theme.meetings?.length || 0,
