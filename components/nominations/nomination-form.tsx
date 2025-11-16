@@ -6,7 +6,7 @@ import { BookCard } from "@/components/books/book-card";
 import { Button } from "@/components/ui/button";
 import { nominateBook } from "@/app/actions/nominations";
 import { useRouter } from "next/navigation";
-import type { BookSearchResult } from "@/lib/google-books";
+import type { BookSearchResult } from "@/lib/open-library";
 import { CheckCircle2 } from "lucide-react";
 
 interface ExistingNomination {

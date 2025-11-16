@@ -38,7 +38,8 @@
       "Bash(gh issue view:*)",
       "Bash(gh issue close:*)",
       "Bash(node -r dotenv/config node_modules/.bin/tsx:*)",
-      "Bash(source:*)"
+      "Bash(source:*)",
+      "WebFetch(domain:openlibrary.org)"
     ],
     "deny": [],
     "ask": []

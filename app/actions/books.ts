@@ -1,22 +1,25 @@
 "use server";
 
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { searchBooks as searchGoogleBooks } from "@/lib/google-books";
-import type { BookSearchResult } from "@/lib/google-books";
+import { searchBooks as searchOpenLibrary } from "@/lib/open-library";
+import { enrichBookDescription } from "@/lib/enrichment";
+import type { BookSearchResult } from "@/lib/open-library";
 
 /**
- * Search for books using Google Books API
+ * Search for books using Open Library API
+ * Returns work-level results (no duplicate editions)
  */
 export async function searchBooks(query: string): Promise<BookSearchResult[]> {
   if (!query || query.trim().length === 0) {
     return [];
   }
 
-  return searchGoogleBooks(query.trim());
+  return searchOpenLibrary(query.trim());
 }
 
 /**
  * Add a book to our database (if it doesn't exist already)
+ * Enriches description from Google Books if missing from Open Library
  */
 export async function addBookToDatabase(book: BookSearchResult) {
   try {
@@ -43,7 +46,13 @@ export async function addBookToDatabase(book: BookSearchResult) {
       return { success: true, bookId: existing.id };
     }
 
-    // Insert new book
+    // Enrich description from Google Books if missing
+    let description = book.description;
+    if (!description) {
+      description = await enrichBookDescription(book) || undefined;
+    }
+
+    // Insert new book (always with external_source: "open_library")
     const { data, error } = await supabase
       .from("books")
       .insert({
@@ -51,7 +60,7 @@ export async function addBookToDatabase(book: BookSearchResult) {
         author: book.author,
         isbn: book.isbn || null,
         cover_url: book.coverUrl || null,
-        description: book.description || null,
+        description: description || null,
         published_year: book.publishedYear || null,
         page_count: book.pageCount || null,
         external_id: book.externalId,

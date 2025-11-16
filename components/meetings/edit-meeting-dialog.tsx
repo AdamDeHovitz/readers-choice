@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
 import { BookSearch } from "@/components/books/book-search";
-import type { BookSearchResult } from "@/lib/google-books";
+import type { BookSearchResult } from "@/lib/open-library";
 
 interface EditMeetingDialogProps {
   meetingId: string;
@@ -74,7 +74,7 @@ export function EditMeetingDialog({
           title: currentBook.title,
           author: currentBook.author,
           externalId: currentBook.id,
-          externalSource: "google_books" as const,
+          externalSource: "open_library" as const,
         }
       : null
   );
@@ -100,7 +100,7 @@ export function EditMeetingDialog({
             title: currentBook.title,
             author: currentBook.author,
             externalId: currentBook.id,
-            externalSource: "google_books" as const,
+            externalSource: "open_library" as const,
           }
         : null
     );

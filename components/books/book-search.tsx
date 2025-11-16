@@ -4,7 +4,7 @@ import { useState } from "react";
 import { searchBooks } from "@/app/actions/books";
 import { Input } from "@/components/ui/input";
 import { BookCard } from "./book-card";
-import type { BookSearchResult } from "@/lib/google-books";
+import type { BookSearchResult } from "@/lib/open-library";
 
 interface BookSearchProps {
   onSelectBook: (book: BookSearchResult) => void;

@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookSearch } from "@/components/books/book-search";
-import type { BookSearchResult } from "@/lib/google-books";
+import type { BookSearchResult } from "@/lib/open-library";
 
 interface AddBookOptionDialogProps {
   meetingId: string;

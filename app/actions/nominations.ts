@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { addBookToDatabase } from "./books";
 import { revalidatePath } from "next/cache";
-import type { BookSearchResult } from "@/lib/google-books";
+import type { BookSearchResult } from "@/lib/open-library";
 
 /**
  * Nominate a book for a meeting
