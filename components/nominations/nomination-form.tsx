@@ -120,7 +120,6 @@ export function NominationForm({
                 author={nomination.book.author}
                 coverUrl={nomination.book.cover_url || undefined}
                 onClick={() => {}}
-                disabled
               />
             ))}
           </div>

@@ -9,6 +9,7 @@ interface HeroSectionProps {
   meetingId?: string;
   meetingDate?: string;
   themeName?: string;
+  nominationDeadline?: string;
   votingDeadline?: string;
 }
 
@@ -19,6 +20,7 @@ export function HeroSection({
   meetingId,
   meetingDate,
   themeName,
+  nominationDeadline,
   votingDeadline,
 }: HeroSectionProps) {
   const formatDate = (dateString: string) => {
@@ -54,14 +56,14 @@ export function HeroSection({
                 <span>{formatDate(meetingDate)}</span>
               </div>
             )}
-            {votingDeadline && state === "nominating" && (
+            {nominationDeadline && state === "nominating" && (
               <p className="text-sm text-dark-900/80 font-inria">
-                Nominations close {formatDate(votingDeadline)}
+                Nominations close {formatDate(nominationDeadline)}
               </p>
             )}
             {votingDeadline && state === "voting" && (
               <p className="text-sm text-dark-900/80 font-inria">
-                Voting closes at meeting time
+                Voting closes {formatDate(votingDeadline)}
               </p>
             )}
           </div>

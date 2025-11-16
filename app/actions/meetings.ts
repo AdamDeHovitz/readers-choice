@@ -324,6 +324,7 @@ export async function getMeetingDetails(meetingId: string) {
         `
         id,
         created_at,
+        added_by,
         books!inner (
           id,
           title,
@@ -394,12 +395,14 @@ export async function getMeetingDetails(meetingId: string) {
               coverUrl: book.cover_url,
               description: book.description,
               publishedYear: book.published_year,
+              cover_url: book.cover_url,
             },
             voteCount: option.votes?.length || 0,
             userHasVoted: option.votes?.some(
               (v: any) => v.user_id === session.user.id
             ),
             createdAt: option.created_at,
+            added_by: option.added_by,
           };
         }) || [],
       currentUserIsAdmin: member.is_admin,
@@ -773,6 +776,7 @@ export async function getBookClubState(bookClubId: string) {
       .select(`
         id,
         meeting_date,
+        nomination_deadline,
         voting_deadline,
         is_finalized,
         theme:themes(id, name)
@@ -800,7 +804,7 @@ export async function getBookClubState(bookClubId: string) {
       `)
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", true)
-      .order("meeting_date", { descending: true })
+      .order("meeting_date", { ascending: false })
       .limit(1)
       .single();
 
@@ -814,25 +818,38 @@ export async function getBookClubState(bookClubId: string) {
     }
 
     // Check if we're in nomination or voting phase
+    const currentTime = new Date();
+    const nominationDeadline = upcomingMeeting.nomination_deadline
+      ? new Date(upcomingMeeting.nomination_deadline)
+      : null;
     const votingDeadline = upcomingMeeting.voting_deadline
       ? new Date(upcomingMeeting.voting_deadline)
       : null;
-    
-    if (votingDeadline && new Date() <= votingDeadline) {
-      // State 1: Nomination phase
+
+    // State 1: Nomination phase - before nomination_deadline
+    if (!nominationDeadline || currentTime <= nominationDeadline) {
       return {
         state: "nominating" as const,
         meeting: upcomingMeeting,
         book: previousMeeting || null,
       };
-    } else {
-      // State 2: Voting phase
+    }
+
+    // State 2: Voting phase - after nomination_deadline, before voting_deadline (or meeting)
+    if (!votingDeadline || currentTime <= votingDeadline) {
       return {
         state: "voting" as const,
         meeting: upcomingMeeting,
         book: previousMeeting || null,
       };
     }
+
+    // State 3: Past deadlines but meeting not finalized yet - treat as voting
+    return {
+      state: "voting" as const,
+      meeting: upcomingMeeting,
+      book: previousMeeting || null,
+    };
   } catch (error) {
     console.error("Error getting book club state:", error);
     return {

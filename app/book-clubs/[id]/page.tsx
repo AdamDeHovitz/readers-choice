@@ -43,15 +43,15 @@ export default async function BookClubPage({
 
   // Determine what book to display
   let bookToDisplay = null;
-  let bookMeeting = null;
+  let bookMeeting: { id: string; meetingDate: string; isFinalized: boolean } | undefined = undefined;
   let bookLabel: "Current Book" | "Previous Book" | "Upcoming" = "Current Book";
 
-  if (latestFinalizedMeeting?.selected_book) {
+  if (latestFinalizedMeeting?.selected_book && Array.isArray(latestFinalizedMeeting.selected_book) && latestFinalizedMeeting.selected_book[0]) {
     bookToDisplay = {
-      id: latestFinalizedMeeting.selected_book.id,
-      title: latestFinalizedMeeting.selected_book.title,
-      author: latestFinalizedMeeting.selected_book.author,
-      coverUrl: latestFinalizedMeeting.selected_book.cover_url,
+      id: latestFinalizedMeeting.selected_book[0].id,
+      title: latestFinalizedMeeting.selected_book[0].title,
+      author: latestFinalizedMeeting.selected_book[0].author,
+      coverUrl: latestFinalizedMeeting.selected_book[0].cover_url,
     };
     bookMeeting = {
       id: latestFinalizedMeeting.id,
@@ -84,7 +84,14 @@ export default async function BookClubPage({
         state={state}
         meetingId={upcomingMeeting?.id}
         meetingDate={upcomingMeeting?.meeting_date}
-        themeName={upcomingMeeting?.theme?.name}
+        themeName={
+          upcomingMeeting?.theme &&
+          Array.isArray(upcomingMeeting.theme) &&
+          upcomingMeeting.theme[0]?.name
+            ? upcomingMeeting.theme[0].name
+            : undefined
+        }
+        nominationDeadline={upcomingMeeting?.nomination_deadline || undefined}
         votingDeadline={upcomingMeeting?.voting_deadline || undefined}
       />
 

@@ -65,6 +65,18 @@ export default async function NominatePage({
   const now = new Date();
   const nominationsClosed = nominationDeadline && nominationDeadline < now;
 
+  // Transform bookOptions from Supabase array format to expected format
+  const existingNominations = (upcomingMeeting.bookOptions || []).map((option: any) => ({
+    id: option.id,
+    book: {
+      id: option.book[0]?.id || "",
+      title: option.book[0]?.title || "",
+      author: option.book[0]?.author || "",
+      cover_url: option.book[0]?.cover_url || null,
+    },
+    added_by: option.added_by,
+  }));
+
   return (
     <div className="min-h-screen bg-cream-100">
       <BookClubNav
@@ -95,11 +107,11 @@ export default async function NominatePage({
                 {nominationsClosed ? "Nominated Books" : "Nominate a Book"}
               </CardTitle>
               <div className="space-y-2 text-dark-600 mt-2">
-                {upcomingMeeting.theme && (
+                {upcomingMeeting.theme && Array.isArray(upcomingMeeting.theme) && upcomingMeeting.theme[0]?.name && (
                   <div className="flex items-center gap-2">
                     <SparklesIcon className="h-4 w-4" />
                     <span className="font-semibold">
-                      Theme: {upcomingMeeting.theme.name}
+                      Theme: {upcomingMeeting.theme[0].name}
                     </span>
                   </div>
                 )}
@@ -152,7 +164,7 @@ export default async function NominatePage({
                 <NominationForm
                   meetingId={upcomingMeeting.id}
                   bookClubId={id}
-                  existingNominations={upcomingMeeting.bookOptions || []}
+                  existingNominations={existingNominations}
                 />
               </CardContent>
             </Card>
