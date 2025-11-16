@@ -39,6 +39,9 @@ export function BookOptionsList({
   const router = useRouter();
   const [votingForId, setVotingForId] = useState<string | null>(null);
   const [finalizingBookId, setFinalizingBookId] = useState<string | null>(null);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
+    new Set()
+  );
 
   if (bookOptions.length === 0) {
     return (
@@ -73,6 +76,18 @@ export function BookOptionsList({
     router.refresh();
   }
 
+  function toggleDescription(bookId: string) {
+    setExpandedDescriptions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(bookId)) {
+        newSet.delete(bookId);
+      } else {
+        newSet.add(bookId);
+      }
+      return newSet;
+    });
+  }
+
   // Sort by vote count (highest first)
   const sortedOptions = [...bookOptions].sort(
     (a, b) => b.voteCount - a.voteCount
@@ -84,6 +99,9 @@ export function BookOptionsList({
         const isWinner = isFinalized && option.book.id === selectedBookId;
         const isVoting = votingForId === option.id;
         const isFinalizing = finalizingBookId === option.book.id;
+        const isExpanded = expandedDescriptions.has(option.book.id);
+        const hasLongDescription =
+          option.book.description && option.book.description.length > 150;
 
         return (
           <Card
@@ -163,9 +181,23 @@ export function BookOptionsList({
                   </div>
 
                   {option.book.description && (
-                    <p className="text-sm text-dark-600 line-clamp-2 mb-3">
-                      {option.book.description}
-                    </p>
+                    <div className="mb-3">
+                      <p
+                        className={`text-sm text-dark-600 ${
+                          isExpanded ? "" : "line-clamp-2"
+                        }`}
+                      >
+                        {option.book.description}
+                      </p>
+                      {hasLongDescription && (
+                        <button
+                          onClick={() => toggleDescription(option.book.id)}
+                          className="text-xs text-gold-700 hover:text-gold-800 font-medium mt-1"
+                        >
+                          {isExpanded ? "Show less" : "Show more"}
+                        </button>
+                      )}
+                    </div>
                   )}
 
                   <div className="flex items-center gap-4">
