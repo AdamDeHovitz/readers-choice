@@ -110,16 +110,9 @@ export function BookDisplay({
                 {book.title}
               </h3>
 
-              <div className="space-y-1">
-                <p className="text-lg text-dark-700 font-inria">
-                  By {book.author}
-                </p>
-                {book.publishedYear && (
-                  <p className="text-base text-dark-600 font-inria">
-                    Translated by John French
-                  </p>
-                )}
-              </div>
+              <p className="text-lg text-dark-700 font-inria">
+                By {book.author}
+              </p>
 
               {/* Page Count and Published Year */}
               {(book.pageCount || book.publishedYear) && (

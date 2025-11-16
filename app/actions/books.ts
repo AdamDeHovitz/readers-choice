@@ -53,6 +53,7 @@ export async function addBookToDatabase(book: BookSearchResult) {
         cover_url: book.coverUrl || null,
         description: book.description || null,
         published_year: book.publishedYear || null,
+        page_count: book.pageCount || null,
         external_id: book.externalId,
         external_source: book.externalSource,
       })

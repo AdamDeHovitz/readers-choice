@@ -30,6 +30,7 @@ export interface BookSearchResult {
   coverUrl?: string;
   description?: string;
   publishedYear?: number;
+  pageCount?: number;
   isbn?: string;
   externalId: string;
   externalSource: "google_books";
@@ -131,6 +132,7 @@ function formatGoogleBook(book: GoogleBook): BookSearchResult {
     coverUrl,
     description: volumeInfo.description,
     publishedYear,
+    pageCount: volumeInfo.pageCount,
     isbn,
     externalId: book.id,
     externalSource: "google_books",
