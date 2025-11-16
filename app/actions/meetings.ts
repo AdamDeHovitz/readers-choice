@@ -210,6 +210,7 @@ export async function getBookClubMeetings(bookClubId: string) {
         `
         id,
         meeting_date,
+        nomination_deadline,
         voting_deadline,
         is_finalized,
         finalized_at,
@@ -235,6 +236,7 @@ export async function getBookClubMeetings(bookClubId: string) {
       meetings?.map((meeting: any) => ({
         id: meeting.id,
         meetingDate: meeting.meeting_date,
+        nominationDeadline: meeting.nomination_deadline,
         votingDeadline: meeting.voting_deadline,
         isFinalized: meeting.is_finalized,
         finalizedAt: meeting.finalized_at,
@@ -410,6 +412,70 @@ export async function getMeetingDetails(meetingId: string) {
   } catch (error) {
     console.error("Error fetching meeting details:", error);
     return null;
+  }
+}
+
+/**
+ * Delete a meeting
+ */
+export async function deleteMeeting(meetingId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Not authenticated" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Get meeting to check book club membership
+    const { data: meeting } = await supabase
+      .from("meetings")
+      .select("book_club_id")
+      .eq("id", meetingId)
+      .single();
+
+    if (!meeting) {
+      return { error: "Meeting not found" };
+    }
+
+    // Check if user is admin
+    const { data: member } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", meeting.book_club_id)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!member?.is_admin) {
+      return { error: "You must be an admin to delete meetings" };
+    }
+
+    // Delete the meeting (cascade will handle related records)
+    const { error: deleteError } = await supabase
+      .from("meetings")
+      .delete()
+      .eq("id", meetingId);
+
+    if (deleteError) throw deleteError;
+
+    revalidatePath(`/book-clubs/${meeting.book_club_id}/schedule`);
+    revalidatePath(`/book-clubs/${meeting.book_club_id}/history`);
+    revalidatePath(`/book-clubs/${meeting.book_club_id}`);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting meeting:", error);
+    return { error: "Failed to delete meeting" };
   }
 }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { updateMeeting } from "@/app/actions/meetings";
+import { updateMeeting, deleteMeeting } from "@/app/actions/meetings";
 import { addBookToDatabase } from "@/app/actions/books";
 import {
   Dialog,
@@ -140,6 +140,33 @@ export function EditMeetingDialog({
     }
   }
 
+  async function handleDelete() {
+    if (
+      !confirm(
+        "Are you sure you want to delete this meeting? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    setError(null);
+    setIsSubmitting(true);
+
+    const result = await deleteMeeting(meetingId);
+
+    if (result.error) {
+      setError(result.error);
+      setIsSubmitting(false);
+    } else {
+      setOpen(false);
+      resetDialog();
+      setIsSubmitting(false);
+      // Redirect to schedule page after deletion
+      router.push(window.location.pathname.replace(/\/meetings\/.*/, "/schedule"));
+      router.refresh();
+    }
+  }
+
   return (
     <Dialog
       open={open}
@@ -243,24 +270,34 @@ export function EditMeetingDialog({
               </div>
             )}
 
-            <div className="flex gap-2 justify-end">
+            <div className="flex gap-2 justify-between">
               <Button
                 type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
+                variant="destructive"
+                onClick={handleDelete}
                 disabled={isSubmitting}
               >
-                Cancel
+                Delete Meeting
               </Button>
-              {changeBook ? (
-                <Button onClick={() => setStep("book")} disabled={!meetingDate}>
-                  Next: Select Book
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
                 </Button>
-              ) : (
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              )}
+                {changeBook ? (
+                  <Button onClick={() => setStep("book")} disabled={!meetingDate}>
+                    Next: Select Book
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}

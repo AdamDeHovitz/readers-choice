@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 interface Meeting {
   id: string;
   meetingDate: string;
+  nominationDeadline?: string | null;
   votingDeadline: string | null;
   isFinalized: boolean;
   theme: {
@@ -36,8 +37,21 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
     <div className="space-y-4">
       {meetings.map((meeting) => {
         const meetingDate = new Date(meeting.meetingDate);
-        const isPast = meetingDate < new Date();
+        const now = new Date();
+        const isPast = meetingDate < now;
         const isUpcoming = !isPast && !meeting.isFinalized;
+
+        // Determine phase for upcoming meetings
+        const nominationDeadline = meeting.nominationDeadline
+          ? new Date(meeting.nominationDeadline)
+          : null;
+        const isNominating =
+          isUpcoming &&
+          (!nominationDeadline || nominationDeadline > now);
+        const isVoting =
+          isUpcoming &&
+          nominationDeadline &&
+          nominationDeadline <= now;
 
         return (
           <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
@@ -86,15 +100,19 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                           <span className="text-xs bg-rust-600 text-cream-100 px-2 py-1 rounded-full font-medium font-inria">
                             Finalized
                           </span>
-                        ) : isUpcoming ? (
+                        ) : isNominating ? (
+                          <span className="text-xs bg-blue-100 text-dark-900 px-2 py-1 rounded-full font-medium font-inria">
+                            Nominations Open
+                          </span>
+                        ) : isVoting ? (
                           <span className="text-xs bg-gold-600 text-dark-900 px-2 py-1 rounded-full font-medium font-inria">
                             Voting Open
                           </span>
-                        ) : (
+                        ) : isPast ? (
                           <span className="text-xs bg-cream-200 text-dark-600 px-2 py-1 rounded-full font-medium font-inria">
                             Past
                           </span>
-                        )}
+                        ) : null}
                       </div>
                     </div>
 
