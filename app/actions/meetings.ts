@@ -19,6 +19,7 @@ export async function createMeeting(formData: FormData) {
   const nominationDeadline = formData.get("nominationDeadline") as string;
   const votingDeadline = formData.get("votingDeadline") as string;
   const themeName = formData.get("themeName") as string;
+  const details = formData.get("details") as string;
 
   if (!bookClubId || !meetingDate) {
     return { error: "Book club ID and meeting date are required" };
@@ -74,6 +75,7 @@ export async function createMeeting(formData: FormData) {
         nomination_deadline: nominationDeadline || null,
         voting_deadline: votingDeadline || null,
         theme_id: themeId,
+        details: details || null,
       })
       .select()
       .single();
@@ -95,7 +97,8 @@ export async function logPastMeeting(
   bookClubId: string,
   meetingDate: string,
   themeName: string | null,
-  bookId: string
+  bookId: string,
+  details: string | null
 ) {
   const session = await auth();
 
@@ -152,6 +155,7 @@ export async function logPastMeeting(
         meeting_date: meetingDate,
         theme_id: themeId,
         selected_book_id: bookId,
+        details: details,
         is_finalized: true,
         finalized_at: new Date().toISOString(),
         finalized_by: session.user.id,
@@ -377,6 +381,7 @@ export async function getMeetingDetails(meetingId: string) {
       finalizedAt: meeting.finalized_at,
       selectedBookId: meeting.selected_book_id,
       selectedBook,
+      details: meeting.details,
       bookClub: {
         id: meeting.book_clubs.id,
         name: meeting.book_clubs.name,
@@ -714,7 +719,8 @@ export async function updateMeeting(
   nominationDeadline: string | null,
   votingDeadline: string | null,
   themeName: string | null,
-  bookId: string | null
+  bookId: string | null,
+  details: string | null
 ) {
   const session = await auth();
 
@@ -797,6 +803,7 @@ export async function updateMeeting(
       nomination_deadline: nominationDeadline,
       voting_deadline: votingDeadline,
       theme_id: themeId,
+      details: details,
     };
 
     if (bookId !== null) {

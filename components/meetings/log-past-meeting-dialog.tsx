@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/google-books";
 
@@ -30,6 +31,7 @@ export function LogPastMeetingDialog({
   const [step, setStep] = useState<"details" | "book">("details");
   const [meetingDate, setMeetingDate] = useState("");
   const [themeName, setThemeName] = useState("");
+  const [details, setDetails] = useState("");
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     null
   );
@@ -40,6 +42,7 @@ export function LogPastMeetingDialog({
     setStep("details");
     setMeetingDate("");
     setThemeName("");
+    setDetails("");
     setSelectedBook(null);
     setError(null);
   }
@@ -64,7 +67,8 @@ export function LogPastMeetingDialog({
       bookClubId,
       meetingDate,
       themeName || null,
-      bookResult.bookId!
+      bookResult.bookId!,
+      details || null
     );
 
     if (result.error) {
@@ -119,6 +123,20 @@ export function LogPastMeetingDialog({
                 value={themeName}
                 onChange={(e) => setThemeName(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="pastDetails">Details (Optional)</Label>
+              <Textarea
+                id="pastDetails"
+                placeholder="e.g., Read the first half only, specific chapters to discuss..."
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-dark-500">
+                Add any additional details or instructions for this meeting
+              </p>
             </div>
 
             <div className="flex gap-2 justify-end">

@@ -75,6 +75,7 @@ export default async function MeetingPage({
                         currentNominationDeadline={meeting.nominationDeadline || null}
                         currentVotingDeadline={meeting.votingDeadline || null}
                         currentTheme={meeting.theme?.name || null}
+                        currentDetails={meeting.details || null}
                         currentBook={meeting.selectedBook || null}
                       />
                     )}
@@ -111,6 +112,13 @@ export default async function MeetingPage({
                           }
                         )}
                       </p>
+                    )}
+                    {meeting.details && (
+                      <div className="mt-3 p-3 bg-cream-100 border border-gold-600/20 rounded-lg">
+                        <p className="text-sm text-dark-900 whitespace-pre-wrap">
+                          {meeting.details}
+                        </p>
+                      </div>
                     )}
                   </div>
                 </div>

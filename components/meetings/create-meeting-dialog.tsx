@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CreateMeetingDialogProps {
   bookClubId: string;
@@ -82,6 +83,20 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
             />
             <p className="text-xs text-dark-500">
               Choose a theme for this meeting
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="details">Details (Optional)</Label>
+            <Textarea
+              id="details"
+              name="details"
+              placeholder="e.g., Read the first half only, specific chapters to discuss..."
+              disabled={isSubmitting}
+              rows={3}
+            />
+            <p className="text-xs text-dark-500">
+              Add any additional details or instructions for this meeting
             </p>
           </div>
 

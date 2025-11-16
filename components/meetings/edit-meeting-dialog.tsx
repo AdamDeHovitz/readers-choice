@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/google-books";
 
@@ -24,6 +25,7 @@ interface EditMeetingDialogProps {
   currentNominationDeadline?: string | null;
   currentVotingDeadline?: string | null;
   currentTheme: string | null;
+  currentDetails?: string | null;
   currentBook: {
     id: string;
     title: string;
@@ -37,6 +39,7 @@ export function EditMeetingDialog({
   currentNominationDeadline,
   currentVotingDeadline,
   currentTheme,
+  currentDetails,
   currentBook,
 }: EditMeetingDialogProps) {
   const router = useRouter();
@@ -60,6 +63,7 @@ export function EditMeetingDialog({
     currentVotingDeadline ? formatDateForInput(currentVotingDeadline) : ""
   );
   const [themeName, setThemeName] = useState(currentTheme || "");
+  const [details, setDetails] = useState(currentDetails || "");
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     currentBook
       ? {
@@ -85,6 +89,7 @@ export function EditMeetingDialog({
       currentVotingDeadline ? formatDateForInput(currentVotingDeadline) : ""
     );
     setThemeName(currentTheme || "");
+    setDetails(currentDetails || "");
     setSelectedBook(
       currentBook
         ? {
@@ -126,7 +131,8 @@ export function EditMeetingDialog({
       nominationDeadline ? new Date(nominationDeadline).toISOString() : null,
       votingDeadline ? new Date(votingDeadline).toISOString() : null,
       themeName || null,
-      bookId
+      bookId,
+      details || null
     );
 
     if (result.error) {
@@ -210,6 +216,20 @@ export function EditMeetingDialog({
                 value={themeName}
                 onChange={(e) => setThemeName(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editDetails">Details (Optional)</Label>
+              <Textarea
+                id="editDetails"
+                placeholder="e.g., Read the first half only, specific chapters to discuss..."
+                value={details}
+                onChange={(e) => setDetails(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-dark-500">
+                Add any additional details or instructions for this meeting
+              </p>
             </div>
 
             <div className="space-y-2">
