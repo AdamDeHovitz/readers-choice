@@ -3,7 +3,7 @@ import { getBookClubDetails } from "@/app/actions/book-clubs";
 import {
   getBookClubState,
   getUpcomingMeeting,
-  getLatestFinalizedMeeting,
+  getBookClubMeetings,
 } from "@/app/actions/meetings";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { HeroSection } from "@/components/book-clubs/hero-section";
@@ -38,35 +38,53 @@ export default async function BookClubPage({
     upcomingMeeting = await getUpcomingMeeting(id);
   }
 
-  // Get the latest finalized meeting to display (regardless of voting state)
-  const latestFinalizedMeeting = await getLatestFinalizedMeeting(id);
+  // Get all finalized meetings to display the correct book
+  const allMeetings = await getBookClubMeetings(id);
+  const now = new Date();
+
+  // Filter finalized meetings with selected books
+  const finalizedMeetings = allMeetings.filter(
+    (m) => m.isFinalized && m.selectedBookId
+  );
 
   // Determine what book to display
   let bookToDisplay = null;
   let bookMeeting: { id: string; meetingDate: string; isFinalized: boolean } | undefined = undefined;
   let bookLabel: "Current Book" | "Previous Book" | "Upcoming" = "Current Book";
 
-  if (latestFinalizedMeeting?.selected_book && Array.isArray(latestFinalizedMeeting.selected_book) && latestFinalizedMeeting.selected_book[0]) {
-    bookToDisplay = {
-      id: latestFinalizedMeeting.selected_book[0].id,
-      title: latestFinalizedMeeting.selected_book[0].title,
-      author: latestFinalizedMeeting.selected_book[0].author,
-      coverUrl: latestFinalizedMeeting.selected_book[0].cover_url,
-    };
-    bookMeeting = {
-      id: latestFinalizedMeeting.id,
-      meetingDate: latestFinalizedMeeting.meeting_date,
-      isFinalized: true,
-    };
+  if (finalizedMeetings.length > 0) {
+    // First, check for upcoming finalized meetings
+    const upcomingFinalizedMeetings = finalizedMeetings.filter(
+      (m) => new Date(m.meetingDate) > now
+    );
 
-    // Determine label based on whether the meeting date has passed
-    const meetingDate = new Date(latestFinalizedMeeting.meeting_date);
-    const now = new Date();
-
-    if (meetingDate > now) {
+    let meetingToDisplay;
+    if (upcomingFinalizedMeetings.length > 0) {
+      // Show the next upcoming finalized meeting
+      meetingToDisplay = upcomingFinalizedMeetings.sort(
+        (a, b) => new Date(a.meetingDate).getTime() - new Date(b.meetingDate).getTime()
+      )[0];
       bookLabel = "Upcoming";
     } else {
+      // Show the most recent past finalized meeting
+      meetingToDisplay = finalizedMeetings.sort(
+        (a, b) => new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime()
+      )[0];
       bookLabel = "Previous Book";
+    }
+
+    if (meetingToDisplay.selectedBook) {
+      bookToDisplay = {
+        id: meetingToDisplay.selectedBook.id,
+        title: meetingToDisplay.selectedBook.title,
+        author: meetingToDisplay.selectedBook.author,
+        coverUrl: meetingToDisplay.selectedBook.coverUrl,
+      };
+      bookMeeting = {
+        id: meetingToDisplay.id,
+        meetingDate: meetingToDisplay.meetingDate,
+        isFinalized: true,
+      };
     }
   }
 

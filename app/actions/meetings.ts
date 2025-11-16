@@ -214,6 +214,7 @@ export async function getBookClubMeetings(bookClubId: string) {
         voting_deadline,
         is_finalized,
         finalized_at,
+        selected_book_id,
         created_at,
         themes (
           id,
@@ -240,6 +241,7 @@ export async function getBookClubMeetings(bookClubId: string) {
         votingDeadline: meeting.voting_deadline,
         isFinalized: meeting.is_finalized,
         finalizedAt: meeting.finalized_at,
+        selectedBookId: meeting.selected_book_id,
         createdAt: meeting.created_at,
         theme: meeting.themes
           ? {
