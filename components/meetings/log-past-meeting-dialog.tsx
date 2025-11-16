@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ThemeCombobox } from "@/components/themes/theme-combobox";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/google-books";
 
@@ -116,13 +117,15 @@ export function LogPastMeetingDialog({
 
             <div className="space-y-2">
               <Label htmlFor="pastThemeName">Theme (Optional)</Label>
-              <Input
-                id="pastThemeName"
-                type="text"
-                placeholder="e.g., Science Fiction, Historical Fiction..."
+              <ThemeCombobox
+                bookClubId={bookClubId}
                 value={themeName}
-                onChange={(e) => setThemeName(e.target.value)}
+                onChange={setThemeName}
+                id="pastThemeName"
               />
+              <p className="text-xs text-dark-500">
+                Popular unused themes shown first
+              </p>
             </div>
 
             <div className="space-y-2">

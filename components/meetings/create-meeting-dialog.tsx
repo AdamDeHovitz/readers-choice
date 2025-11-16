@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ThemeCombobox } from "@/components/themes/theme-combobox";
 
 interface CreateMeetingDialogProps {
   bookClubId: string;
@@ -23,6 +24,7 @@ interface CreateMeetingDialogProps {
 export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [themeName, setThemeName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
 
     const formData = new FormData(e.currentTarget);
     formData.append("bookClubId", bookClubId);
+    formData.append("themeName", themeName);
 
     const result = await createMeeting(formData);
 
@@ -41,6 +44,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
       setIsSubmitting(false);
     } else {
       setOpen(false);
+      setThemeName("");
       setIsSubmitting(false);
       router.refresh();
     }
@@ -74,15 +78,15 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="themeName">Theme (Optional)</Label>
-            <Input
-              id="themeName"
-              name="themeName"
-              type="text"
-              placeholder="e.g., Science Fiction, Historical Fiction..."
+            <ThemeCombobox
+              bookClubId={bookClubId}
+              value={themeName}
+              onChange={setThemeName}
               disabled={isSubmitting}
+              id="themeName"
             />
             <p className="text-xs text-dark-500">
-              Choose a theme for this meeting
+              Popular unused themes shown first
             </p>
           </div>
 

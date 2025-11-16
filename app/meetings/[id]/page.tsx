@@ -71,6 +71,7 @@ export default async function MeetingPage({
                     {meeting.currentUserIsAdmin && (
                       <EditMeetingDialog
                         meetingId={meeting.id}
+                        bookClubId={meeting.bookClub.id}
                         currentDate={meeting.meetingDate}
                         currentNominationDeadline={meeting.nominationDeadline || null}
                         currentVotingDeadline={meeting.votingDeadline || null}

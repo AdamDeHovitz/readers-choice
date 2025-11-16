@@ -156,6 +156,83 @@ export async function toggleThemeUpvote(themeId: string) {
 }
 
 /**
+ * Get theme suggestions for autocomplete (unused themes sorted by popularity)
+ */
+export async function getThemeSuggestions(bookClubId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return [];
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if user is a member
+    const { data: member } = await supabase
+      .from("members")
+      .select("user_id")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!member) {
+      return [];
+    }
+
+    // Get all themes with vote counts and meetings
+    const { data: themes, error } = await supabase
+      .from("themes")
+      .select(
+        `
+        id,
+        name,
+        theme_votes (
+          id
+        ),
+        meetings (
+          id
+        )
+      `
+      )
+      .eq("book_club_id", bookClubId);
+
+    if (error) throw error;
+
+    // Transform and sort: unused themes first, then by vote count
+    const suggestions = (themes || [])
+      .map((theme: any) => ({
+        name: theme.name,
+        voteCount: theme.theme_votes?.length || 0,
+        isUsed: theme.meetings?.length > 0,
+      }))
+      .sort((a, b) => {
+        // Unused themes first
+        if (a.isUsed !== b.isUsed) {
+          return a.isUsed ? 1 : -1;
+        }
+        // Then by vote count (descending)
+        return b.voteCount - a.voteCount;
+      })
+      .map((theme) => theme.name);
+
+    return suggestions;
+  } catch (error) {
+    console.error("Error fetching theme suggestions:", error);
+    return [];
+  }
+}
+
+/**
  * Get all themes for a book club with upvote counts and usage
  */
 export async function getBookClubThemes(bookClubId: string) {
