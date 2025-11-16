@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import {
   HomeIcon,
-  HistoryIcon,
   BarChart3Icon,
   FileTextIcon,
   CalendarIcon,
@@ -41,9 +40,9 @@ export function BookClubNav({
       icon: HomeIcon,
     },
     {
-      name: "History",
-      href: `/book-clubs/${bookClubId}/history`,
-      icon: HistoryIcon,
+      name: "Schedule",
+      href: `/book-clubs/${bookClubId}/schedule`,
+      icon: CalendarIcon,
     },
     {
       name: "Statistics",
@@ -63,11 +62,6 @@ export function BookClubNav({
       name: "Themes",
       href: `/book-clubs/${bookClubId}/themes`,
       icon: FileTextIcon,
-    },
-    {
-      name: "Schedule",
-      href: `/book-clubs/${bookClubId}/schedule`,
-      icon: CalendarIcon,
     },
     {
       name: "Members",

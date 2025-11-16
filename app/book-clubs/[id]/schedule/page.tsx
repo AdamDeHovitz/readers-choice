@@ -5,6 +5,7 @@ import { getBookClubMeetings } from "@/app/actions/meetings";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
 import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
+import { LogPastMeetingDialog } from "@/components/meetings/log-past-meeting-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function SchedulePage({
@@ -28,12 +29,6 @@ export default async function SchedulePage({
     redirect("/dashboard");
   }
 
-  // Filter to show only upcoming meetings
-  const upcomingMeetings = meetings.filter((meeting) => {
-    const meetingDate = new Date(meeting.meetingDate);
-    return meetingDate >= new Date() || !meeting.isFinalized;
-  });
-
   return (
     <div className="min-h-screen bg-cream-100">
       <BookClubNav
@@ -47,31 +42,22 @@ export default async function SchedulePage({
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-2xl">Upcoming Schedule</CardTitle>
+                <CardTitle className="text-2xl">Schedule</CardTitle>
                 <p className="text-dark-600 mt-1">
-                  {upcomingMeetings.length}{" "}
-                  {upcomingMeetings.length === 1
-                    ? "upcoming meeting"
-                    : "upcoming meetings"}
+                  {meetings.length}{" "}
+                  {meetings.length === 1 ? "meeting" : "meetings"}
                 </p>
               </div>
               {bookClub.currentUserIsAdmin && (
-                <CreateMeetingDialog bookClubId={bookClubId} />
+                <div className="flex gap-2">
+                  <LogPastMeetingDialog bookClubId={bookClubId} />
+                  <CreateMeetingDialog bookClubId={bookClubId} />
+                </div>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            {upcomingMeetings.length > 0 ? (
-              <MeetingTimeline meetings={upcomingMeetings} />
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-dark-600">
-                  No upcoming meetings scheduled.
-                  {bookClub.currentUserIsAdmin &&
-                    " Click the button above to schedule one!"}
-                </p>
-              </div>
-            )}
+            <MeetingTimeline meetings={meetings} />
           </CardContent>
         </Card>
       </main>

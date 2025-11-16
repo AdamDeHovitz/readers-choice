@@ -469,7 +469,6 @@ export async function deleteMeeting(meetingId: string) {
     if (deleteError) throw deleteError;
 
     revalidatePath(`/book-clubs/${meeting.book_club_id}/schedule`);
-    revalidatePath(`/book-clubs/${meeting.book_club_id}/history`);
     revalidatePath(`/book-clubs/${meeting.book_club_id}`);
 
     return { success: true };
