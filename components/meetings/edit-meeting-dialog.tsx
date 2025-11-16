@@ -21,6 +21,8 @@ import type { BookSearchResult } from "@/lib/google-books";
 interface EditMeetingDialogProps {
   meetingId: string;
   currentDate: string;
+  currentNominationDeadline?: string | null;
+  currentVotingDeadline?: string | null;
   currentTheme: string | null;
   currentBook: {
     id: string;
@@ -32,6 +34,8 @@ interface EditMeetingDialogProps {
 export function EditMeetingDialog({
   meetingId,
   currentDate,
+  currentNominationDeadline,
+  currentVotingDeadline,
   currentTheme,
   currentBook,
 }: EditMeetingDialogProps) {
@@ -40,10 +44,21 @@ export function EditMeetingDialog({
   const [step, setStep] = useState<"details" | "book">("details");
 
   // Format date for datetime-local input
+  const formatDateForInput = (dateString: string) => {
+    const date = new Date(dateString);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  };
+
   const initialDate = new Date(currentDate);
-  const formattedDate = `${initialDate.getFullYear()}-${String(initialDate.getMonth() + 1).padStart(2, "0")}-${String(initialDate.getDate()).padStart(2, "0")}T${String(initialDate.getHours()).padStart(2, "0")}:${String(initialDate.getMinutes()).padStart(2, "0")}`;
+  const formattedDate = formatDateForInput(currentDate);
 
   const [meetingDate, setMeetingDate] = useState(formattedDate);
+  const [nominationDeadline, setNominationDeadline] = useState(
+    currentNominationDeadline ? formatDateForInput(currentNominationDeadline) : ""
+  );
+  const [votingDeadline, setVotingDeadline] = useState(
+    currentVotingDeadline ? formatDateForInput(currentVotingDeadline) : ""
+  );
   const [themeName, setThemeName] = useState(currentTheme || "");
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     currentBook
@@ -63,6 +78,12 @@ export function EditMeetingDialog({
   function resetDialog() {
     setStep("details");
     setMeetingDate(formattedDate);
+    setNominationDeadline(
+      currentNominationDeadline ? formatDateForInput(currentNominationDeadline) : ""
+    );
+    setVotingDeadline(
+      currentVotingDeadline ? formatDateForInput(currentVotingDeadline) : ""
+    );
     setThemeName(currentTheme || "");
     setSelectedBook(
       currentBook
@@ -102,6 +123,8 @@ export function EditMeetingDialog({
     const result = await updateMeeting(
       meetingId,
       new Date(meetingDate).toISOString(),
+      nominationDeadline ? new Date(nominationDeadline).toISOString() : null,
+      votingDeadline ? new Date(votingDeadline).toISOString() : null,
       themeName || null,
       bookId
     );
@@ -160,6 +183,32 @@ export function EditMeetingDialog({
                 value={themeName}
                 onChange={(e) => setThemeName(e.target.value)}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editNominationDeadline">Nomination Deadline (Optional)</Label>
+              <Input
+                id="editNominationDeadline"
+                type="datetime-local"
+                value={nominationDeadline}
+                onChange={(e) => setNominationDeadline(e.target.value)}
+              />
+              <p className="text-xs text-dark-500">
+                When should nominations close? After this, members can only vote.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="editVotingDeadline">Voting Deadline (Optional)</Label>
+              <Input
+                id="editVotingDeadline"
+                type="datetime-local"
+                value={votingDeadline}
+                onChange={(e) => setVotingDeadline(e.target.value)}
+              />
+              <p className="text-xs text-dark-500">
+                When should voting close? Usually set to meeting time.
+              </p>
             </div>
 
             {currentBook && (

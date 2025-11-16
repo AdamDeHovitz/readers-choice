@@ -1,13 +1,12 @@
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { createClient } from "@supabase/supabase-js";
+import { getBookClubDetails } from "@/app/actions/book-clubs";
 import {
   getBookClubYears,
   getYearBooks,
 } from "@/app/actions/rankings";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { RankingsContainer } from "@/components/rankings/rankings-container";
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function RankingsPage({
@@ -22,37 +21,9 @@ export default async function RankingsPage({
     redirect("/login");
   }
 
-  // Get book club details
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-
-  const { data: bookClub } = await supabase
-    .from("book_clubs")
-    .select("id, name")
-    .eq("id", bookClubId)
-    .single();
+  const bookClub = await getBookClubDetails(bookClubId);
 
   if (!bookClub) {
-    redirect("/dashboard");
-  }
-
-  // Check if user is a member
-  const { data: member } = await supabase
-    .from("members")
-    .select("user_id")
-    .eq("book_club_id", bookClubId)
-    .eq("user_id", session.user.id)
-    .single();
-
-  if (!member) {
     redirect("/dashboard");
   }
 
@@ -62,26 +33,11 @@ export default async function RankingsPage({
   if (years.length === 0) {
     return (
       <div className="min-h-screen bg-cream-100">
-        <nav className="bg-white border-b border-gold-600/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center gap-4">
-                <Link
-                  href={`/book-clubs/${bookClubId}`}
-                  className="text-dark-600 hover:text-dark-900"
-                >
-                  ← Back to {bookClub.name}
-                </Link>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-dark-600">
-                  {session.user.name}
-                </span>
-                <SignOutButton />
-              </div>
-            </div>
-          </div>
-        </nav>
+        <BookClubNav
+          bookClubId={bookClubId}
+          bookClubName={bookClub.name}
+          userName={session.user.name || "User"}
+        />
 
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
@@ -106,24 +62,11 @@ export default async function RankingsPage({
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <nav className="bg-white border-b border-gold-600/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/book-clubs/${bookClubId}`}
-                className="text-dark-600 hover:text-dark-900"
-              >
-                ← Back to {bookClub.name}
-              </Link>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-dark-600">{session.user.name}</span>
-              <SignOutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <BookClubNav
+        bookClubId={bookClubId}
+        bookClubName={bookClub.name}
+        userName={session.user.name || "User"}
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <RankingsContainer

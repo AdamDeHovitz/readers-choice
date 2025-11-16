@@ -5,10 +5,9 @@ import {
   getGlobalRankings,
   getYearsWithRankings,
 } from "@/app/actions/global-rankings";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GlobalRankingsList } from "@/components/rankings/global-rankings-list";
-import Link from "next/link";
 
 export default async function GlobalRankingsPage({
   params,
@@ -46,27 +45,11 @@ export default async function GlobalRankingsPage({
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <nav className="bg-white border-b border-gold-600/20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/book-clubs/${id}`}
-                className="text-dark-600 hover:text-dark-900"
-              >
-                ← Back
-              </Link>
-              <h1 className="text-xl font-bold font-inria text-dark-900">
-                {bookClub.name}
-              </h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-dark-600">{session.user.name}</span>
-              <SignOutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <BookClubNav
+        bookClubId={id}
+        bookClubName={bookClub.name}
+        userName={session.user.name || "User"}
+      />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Card>

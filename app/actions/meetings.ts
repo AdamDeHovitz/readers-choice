@@ -16,6 +16,7 @@ export async function createMeeting(formData: FormData) {
 
   const bookClubId = formData.get("bookClubId") as string;
   const meetingDate = formData.get("meetingDate") as string;
+  const nominationDeadline = formData.get("nominationDeadline") as string;
   const votingDeadline = formData.get("votingDeadline") as string;
   const themeName = formData.get("themeName") as string;
 
@@ -70,6 +71,7 @@ export async function createMeeting(formData: FormData) {
       .insert({
         book_club_id: bookClubId,
         meeting_date: meetingDate,
+        nomination_deadline: nominationDeadline || null,
         voting_deadline: votingDeadline || null,
         theme_id: themeId,
       })
@@ -364,6 +366,7 @@ export async function getMeetingDetails(meetingId: string) {
     return {
       id: meeting.id,
       meetingDate: meeting.meeting_date,
+      nominationDeadline: meeting.nomination_deadline,
       votingDeadline: meeting.voting_deadline,
       isFinalized: meeting.is_finalized,
       finalizedAt: meeting.finalized_at,
@@ -638,6 +641,8 @@ export async function finalizeMeeting(meetingId: string, selectedBookId: string)
 export async function updateMeeting(
   meetingId: string,
   meetingDate: string,
+  nominationDeadline: string | null,
+  votingDeadline: string | null,
   themeName: string | null,
   bookId: string | null
 ) {
@@ -719,6 +724,8 @@ export async function updateMeeting(
     // Update meeting
     const updateData: any = {
       meeting_date: meetingDate,
+      nomination_deadline: nominationDeadline,
+      voting_deadline: votingDeadline,
       theme_id: themeId,
     };
 
@@ -739,5 +746,275 @@ export async function updateMeeting(
   } catch (error) {
     console.error("Error updating meeting:", error);
     return { error: "Failed to update meeting" };
+  }
+}
+
+/**
+ * Get the current state of a book club (nominating, voting, or no active meeting)
+ */
+export async function getBookClubState(bookClubId: string) {
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const now = new Date().toISOString();
+
+    // Get the next upcoming meeting
+    const { data: upcomingMeeting } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        voting_deadline,
+        is_finalized,
+        theme:themes(id, name)
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", false)
+      .gte("meeting_date", now)
+      .order("meeting_date", { ascending: true })
+      .limit(1)
+      .single();
+
+    // Get the most recent finalized meeting (for book display)
+    const { data: previousMeeting } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        theme:themes(id, name),
+        selected_book:books!meetings_selected_book_id_fkey(
+          id,
+          title,
+          author,
+          cover_url
+        )
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", true)
+      .order("meeting_date", { descending: true })
+      .limit(1)
+      .single();
+
+    if (!upcomingMeeting) {
+      // State 3: No active meeting
+      return {
+        state: "inactive" as const,
+        meeting: null,
+        book: previousMeeting || null,
+      };
+    }
+
+    // Check if we're in nomination or voting phase
+    const votingDeadline = upcomingMeeting.voting_deadline
+      ? new Date(upcomingMeeting.voting_deadline)
+      : null;
+    
+    if (votingDeadline && new Date() <= votingDeadline) {
+      // State 1: Nomination phase
+      return {
+        state: "nominating" as const,
+        meeting: upcomingMeeting,
+        book: previousMeeting || null,
+      };
+    } else {
+      // State 2: Voting phase
+      return {
+        state: "voting" as const,
+        meeting: upcomingMeeting,
+        book: previousMeeting || null,
+      };
+    }
+  } catch (error) {
+    console.error("Error getting book club state:", error);
+    return {
+      state: "inactive" as const,
+      meeting: null,
+      book: null,
+    };
+  }
+}
+
+/**
+ * Get upcoming meeting details
+ */
+export async function getUpcomingMeeting(bookClubId: string) {
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const now = new Date().toISOString();
+
+    const { data: meeting, error } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        nomination_deadline,
+        voting_deadline,
+        theme:themes(id, name),
+        bookOptions:book_options(
+          id,
+          added_by,
+          book:books(
+            id,
+            title,
+            author,
+            cover_url
+          )
+        )
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", false)
+      .gte("meeting_date", now)
+      .order("meeting_date", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error("Error fetching upcoming meeting:", error);
+      return null;
+    }
+
+    return meeting;
+  } catch (error) {
+    console.error("Error in getUpcomingMeeting:", error);
+    return null;
+  }
+}
+
+/**
+ * Get previous finalized meeting details
+ */
+export async function getPreviousMeeting(bookClubId: string) {
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const now = new Date().toISOString();
+
+    // First, let's get all finalized meetings to debug
+    const { data: allMeetings, error: debugError } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        is_finalized,
+        selected_book_id
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", true)
+      .not("selected_book_id", "is", null)
+      .order("meeting_date", { ascending: false });
+
+    console.log("All finalized meetings with books:", JSON.stringify(allMeetings, null, 2));
+
+    const { data: meeting, error } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        is_finalized,
+        theme:themes(id, name),
+        selected_book:books!meetings_selected_book_id_fkey(
+          id,
+          title,
+          author,
+          cover_url
+        )
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", true)
+      .not("selected_book_id", "is", null)
+      .lte("meeting_date", now)
+      .order("meeting_date", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error("Error fetching previous meeting:", error);
+      return null;
+    }
+
+    console.log("Previous meeting returned:", JSON.stringify(meeting, null, 2));
+
+    return meeting;
+  } catch (error) {
+    console.error("Error in getPreviousMeeting:", error);
+    return null;
+  }
+}
+
+/**
+ * Get the latest finalized meeting (regardless of date)
+ * Used to display the most recent book selection on the splash page
+ */
+export async function getLatestFinalizedMeeting(bookClubId: string) {
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const { data: meeting, error } = await supabase
+      .from("meetings")
+      .select(`
+        id,
+        meeting_date,
+        is_finalized,
+        theme:themes(id, name),
+        selected_book:books!meetings_selected_book_id_fkey(
+          id,
+          title,
+          author,
+          cover_url
+        )
+      `)
+      .eq("book_club_id", bookClubId)
+      .eq("is_finalized", true)
+      .not("selected_book_id", "is", null)
+      .order("meeting_date", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (error) {
+      console.error("Error fetching latest finalized meeting:", error);
+      return null;
+    }
+
+    return meeting;
+  } catch (error) {
+    console.error("Error in getLatestFinalizedMeeting:", error);
+    return null;
   }
 }

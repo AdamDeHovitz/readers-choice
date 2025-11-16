@@ -1,9 +1,9 @@
 import { auth } from "@/auth";
 import { getMeetingDetails } from "@/app/actions/meetings";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { AddBookOptionDialog } from "@/components/meetings/add-book-option-dialog";
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog";
 import { BookOptionsList } from "@/components/meetings/book-options-list";
+import { NominationForm } from "@/components/nominations/nomination-form";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,15 @@ export default async function MeetingPage({
 
   const meetingDate = new Date(meeting.meetingDate);
   const isPast = meetingDate < new Date();
+
+  // Check if nomination period is open
+  const now = new Date();
+  const nominationDeadline = meeting.nominationDeadline
+    ? new Date(meeting.nominationDeadline)
+    : null;
+  const nominationsOpen =
+    !meeting.isFinalized &&
+    (!nominationDeadline || nominationDeadline > now);
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -69,6 +78,8 @@ export default async function MeetingPage({
                       <EditMeetingDialog
                         meetingId={meeting.id}
                         currentDate={meeting.meetingDate}
+                        currentNominationDeadline={meeting.nominationDeadline || null}
+                        currentVotingDeadline={meeting.votingDeadline || null}
                         currentTheme={meeting.theme?.name || null}
                         currentBook={meeting.selectedBook || null}
                       />
@@ -81,11 +92,6 @@ export default async function MeetingPage({
                         year: "numeric",
                         month: "long",
                         day: "numeric",
-                      })}{" "}
-                      at{" "}
-                      {meetingDate.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
                       })}
                     </p>
                     {meeting.votingDeadline && !meeting.isFinalized && (
@@ -96,8 +102,6 @@ export default async function MeetingPage({
                           {
                             month: "short",
                             day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit",
                           }
                         )}
                       </p>
@@ -123,22 +127,44 @@ export default async function MeetingPage({
             </CardHeader>
           </Card>
 
+          {/* Nomination Form */}
+          {nominationsOpen && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl font-inria text-dark-900">
+                  Nominate a Book
+                </CardTitle>
+                {nominationDeadline && (
+                  <p className="text-sm text-dark-600 mt-2">
+                    Nominations close{" "}
+                    {nominationDeadline.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent>
+                <NominationForm
+                  meetingId={meeting.id}
+                  bookClubId={meeting.bookClub.id}
+                  existingNominations={meeting.bookOptions}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Book Options */}
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>
-                  Book Options
-                  {meeting.bookOptions.length > 0 && (
-                    <span className="ml-2 text-base font-normal text-dark-500">
-                      ({meeting.bookOptions.length})
-                    </span>
-                  )}
-                </CardTitle>
-                {meeting.currentUserIsAdmin && !meeting.isFinalized && (
-                  <AddBookOptionDialog meetingId={meeting.id} />
+              <CardTitle>
+                {nominationsOpen ? "Nominated Books" : "Book Options"}
+                {meeting.bookOptions.length > 0 && (
+                  <span className="ml-2 text-base font-normal text-dark-500">
+                    ({meeting.bookOptions.length})
+                  </span>
                 )}
-              </div>
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <BookOptionsList

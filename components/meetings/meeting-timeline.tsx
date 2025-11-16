@@ -49,9 +49,9 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                     <div
                       className={`w-16 h-16 rounded-lg flex flex-col items-center justify-center ${
                         isUpcoming
-                          ? "bg-gold-100 text-dark-900"
+                          ? "bg-gold-600 text-dark-900"
                           : isPast && meeting.isFinalized
-                            ? "bg-rust-100 text-cream-100"
+                            ? "bg-rust-600 text-cream-100"
                             : "bg-cream-200 text-dark-900"
                       }`}
                     >
@@ -70,34 +70,24 @@ export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium font-inria text-dark-900 mb-1">
+                        <h3 className="font-medium font-inria text-dark-900">
                           {meeting.theme
                             ? meeting.theme.name
-                            : "Meeting " + meetingDate.toLocaleDateString()}
+                            : meetingDate.toLocaleDateString("en-US", {
+                                month: "long",
+                                year: "numeric",
+                              })}
                         </h3>
-                        <p className="text-sm text-dark-600">
-                          {meetingDate.toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}{" "}
-                          at{" "}
-                          {meetingDate.toLocaleTimeString("en-US", {
-                            hour: "numeric",
-                            minute: "2-digit",
-                          })}
-                        </p>
                       </div>
 
                       {/* Status Badge */}
                       <div className="flex-shrink-0">
                         {meeting.isFinalized ? (
-                          <span className="text-xs bg-rust-100 text-cream-100 px-2 py-1 rounded-full font-medium font-inria">
+                          <span className="text-xs bg-rust-600 text-cream-100 px-2 py-1 rounded-full font-medium font-inria">
                             Finalized
                           </span>
                         ) : isUpcoming ? (
-                          <span className="text-xs bg-gold-100 text-dark-900 px-2 py-1 rounded-full font-medium font-inria">
+                          <span className="text-xs bg-gold-600 text-dark-900 px-2 py-1 rounded-full font-medium font-inria">
                             Voting Open
                           </span>
                         ) : (

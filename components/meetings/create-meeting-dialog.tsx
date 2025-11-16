@@ -86,6 +86,19 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="nominationDeadline">Nomination Deadline (Optional)</Label>
+            <Input
+              id="nominationDeadline"
+              name="nominationDeadline"
+              type="datetime-local"
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-dark-500">
+              When should nominations close? After this, members can only vote.
+            </p>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="votingDeadline">Voting Deadline (Optional)</Label>
             <Input
               id="votingDeadline"
@@ -94,7 +107,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               disabled={isSubmitting}
             />
             <p className="text-xs text-dark-500">
-              When should voting close? You can finalize manually later.
+              When should voting close? Usually set to meeting time.
             </p>
           </div>
 
