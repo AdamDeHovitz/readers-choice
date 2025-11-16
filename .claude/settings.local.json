@@ -36,7 +36,9 @@
       "Bash(node scripts/update-design-tokens.js:*)",
       "Bash(find:*)",
       "Bash(gh issue view:*)",
-      "Bash(gh issue close:*)"
+      "Bash(gh issue close:*)",
+      "Bash(node -r dotenv/config node_modules/.bin/tsx:*)",
+      "Bash(source:*)"
     ],
     "deny": [],
     "ask": []

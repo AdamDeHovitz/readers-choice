@@ -220,6 +220,7 @@ export async function getBookClubMeetings(bookClubId: string) {
         finalized_at,
         selected_book_id,
         created_at,
+        details,
         themes (
           id,
           name
@@ -228,7 +229,10 @@ export async function getBookClubMeetings(bookClubId: string) {
           id,
           title,
           author,
-          cover_url
+          cover_url,
+          description,
+          page_count,
+          published_year
         )
       `
       )
