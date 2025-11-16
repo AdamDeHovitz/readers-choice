@@ -8,12 +8,17 @@ interface Book {
   title: string;
   author: string;
   coverUrl: string | null;
+  description?: string | null;
+  pageCount?: number | null;
+  publishedYear?: number | null;
 }
 
 interface Meeting {
   id: string;
   meetingDate: string;
   isFinalized: boolean;
+  themeName?: string | null;
+  details?: string | null;
 }
 
 interface BookDisplayProps {
@@ -56,29 +61,34 @@ export function BookDisplay({
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-4">
-        <h2 className="text-2xl font-voga text-dark-900 text-center">
+      <div className="mb-6">
+        <h2 className="text-4xl font-voga text-dark-900 text-center uppercase tracking-wider">
           {label}
         </h2>
+        {meeting?.themeName && (
+          <p className="text-xl text-dark-700 text-center mt-2 font-inria">
+            {formatDate(meeting.meetingDate)} - {meeting.themeName}
+          </p>
+        )}
       </div>
 
-      <Card className="bg-white border-gold-600/20 shadow-lg hover:shadow-xl transition-shadow">
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-6">
+      <Card className="bg-white border-gold-600/20 shadow-lg">
+        <CardContent className="p-8">
+          <div className="flex flex-col items-center text-center gap-6">
             {/* Book Cover */}
-            <div className="flex-shrink-0 mx-auto sm:mx-0">
+            <div className="flex-shrink-0">
               {book.coverUrl ? (
                 <Image
                   src={book.coverUrl}
                   alt={book.title}
-                  width={160}
-                  height={240}
-                  className="w-40 h-60 object-cover rounded-lg shadow-md"
+                  width={200}
+                  height={300}
+                  className="w-50 h-75 object-cover rounded-lg shadow-md"
                 />
               ) : (
-                <div className="w-40 h-60 bg-cream-200 rounded-lg shadow-md flex items-center justify-center">
+                <div className="w-50 h-75 bg-cream-200 rounded-lg shadow-md flex items-center justify-center">
                   <svg
-                    className="w-16 h-16 text-dark-500"
+                    className="w-20 h-20 text-dark-500"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -94,37 +104,65 @@ export function BookDisplay({
               )}
             </div>
 
-            {/* Book Details */}
-            <div className="flex-1 min-w-0 flex flex-col justify-center">
-              <h3 className="text-2xl font-playfair font-semibold text-dark-900 mb-2">
+            {/* Book Title and Details */}
+            <div className="space-y-4 max-w-2xl">
+              <h3 className="text-3xl font-playfair font-semibold text-dark-900">
                 {book.title}
               </h3>
-              <p className="text-lg text-dark-600 font-inria mb-4">
-                by {book.author}
-              </p>
 
-              {/* Meeting Info */}
-              {meeting && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-dark-600">
-                    <CalendarIcon className="h-4 w-4" />
-                    <span className="text-sm font-inria">
-                      {label === "Previous Book" && "Read on "}
-                      {label === "Upcoming" && "Meeting on "}
-                      {formatDate(meeting.meetingDate)}
-                    </span>
-                  </div>
+              <div className="space-y-1">
+                <p className="text-lg text-dark-700 font-inria">
+                  By {book.author}
+                </p>
+                {book.publishedYear && (
+                  <p className="text-base text-dark-600 font-inria">
+                    Translated by John French
+                  </p>
+                )}
+              </div>
 
-                  {meeting.id && (
-                    <Link
-                      href={`/meetings/${meeting.id}`}
-                      className="inline-flex items-center gap-2 text-rust-700 hover:text-rust-900 text-sm font-inria font-medium"
-                    >
-                      <UsersIcon className="h-4 w-4" />
-                      View meeting details →
-                    </Link>
+              {/* Page Count and Published Year */}
+              {(book.pageCount || book.publishedYear) && (
+                <div className="text-base text-dark-700 font-inria space-y-1">
+                  {book.pageCount && (
+                    <p>{book.pageCount} pages</p>
+                  )}
+                  {book.publishedYear && (
+                    <p>Published in {book.publishedYear}</p>
                   )}
                 </div>
+              )}
+
+              {/* Book Description */}
+              {book.description && (
+                <div className="mt-6 p-6 bg-rust-600 rounded-lg">
+                  <p className="text-cream-100 font-inria leading-relaxed">
+                    {book.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Meeting Details */}
+              {meeting?.details && (
+                <div className="mt-4 p-4 bg-cream-100 border border-gold-600/20 rounded-lg">
+                  <p className="text-sm font-medium font-inria text-dark-900 mb-1">
+                    Meeting Details:
+                  </p>
+                  <p className="text-sm text-dark-700 font-inria whitespace-pre-wrap">
+                    {meeting.details}
+                  </p>
+                </div>
+              )}
+
+              {/* Meeting Link */}
+              {meeting?.id && (
+                <Link
+                  href={`/meetings/${meeting.id}`}
+                  className="inline-flex items-center gap-2 text-rust-700 hover:text-rust-900 font-inria font-medium mt-4"
+                >
+                  <UsersIcon className="h-5 w-5" />
+                  View meeting →
+                </Link>
               )}
             </div>
           </div>

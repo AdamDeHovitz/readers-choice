@@ -49,7 +49,7 @@ export default async function BookClubPage({
 
   // Determine what book to display
   let bookToDisplay = null;
-  let bookMeeting: { id: string; meetingDate: string; isFinalized: boolean } | undefined = undefined;
+  let bookMeeting: { id: string; meetingDate: string; isFinalized: boolean; themeName?: string | null; details?: string | null } | undefined = undefined;
   let bookLabel: "Current Book" | "Previous Book" | "Upcoming" = "Current Book";
 
   if (finalizedMeetings.length > 0) {
@@ -79,11 +79,16 @@ export default async function BookClubPage({
         title: meetingToDisplay.selectedBook.title,
         author: meetingToDisplay.selectedBook.author,
         coverUrl: meetingToDisplay.selectedBook.coverUrl,
+        description: meetingToDisplay.selectedBook.description,
+        pageCount: meetingToDisplay.selectedBook.pageCount,
+        publishedYear: meetingToDisplay.selectedBook.publishedYear,
       };
       bookMeeting = {
         id: meetingToDisplay.id,
         meetingDate: meetingToDisplay.meetingDate,
         isFinalized: true,
+        themeName: meetingToDisplay.theme?.name,
+        details: meetingToDisplay.details,
       };
     }
   }

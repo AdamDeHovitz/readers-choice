@@ -247,6 +247,7 @@ export async function getBookClubMeetings(bookClubId: string) {
         finalizedAt: meeting.finalized_at,
         selectedBookId: meeting.selected_book_id,
         createdAt: meeting.created_at,
+        details: meeting.details,
         theme: meeting.themes
           ? {
               id: meeting.themes.id,
@@ -259,6 +260,9 @@ export async function getBookClubMeetings(bookClubId: string) {
               title: meeting.selected_book.title,
               author: meeting.selected_book.author,
               coverUrl: meeting.selected_book.cover_url,
+              description: meeting.selected_book.description,
+              pageCount: meeting.selected_book.page_count,
+              publishedYear: meeting.selected_book.published_year,
             }
           : null,
       })) || []

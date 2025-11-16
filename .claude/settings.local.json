@@ -35,7 +35,8 @@
       "Bash(git commit:*)",
       "Bash(node scripts/update-design-tokens.js:*)",
       "Bash(find:*)",
-      "Bash(gh issue view:*)"
+      "Bash(gh issue view:*)",
+      "Bash(gh issue close:*)"
     ],
     "deny": [],
     "ask": []
