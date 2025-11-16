@@ -78,16 +78,9 @@ export async function searchBooks(
       return [];
     }
 
-    // Fetch detailed information for each work to get descriptions
-    const resultsWithDetails = await Promise.all(
-      data.docs.map(async (doc) => {
-        const workId = doc.key.replace("/works/", "");
-        const details = await getWorkDetails(workId);
-        return formatOpenLibraryWork(doc, details);
-      })
-    );
-
-    return resultsWithDetails;
+    // Format results without fetching detailed work info for performance
+    // Details will be fetched when a book is selected
+    return data.docs.map((doc) => formatOpenLibraryWork(doc));
   } catch (error) {
     console.error("Error searching Open Library:", error);
     return [];
@@ -182,15 +175,11 @@ function formatOpenLibraryWork(
     }
   }
 
-  // Get ISBN (prefer ISBN-13 over ISBN-10)
-  const isbn =
-    edition?.isbn_13?.[0] ||
-    edition?.isbn_10?.[0] ||
-    doc.isbn?.[0];
+  // Get ISBN from doc or edition
+  const isbn = doc.isbn?.[0] || edition?.isbn_13?.[0] || edition?.isbn_10?.[0];
 
   // Get page count (from edition, then from search median)
-  const pageCount =
-    edition?.number_of_pages || doc.number_of_pages_median;
+  const pageCount = edition?.number_of_pages || doc.number_of_pages_median;
 
   // Get published year
   const publishedYear = doc.first_publish_year;
