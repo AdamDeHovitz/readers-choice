@@ -62,11 +62,20 @@ export async function searchBooks(
   try {
     const params = new URLSearchParams({
       q: query,
-      limit: "10",
+      limit: "5", // Reduced for faster response
       fields: "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median",
     });
 
-    const response = await fetch(`${OPEN_LIBRARY_API}/search.json?${params}`);
+    // Add timeout for faster failure
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+    const response = await fetch(`${OPEN_LIBRARY_API}/search.json?${params}`, {
+      signal: controller.signal,
+      next: { revalidate: 3600 }, // Cache for 1 hour
+    });
+
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       throw new Error(`Open Library API error: ${response.statusText}`);

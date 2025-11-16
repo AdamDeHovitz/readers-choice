@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { searchBooks } from "@/app/actions/books";
 import { Input } from "@/components/ui/input";
 import { BookCard } from "./book-card";
@@ -15,19 +15,64 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<BookSearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  async function handleSearch(searchQuery: string) {
-    setQuery(searchQuery);
-
-    if (searchQuery.trim().length < 2) {
+  // Debounced search effect with request cancellation
+  useEffect(() => {
+    if (query.trim().length < 2) {
       setResults([]);
+      setIsSearching(false);
+      // Cancel any pending requests
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       return;
     }
 
     setIsSearching(true);
-    const books = await searchBooks(searchQuery);
-    setResults(books);
-    setIsSearching(false);
+
+    // Clear previous timeout
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Set new timeout
+    debounceTimeoutRef.current = setTimeout(async () => {
+      // Create new abort controller for this request
+      abortControllerRef.current = new AbortController();
+
+      try {
+        const books = await searchBooks(query);
+        setResults(books);
+      } catch (error) {
+        // Ignore abort errors
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Search error:', error);
+        }
+      } finally {
+        setIsSearching(false);
+      }
+    }, 250); // Slightly faster debounce
+
+    // Cleanup on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [query]);
+
+  function handleInputChange(value: string) {
+    setQuery(value);
   }
 
   return (
@@ -37,7 +82,7 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
           type="text"
           placeholder="Search for books..."
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => handleInputChange(e.target.value)}
           className="w-full"
         />
         {isSearching && (
