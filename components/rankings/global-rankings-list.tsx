@@ -155,7 +155,7 @@ export function GlobalRankingsList({
         <p className="text-sm text-dark-900">
           Rankings are calculated using Borda Count scoring. When a member ranks
           their books, their #1 choice gets the most points, #2 gets fewer points,
-          and so on. All members' points are combined to create this global
+          and so on. All members&apos; points are combined to create this global
           ranking. Books that more members have ranked higher will appear at the
           top.
         </p>

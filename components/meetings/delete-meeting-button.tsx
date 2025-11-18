@@ -47,7 +47,7 @@ export function DeleteMeetingButton({
       size="icon-sm"
       onClick={handleDelete}
       disabled={isDeleting}
-      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+      className="!text-red-600 hover:!text-red-700 hover:!bg-red-50"
       title="Delete meeting"
     >
       <Trash2Icon className="h-4 w-4" />

@@ -58,7 +58,7 @@ export default async function GlobalRankingsPage({
               Global Rankings
             </CardTitle>
             <p className="text-sm text-dark-600 mt-2">
-              Rankings based on all members' votes using Borda Count scoring.
+              Rankings based on all members&apos; votes using Borda Count scoring.
               Books ranked higher by members earn more points.
             </p>
           </CardHeader>

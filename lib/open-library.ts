@@ -3,6 +3,8 @@
  * Docs: https://openlibrary.org/dev/docs/api
  */
 
+import { normalizeApiText } from "./normalize-text";
+
 export interface OpenLibrarySearchDoc {
   key: string; // work ID like "/works/OL45804W"
   title: string;
@@ -178,9 +180,9 @@ function formatOpenLibraryWork(
   let description: string | undefined;
   if (work?.description) {
     if (typeof work.description === "string") {
-      description = work.description;
+      description = normalizeApiText(work.description) || undefined;
     } else if (work.description.value) {
-      description = work.description.value;
+      description = normalizeApiText(work.description.value) || undefined;
     }
   }
 

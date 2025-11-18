@@ -11,6 +11,7 @@ Project details are available in project.md
 1. Run `npm run build` to ensure the TypeScript build passes
 2. Fix any type errors or build failures
 3. Only commit and push after a successful build
+4. If you were addressing a github issue, close the github issue after pushing
 
 # Current Status
 
@@ -98,8 +99,6 @@ Project details are available in project.md
 
 ## Database Migrations
 - SQL migrations are stored in `supabase/migrations/` for reference only
-- When creating new migrations, copy the SQL directly to the user's clipboard
-- User will paste migrations into Supabase Dashboard SQL Editor
 - Migration files should remain in the repo for documentation
 
 Please keep CLAUDE.md up to date through development

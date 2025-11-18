@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarIcon, UsersIcon } from "lucide-react";
+import { sanitizeDescription } from "@/lib/sanitize-description";
 
 interface Book {
   id: string;
@@ -148,7 +149,7 @@ export function BookDisplay({
               <div className="mt-4 p-4 sm:p-5 bg-rust-600 rounded-lg w-full">
                 <p
                   className="text-cream-100 font-inria text-sm sm:text-base leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: book.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeDescription(book.description) }}
                 />
               </div>
             )}
@@ -157,7 +158,7 @@ export function BookDisplay({
             {meeting?.details && (
               <div className="mt-3 p-3 sm:p-4 bg-cream-100 border border-gold-600/20 rounded-lg w-full">
                 <p className="text-sm font-medium font-inria text-dark-900 mb-1">
-                  Host's Message:
+                  Host&apos;s Message:
                 </p>
                 <p className="text-sm text-dark-700 font-inria whitespace-pre-wrap">
                   {meeting.details}

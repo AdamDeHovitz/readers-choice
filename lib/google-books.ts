@@ -3,6 +3,8 @@
  * Docs: https://developers.google.com/books/docs/v1/using
  */
 
+import { normalizeApiHtml } from "./normalize-text";
+
 export interface GoogleBook {
   id: string;
   volumeInfo: {
@@ -130,7 +132,7 @@ function formatGoogleBook(book: GoogleBook): BookSearchResult {
     title: volumeInfo.title,
     author,
     coverUrl,
-    description: volumeInfo.description,
+    description: normalizeApiHtml(volumeInfo.description) || undefined,
     publishedYear,
     pageCount: volumeInfo.pageCount,
     isbn,

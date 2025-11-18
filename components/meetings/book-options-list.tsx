@@ -6,6 +6,7 @@ import { voteForBook, finalizeMeeting } from "@/app/actions/meetings";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
+import { sanitizeDescription } from "@/lib/sanitize-description";
 
 interface BookOption {
   id: string;
@@ -182,13 +183,14 @@ export function BookOptionsList({
 
                   {option.book.description && (
                     <div className="mb-3">
-                      <p
+                      <div
                         className={`text-sm text-dark-600 ${
                           isExpanded ? "" : "line-clamp-2"
                         }`}
-                      >
-                        {option.book.description}
-                      </p>
+                        dangerouslySetInnerHTML={{
+                          __html: sanitizeDescription(option.book.description)
+                        }}
+                      />
                       {hasLongDescription && (
                         <button
                           onClick={() => toggleDescription(option.book.id)}
