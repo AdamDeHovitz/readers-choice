@@ -41,7 +41,8 @@
       "Bash(source:*)",
       "WebFetch(domain:openlibrary.org)",
       "Bash(rm:*)",
-      "Bash(PORT=3000 npm run dev:*)"
+      "Bash(PORT=3000 npm run dev:*)",
+      "Bash(gh issue list:*)"
     ],
     "deny": [],
     "ask": []
