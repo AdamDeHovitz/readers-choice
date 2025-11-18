@@ -18,19 +18,33 @@ export default async function Home() {
           Create book clubs, vote on your next read, and rank your favorites
           with friends
         </p>
-        <div className="pt-4">
+        <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
           {session ? (
-            <Link href="/dashboard">
-              <Button size="lg" variant="default">
-                Go to Dashboard
-              </Button>
-            </Link>
+            <>
+              <Link href="/dashboard">
+                <Button size="lg" variant="default">
+                  My Book Clubs
+                </Button>
+              </Link>
+              <Link href="/browse">
+                <Button size="lg" variant="secondary">
+                  Browse Book Clubs
+                </Button>
+              </Link>
+            </>
           ) : (
-            <Link href="/login">
-              <Button size="lg" variant="default">
-                Get Started
-              </Button>
-            </Link>
+            <>
+              <Link href="/login">
+                <Button size="lg" variant="default">
+                  Get Started
+                </Button>
+              </Link>
+              <Link href="/browse">
+                <Button size="lg" variant="secondary">
+                  Browse Book Clubs
+                </Button>
+              </Link>
+            </>
           )}
         </div>
       </div>

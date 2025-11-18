@@ -125,12 +125,8 @@ export async function getMyBookClubs() {
 export async function getBookClubDetails(bookClubId: string) {
   const session = await auth();
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
   try {
-    // Use service role key to bypass RLS - server action is already protected by auth
+    // Use service role key to bypass RLS - allows public viewing
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -172,14 +168,10 @@ export async function getBookClubDetails(bookClubId: string) {
 
     if (membersError) throw membersError;
 
-    // Check if current user is a member
-    const currentUserMember = members?.find(
-      (m: any) => m.user_id === session.user.id
-    );
-
-    if (!currentUserMember) {
-      return null; // User is not a member
-    }
+    // Check if current user is a member (if logged in)
+    const currentUserMember = session?.user?.id
+      ? members?.find((m: any) => m.user_id === session.user.id)
+      : null;
 
     return {
       ...bookClub,
@@ -195,7 +187,8 @@ export async function getBookClubDetails(bookClubId: string) {
             joinedAt: m.joined_at,
           };
         }) || [],
-      currentUserIsAdmin: currentUserMember.is_admin,
+      currentUserIsAdmin: currentUserMember?.is_admin || false,
+      currentUserIsMember: !!currentUserMember,
     };
   } catch (error) {
     console.error("Error fetching book club details:", error);
@@ -426,5 +419,135 @@ export async function deleteBookClub(bookClubId: string) {
   } catch (error) {
     console.error("Error deleting book club:", error);
     return { error: "Failed to delete book club" };
+  }
+}
+
+/**
+ * Get all book clubs (public - for browse page)
+ * Shows if current user is already a member
+ */
+export async function getAllBookClubs() {
+  const session = await auth();
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Get all book clubs with member count
+    const { data: bookClubs, error } = await supabase
+      .from("book_clubs")
+      .select(
+        `
+        id,
+        name,
+        description,
+        created_at
+      `
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    if (!bookClubs) return [];
+
+    // Get member counts and check if current user is a member
+    const bookClubsWithDetails = await Promise.all(
+      bookClubs.map(async (club) => {
+        // Get member count
+        const { count } = await supabase
+          .from("members")
+          .select("*", { count: "exact", head: true })
+          .eq("book_club_id", club.id);
+
+        // Check if current user is a member (if logged in)
+        let isMember = false;
+        if (session?.user?.id) {
+          const { data: membership } = await supabase
+            .from("members")
+            .select("user_id")
+            .eq("book_club_id", club.id)
+            .eq("user_id", session.user.id)
+            .single();
+
+          isMember = !!membership;
+        }
+
+        return {
+          id: club.id,
+          name: club.name,
+          description: club.description,
+          createdAt: club.created_at,
+          memberCount: count || 0,
+          isMember,
+        };
+      })
+    );
+
+    return bookClubsWithDetails;
+  } catch (error) {
+    console.error("Error fetching all book clubs:", error);
+    return [];
+  }
+}
+
+/**
+ * Join a book club (public)
+ * Anyone can join any book club
+ */
+export async function joinBookClub(bookClubId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Please sign in to join a book club" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Check if user is already a member
+    const { data: existingMember } = await supabase
+      .from("members")
+      .select("user_id")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (existingMember) {
+      return { error: "You are already a member of this book club" };
+    }
+
+    // Add user as a regular member (not admin)
+    const { error } = await supabase.from("members").insert({
+      user_id: session.user.id,
+      book_club_id: bookClubId,
+      is_admin: false,
+    });
+
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    revalidatePath("/browse");
+    revalidatePath("/dashboard");
+    return { success: true };
+  } catch (error) {
+    console.error("Error joining book club:", error);
+    return { error: "Failed to join book club. Please try again." };
   }
 }

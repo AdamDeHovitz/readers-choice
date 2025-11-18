@@ -8,6 +8,7 @@ import {
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { HeroSection } from "@/components/book-clubs/hero-section";
 import { BookDisplay } from "@/components/book-clubs/book-display";
+import { JoinClubButton } from "@/components/book-clubs/join-club-button";
 import { redirect } from "next/navigation";
 
 export default async function BookClubPage({
@@ -18,14 +19,52 @@ export default async function BookClubPage({
   const session = await auth();
   const { id } = await params;
 
-  if (!session?.user) {
-    redirect("/login");
-  }
-
   const bookClub = await getBookClubDetails(id);
 
   if (!bookClub) {
-    redirect("/dashboard");
+    redirect("/browse");
+  }
+
+  // If not logged in or not a member, show limited view with join button
+  if (!session?.user || !bookClub.currentUserIsMember) {
+    return (
+      <div className="min-h-screen bg-cream-100">
+        <header className="bg-cream-100 border-b border-gold-600/20">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <h1 className="text-4xl font-voga text-dark-900 uppercase tracking-wider">
+              {bookClub.name}
+            </h1>
+            {bookClub.description && (
+              <p className="text-dark-600 mt-2 font-inria">
+                {bookClub.description}
+              </p>
+            )}
+          </div>
+        </header>
+
+        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="bg-white border border-gold-600/20 rounded-lg p-8 text-center">
+            <h2 className="text-2xl font-inria font-semibold text-dark-900 mb-4">
+              {session?.user ? "Join this book club" : "Sign in to join"}
+            </h2>
+            <p className="text-dark-600 mb-6 font-inria">
+              {session?.user
+                ? `Join ${bookClub.name} to see meetings, vote on books, and participate in discussions.`
+                : "Sign in to join this book club and start reading with the community."}
+            </p>
+            {session?.user ? (
+              <JoinClubButton bookClubId={id} />
+            ) : (
+              <a href="/login" className="inline-block">
+                <button className="bg-rust-600 text-cream-100 border-2 border-dark-900 px-6 py-3 rounded-lg font-medium font-inria hover:bg-rust-700 transition-colors">
+                  Sign In
+                </button>
+              </a>
+            )}
+          </div>
+        </main>
+      </div>
+    );
   }
 
   // Get book club state and determine what to show
