@@ -46,7 +46,8 @@ function normalizeString(str: string): string {
 
 /**
  * Check if two theme names are fuzzy matches
- * Returns true if they match exactly (case-insensitive) or have a Levenshtein distance <= 2
+ * Returns true if they match exactly (case-insensitive) or have a Levenshtein distance <= 3
+ * Also checks if one is a substring of the other (for plurals like "Mystery" vs "Mysteries")
  */
 export function areThemesFuzzyMatch(theme1: string, theme2: string): boolean {
   const normalized1 = normalizeString(theme1);
@@ -57,12 +58,21 @@ export function areThemesFuzzyMatch(theme1: string, theme2: string): boolean {
     return true;
   }
 
+  // Check if one is a substring of the other (handles plurals)
+  if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
+    // Make sure the difference is small (e.g., just "s" or "ies")
+    const lengthDiff = Math.abs(normalized1.length - normalized2.length);
+    if (lengthDiff <= 3) {
+      return true;
+    }
+  }
+
   // Calculate edit distance
   const distance = levenshteinDistance(normalized1, normalized2);
 
-  // Consider it a match if edit distance is 2 or less
+  // Consider it a match if edit distance is 3 or less
   // This catches typos, plurals, etc.
-  return distance <= 2;
+  return distance <= 3;
 }
 
 /**
