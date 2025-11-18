@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { findFuzzyMatch } from "@/lib/fuzzy-match";
 
 /**
  * Suggest a new theme for a book club
@@ -38,16 +39,19 @@ export async function suggestTheme(bookClubId: string, themeName: string) {
       return { error: "You must be a member to suggest themes" };
     }
 
-    // Check if theme already exists (case-insensitive)
-    const { data: existingTheme } = await supabase
+    // Get all themes for fuzzy matching
+    const { data: allThemes } = await supabase
       .from("themes")
       .select("id, name")
-      .eq("book_club_id", bookClubId)
-      .ilike("name", themeName.trim())
-      .single();
+      .eq("book_club_id", bookClubId);
 
-    if (existingTheme) {
-      return { error: `Theme "${existingTheme.name}" already exists` };
+    // Check if theme already exists using fuzzy matching
+    const fuzzyMatch = findFuzzyMatch(themeName.trim(), allThemes || []);
+
+    if (fuzzyMatch) {
+      return {
+        error: `Theme "${fuzzyMatch.name}" already exists (similar to "${themeName}")`,
+      };
     }
 
     // Create the theme
@@ -229,6 +233,89 @@ export async function getThemeSuggestions(bookClubId: string) {
   } catch (error) {
     console.error("Error fetching theme suggestions:", error);
     return [];
+  }
+}
+
+/**
+ * Delete a theme (only if submitted by user and not used in any meetings)
+ */
+export async function deleteTheme(themeId: string) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    // Get theme with meetings
+    const { data: theme, error: themeError } = await supabase
+      .from("themes")
+      .select(
+        `
+        id,
+        name,
+        book_club_id,
+        submitted_by,
+        meetings (id)
+      `
+      )
+      .eq("id", themeId)
+      .single();
+
+    if (themeError || !theme) {
+      return { error: "Theme not found" };
+    }
+
+    // Check if user is a member
+    const { data: member } = await supabase
+      .from("members")
+      .select("user_id, is_admin")
+      .eq("book_club_id", theme.book_club_id)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (!member) {
+      return { error: "You must be a member to delete themes" };
+    }
+
+    // Check if user is the submitter or an admin
+    if (theme.submitted_by !== session.user.id && !member.is_admin) {
+      return {
+        error: "You can only delete themes you submitted or be an admin",
+      };
+    }
+
+    // Check if theme has been used in meetings
+    if (theme.meetings && theme.meetings.length > 0) {
+      return {
+        error: "Cannot delete theme that has been used in meetings",
+      };
+    }
+
+    // Delete the theme (votes will cascade delete)
+    const { error: deleteError } = await supabase
+      .from("themes")
+      .delete()
+      .eq("id", themeId);
+
+    if (deleteError) throw deleteError;
+
+    revalidatePath(`/book-clubs/${theme.book_club_id}/themes`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting theme:", error);
+    return { error: "Failed to delete theme" };
   }
 }
 

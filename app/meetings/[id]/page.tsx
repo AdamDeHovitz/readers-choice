@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { getMeetingDetails } from "@/app/actions/meetings";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog";
+import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { BookOptionsList } from "@/components/meetings/book-options-list";
 import { NominationForm } from "@/components/nominations/nomination-form";
 import { redirect } from "next/navigation";
@@ -62,23 +63,34 @@ export default async function MeetingPage({
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-2 mb-2">
                     <CardTitle className="text-2xl">
                       {meeting.theme
                         ? meeting.theme.name
                         : "Meeting " + meetingDate.toLocaleDateString()}
                     </CardTitle>
                     {meeting.currentUserIsAdmin && (
-                      <EditMeetingDialog
-                        meetingId={meeting.id}
-                        bookClubId={meeting.bookClub.id}
-                        currentDate={meeting.meetingDate}
-                        currentNominationDeadline={meeting.nominationDeadline || null}
-                        currentVotingDeadline={meeting.votingDeadline || null}
-                        currentTheme={meeting.theme?.name || null}
-                        currentDetails={meeting.details || null}
-                        currentBook={meeting.selectedBook || null}
-                      />
+                      <>
+                        <EditMeetingDialog
+                          meetingId={meeting.id}
+                          bookClubId={meeting.bookClub.id}
+                          currentDate={meeting.meetingDate}
+                          currentNominationDeadline={meeting.nominationDeadline || null}
+                          currentVotingDeadline={meeting.votingDeadline || null}
+                          currentTheme={meeting.theme?.name || null}
+                          currentDetails={meeting.details || null}
+                          currentBook={meeting.selectedBook || null}
+                        />
+                        <DeleteMeetingButton
+                          meetingId={meeting.id}
+                          bookClubId={meeting.bookClub.id}
+                          meetingName={
+                            meeting.theme
+                              ? meeting.theme.name
+                              : "Meeting " + meetingDate.toLocaleDateString()
+                          }
+                        />
+                      </>
                     )}
                   </div>
                   <div className="space-y-1">

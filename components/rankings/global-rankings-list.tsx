@@ -88,11 +88,7 @@ export function GlobalRankingsList({
             return (
               <div
                 key={book.id}
-                className={`flex gap-4 p-4 rounded-lg border transition-all ${
-                  rank <= 3
-                    ? "border-gold-600/20 bg-cream-100"
-                    : "border-gold-600/20 bg-white"
-                }`}
+                className="flex gap-4 p-4 rounded-lg border border-gold-600/20 bg-cream-100 transition-all"
               >
                 {/* Rank */}
                 <div

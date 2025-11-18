@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { toggleThemeUpvote } from "@/app/actions/themes";
+import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
 import { Button } from "@/components/ui/button";
-import { ArrowUpIcon, CheckCircle2Icon } from "lucide-react";
+import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 
 interface Theme {
@@ -28,13 +28,16 @@ interface Theme {
 
 interface ThemesListProps {
   themes: Theme[];
+  currentUserId: string;
+  isAdmin: boolean;
 }
 
 type FilterType = "all" | "used" | "unused";
 
-export function ThemesList({ themes }: ThemesListProps) {
+export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) {
   const router = useRouter();
   const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
+  const [deletingStates, setDeletingStates] = useState<Record<string, boolean>>({});
   const [filter, setFilter] = useState<FilterType>("all");
 
   async function handleUpvote(themeId: string) {
@@ -47,6 +50,23 @@ export function ThemesList({ themes }: ThemesListProps) {
     }
 
     setVotingStates((prev) => ({ ...prev, [themeId]: false }));
+  }
+
+  async function handleDelete(themeId: string, themeName: string) {
+    if (!confirm(`Are you sure you want to delete the theme "${themeName}"?`)) {
+      return;
+    }
+
+    setDeletingStates((prev) => ({ ...prev, [themeId]: true }));
+
+    const result = await deleteTheme(themeId);
+
+    if (result.error) {
+      alert(`Error: ${result.error}`);
+      setDeletingStates((prev) => ({ ...prev, [themeId]: false }));
+    } else {
+      router.refresh();
+    }
   }
 
   // Filter themes based on selected filter
@@ -155,6 +175,20 @@ export function ThemesList({ themes }: ThemesListProps) {
                       <span className="font-medium font-inria">{theme.timesUsed}x</span>
                     </div>
                   )}
+                  {/* Show delete button if user is the submitter or an admin, and theme is unused */}
+                  {(theme.submittedBy.id === currentUserId || isAdmin) &&
+                    theme.timesUsed === 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDelete(theme.id, theme.name)}
+                        disabled={deletingStates[theme.id]}
+                        className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                        title="Delete theme"
+                      >
+                        <Trash2Icon className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                 </div>
 
                 {/* Submitter icon only */}

@@ -66,7 +66,7 @@ export default async function ThemesPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ThemesList themes={themes} />
+              <ThemesList themes={themes} currentUserId={session.user.id!} isAdmin={bookClub.isAdmin} />
             </CardContent>
           </Card>
         </div>

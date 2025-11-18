@@ -39,7 +39,9 @@
       "Bash(gh issue close:*)",
       "Bash(node -r dotenv/config node_modules/.bin/tsx:*)",
       "Bash(source:*)",
-      "WebFetch(domain:openlibrary.org)"
+      "WebFetch(domain:openlibrary.org)",
+      "Bash(rm:*)",
+      "Bash(PORT=3000 npm run dev:*)"
     ],
     "deny": [],
     "ask": []
