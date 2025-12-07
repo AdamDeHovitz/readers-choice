@@ -320,65 +320,65 @@ export async function getMeetingDetails(meetingId: string) {
 
     if (meetingError) throw meetingError;
 
-    // Check if user is a member
     const bookClubId = meeting.book_clubs.id;
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
 
-    if (!member) {
+    // Parallelize membership check, book options, and selected book queries
+    const [memberResult, bookOptionsResult, selectedBookResult] = await Promise.all([
+      supabase
+        .from("members")
+        .select("is_admin")
+        .eq("book_club_id", bookClubId)
+        .eq("user_id", session.user.id)
+        .single(),
+      supabase
+        .from("book_options")
+        .select(
+          `
+          id,
+          created_at,
+          added_by,
+          books!inner (
+            id,
+            title,
+            author,
+            cover_url,
+            description,
+            published_year
+          ),
+          votes (
+            id,
+            user_id
+          )
+        `
+        )
+        .eq("meeting_id", meetingId),
+      meeting.selected_book_id
+        ? supabase
+            .from("books")
+            .select("id, title, author, cover_url, description, published_year")
+            .eq("id", meeting.selected_book_id)
+            .single()
+        : Promise.resolve({ data: null }),
+    ]);
+
+    if (!memberResult.data) {
       return null;
     }
 
-    // Get book options with vote counts
-    const { data: bookOptions, error: optionsError } = await supabase
-      .from("book_options")
-      .select(
-        `
-        id,
-        created_at,
-        added_by,
-        books!inner (
-          id,
-          title,
-          author,
-          cover_url,
-          description,
-          published_year
-        ),
-        votes (
-          id,
-          user_id
-        )
-      `
-      )
-      .eq("meeting_id", meetingId);
+    if (bookOptionsResult.error) throw bookOptionsResult.error;
 
-    if (optionsError) throw optionsError;
-
-    // Get selected book details if there is one
-    let selectedBook = null;
-    if (meeting.selected_book_id) {
-      const { data: bookData } = await supabase
-        .from("books")
-        .select("id, title, author, cover_url, description, published_year")
-        .eq("id", meeting.selected_book_id)
-        .single();
-
-      if (bookData) {
-        selectedBook = {
-          id: bookData.id,
-          title: bookData.title,
-          author: bookData.author,
-          coverUrl: bookData.cover_url,
-          description: bookData.description,
-          publishedYear: bookData.published_year,
-        };
-      }
-    }
+    const member = memberResult.data;
+    const bookOptions = bookOptionsResult.data;
+    const selectedBook = selectedBookResult.data
+      ? {
+          id: selectedBookResult.data.id,
+          title: selectedBookResult.data.title,
+          author: selectedBookResult.data.author,
+          coverUrl: selectedBookResult.data.cover_url,
+          description: selectedBookResult.data.description,
+          publishedYear: selectedBookResult.data.published_year,
+        }
+      : null;
 
     return {
       id: meeting.id,

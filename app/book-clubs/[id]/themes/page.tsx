@@ -19,13 +19,15 @@ export default async function ThemesPage({
     redirect("/login");
   }
 
-  const bookClub = await getBookClubDetails(bookClubId);
+  // Parallelize book club details and themes queries
+  const [bookClub, themes] = await Promise.all([
+    getBookClubDetails(bookClubId),
+    getBookClubThemes(bookClubId),
+  ]);
 
   if (!bookClub) {
     redirect("/dashboard");
   }
-
-  const themes = await getBookClubThemes(bookClubId);
 
   return (
     <div className="min-h-screen bg-cream-100">

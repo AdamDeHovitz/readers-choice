@@ -19,7 +19,12 @@ export default async function BookClubPage({
   const session = await auth();
   const { id } = await params;
 
-  const bookClub = await getBookClubDetails(id);
+  // Parallelize initial queries
+  const [bookClub, stateResult, allMeetings] = await Promise.all([
+    getBookClubDetails(id),
+    getBookClubState(id),
+    getBookClubMeetings(id),
+  ]);
 
   if (!bookClub) {
     redirect("/browse");
@@ -67,19 +72,14 @@ export default async function BookClubPage({
     );
   }
 
-  // Get book club state and determine what to show
-  const stateResult = await getBookClubState(id);
+  // Extract state and fetch upcoming meeting if needed
   const state = stateResult.state;
+  const now = new Date();
 
   let upcomingMeeting = null;
-
   if (state === "nominating" || state === "voting") {
     upcomingMeeting = await getUpcomingMeeting(id);
   }
-
-  // Get all finalized meetings to display the correct book
-  const allMeetings = await getBookClubMeetings(id);
-  const now = new Date();
 
   // Filter finalized meetings with selected books
   const finalizedMeetings = allMeetings.filter(

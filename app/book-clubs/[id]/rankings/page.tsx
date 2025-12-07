@@ -21,14 +21,15 @@ export default async function RankingsPage({
     redirect("/login");
   }
 
-  const bookClub = await getBookClubDetails(bookClubId);
+  // Parallelize book club details and years queries
+  const [bookClub, years] = await Promise.all([
+    getBookClubDetails(bookClubId),
+    getBookClubYears(bookClubId),
+  ]);
 
   if (!bookClub) {
     redirect("/dashboard");
   }
-
-  // Get available years and books for the most recent year
-  const years = await getBookClubYears(bookClubId);
 
   if (years.length === 0) {
     return (
