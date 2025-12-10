@@ -188,12 +188,13 @@ export async function getIndividualBookRankings(
   year: number
 ): Promise<IndividualRanking[]> {
   try {
-    // Get all members of the book club
-    const { data: members, error: membersError } = await supabase
-      .from("members")
+    // Get all rankings for this book with user information
+    const { data: rankings, error: rankingsError } = await supabase
+      .from("personal_rankings")
       .select(
         `
         user_id,
+        rank,
         users (
           id,
           name,
@@ -201,44 +202,31 @@ export async function getIndividualBookRankings(
         )
       `
       )
-      .eq("book_club_id", bookClubId);
-
-    if (membersError || !members) {
-      console.error("Error fetching members:", membersError);
-      return [];
-    }
-
-    // Get all rankings for this book
-    const { data: rankings, error: rankingsError } = await supabase
-      .from("personal_rankings")
-      .select("user_id, rank")
       .eq("book_club_id", bookClubId)
       .eq("book_id", bookId)
-      .eq("year", year);
+      .eq("year", year)
+      .not("rank", "is", null); // Only get ranked books (not "not read")
 
     if (rankingsError) {
       console.error("Error fetching rankings:", rankingsError);
       return [];
     }
 
-    // Create a map of user rankings
-    const rankingsMap = new Map<string, number | null>();
-    rankings?.forEach((r) => {
-      rankingsMap.set(r.user_id, r.rank);
-    });
+    if (!rankings || rankings.length === 0) {
+      return [];
+    }
 
-    // Combine member info with their rankings
-    const individualRankings: IndividualRanking[] = members
-      .map((member) => {
-        const user = member.users as any;
+    // Map to individual rankings format
+    const individualRankings: IndividualRanking[] = rankings
+      .map((ranking) => {
+        const user = ranking.users as any;
         return {
-          userId: member.user_id,
+          userId: ranking.user_id,
           userName: user?.name || "Unknown User",
           userImage: user?.image || null,
-          rank: rankingsMap.get(member.user_id) ?? null,
+          rank: ranking.rank,
         };
       })
-      .filter((r) => r.rank !== null) // Only show members who ranked this book
       .sort((a, b) => {
         // Sort by rank (ascending - lower rank is better)
         if (a.rank === null && b.rank === null) return 0;
