@@ -44,7 +44,8 @@
       "Bash(PORT=3000 npm run dev:*)",
       "Bash(gh issue list:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(node test-rankings-query.js:*)"
     ],
     "deny": [],
     "ask": []

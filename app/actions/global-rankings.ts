@@ -198,7 +198,7 @@ export async function getIndividualBookRankings(
         users (
           id,
           name,
-          image
+          avatar_url
         )
       `
       )
@@ -223,7 +223,7 @@ export async function getIndividualBookRankings(
         return {
           userId: ranking.user_id,
           userName: user?.name || "Unknown User",
-          userImage: user?.image || null,
+          userImage: user?.avatar_url || null,
           rank: ranking.rank,
         };
       })
