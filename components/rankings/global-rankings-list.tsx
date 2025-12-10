@@ -158,30 +158,30 @@ export function GlobalRankingsList({
                 </div>
 
                 {/* Book Info */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 overflow-hidden">
                   <h3 className="font-semibold font-inria text-dark-900 text-lg truncate">
                     {book.title}
                   </h3>
                   <p className="text-sm text-dark-600 truncate">{book.author}</p>
 
-                  <div className="flex gap-4 mt-3">
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <TrophyIcon className="h-4 w-4 text-gold-700" />
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3">
+                    <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
+                      <TrophyIcon className="h-4 w-4 text-gold-700 flex-shrink-0" />
                       <span className="font-semibold font-inria text-dark-900">
                         {book.totalPoints}
                       </span>
                       <span className="text-dark-500">points</span>
                     </div>
 
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <UsersIcon className="h-4 w-4 text-dark-500" />
+                    <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
+                      <UsersIcon className="h-4 w-4 text-dark-500 flex-shrink-0" />
                       <span className="text-dark-600">
                         {book.numberOfRankings} member
                         {book.numberOfRankings !== 1 ? "s" : ""}
                       </span>
                     </div>
 
-                    <div className="text-sm text-dark-500">
+                    <div className="text-sm text-dark-500 whitespace-nowrap">
                       Avg rank: {book.averageRank.toFixed(1)}
                     </div>
                   </div>
