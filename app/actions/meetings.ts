@@ -49,21 +49,35 @@ export async function createMeeting(formData: FormData) {
       return { error: "Only admins can create meetings" };
     }
 
-    // Create theme if provided
+    // Get or create theme if provided
     let themeId = null;
     if (themeName && themeName.trim().length > 0) {
-      const { data: theme, error: themeError } = await supabase
+      // First, check if theme already exists
+      const { data: existingTheme } = await supabase
         .from("themes")
-        .insert({
-          book_club_id: bookClubId,
-          name: themeName.trim(),
-          submitted_by: session.user.id,
-        })
         .select("id")
+        .eq("book_club_id", bookClubId)
+        .eq("name", themeName.trim())
         .single();
 
-      if (themeError) throw themeError;
-      themeId = theme.id;
+      if (existingTheme) {
+        // Use existing theme
+        themeId = existingTheme.id;
+      } else {
+        // Create new theme
+        const { data: newTheme, error: themeError } = await supabase
+          .from("themes")
+          .insert({
+            book_club_id: bookClubId,
+            name: themeName.trim(),
+            submitted_by: session.user.id,
+          })
+          .select("id")
+          .single();
+
+        if (themeError) throw themeError;
+        themeId = newTheme.id;
+      }
     }
 
     // Create the meeting
@@ -130,21 +144,35 @@ export async function logPastMeeting(
       return { error: "Only admins can log past meetings" };
     }
 
-    // Create theme if provided
+    // Get or create theme if provided
     let themeId = null;
     if (themeName && themeName.trim().length > 0) {
-      const { data: theme, error: themeError } = await supabase
+      // First, check if theme already exists
+      const { data: existingTheme } = await supabase
         .from("themes")
-        .insert({
-          book_club_id: bookClubId,
-          name: themeName.trim(),
-          submitted_by: session.user.id,
-        })
         .select("id")
+        .eq("book_club_id", bookClubId)
+        .eq("name", themeName.trim())
         .single();
 
-      if (themeError) throw themeError;
-      themeId = theme.id;
+      if (existingTheme) {
+        // Use existing theme
+        themeId = existingTheme.id;
+      } else {
+        // Create new theme
+        const { data: newTheme, error: themeError } = await supabase
+          .from("themes")
+          .insert({
+            book_club_id: bookClubId,
+            name: themeName.trim(),
+            submitted_by: session.user.id,
+          })
+          .select("id")
+          .single();
+
+        if (themeError) throw themeError;
+        themeId = newTheme.id;
+      }
     }
 
     // Create the meeting as already finalized
@@ -776,9 +804,19 @@ export async function updateMeeting(
 
     if (themeName !== null) {
       if (themeName.trim().length > 0) {
-        // Create new theme or update existing
-        if (meeting.theme_id) {
-          // Update existing theme
+        // First check if this theme name already exists
+        const { data: existingTheme } = await supabase
+          .from("themes")
+          .select("id")
+          .eq("book_club_id", meeting.book_club_id)
+          .eq("name", themeName.trim())
+          .single();
+
+        if (existingTheme) {
+          // Use existing theme
+          themeId = existingTheme.id;
+        } else if (meeting.theme_id) {
+          // Update current theme name (if no other meetings use it)
           await supabase
             .from("themes")
             .update({ name: themeName.trim() })
