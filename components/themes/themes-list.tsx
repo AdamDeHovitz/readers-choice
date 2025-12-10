@@ -38,7 +38,7 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
   const router = useRouter();
   const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
   const [deletingStates, setDeletingStates] = useState<Record<string, boolean>>({});
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [filter, setFilter] = useState<FilterType>("unused");
 
   async function handleUpvote(themeId: string) {
     setVotingStates((prev) => ({ ...prev, [themeId]: true }));
