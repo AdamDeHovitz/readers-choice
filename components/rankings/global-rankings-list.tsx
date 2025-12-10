@@ -4,6 +4,14 @@ import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { TrophyIcon, UsersIcon } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { getIndividualBookRankings } from "@/app/actions/global-rankings";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface GlobalRankingBook {
   id: string;
@@ -22,6 +30,13 @@ interface GlobalRankingsListProps {
   selectedYear: number;
 }
 
+interface IndividualRanking {
+  userId: string;
+  userName: string;
+  userImage: string | null;
+  rank: number | null;
+}
+
 export function GlobalRankingsList({
   bookClubId,
   rankings,
@@ -30,10 +45,37 @@ export function GlobalRankingsList({
 }: GlobalRankingsListProps) {
   const router = useRouter();
   const [currentYear, setCurrentYear] = useState(selectedYear);
+  const [selectedBook, setSelectedBook] = useState<GlobalRankingBook | null>(
+    null
+  );
+  const [individualRankings, setIndividualRankings] = useState<
+    IndividualRanking[]
+  >([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleYearChange(year: number) {
     setCurrentYear(year);
     router.push(`/book-clubs/${bookClubId}/global-rankings?year=${year}`);
+  }
+
+  async function handleBookClick(book: GlobalRankingBook) {
+    setSelectedBook(book);
+    setIsDialogOpen(true);
+    setIsLoading(true);
+
+    try {
+      const rankings = await getIndividualBookRankings(
+        bookClubId,
+        book.id,
+        currentYear
+      );
+      setIndividualRankings(rankings);
+    } catch (error) {
+      console.error("Error fetching individual rankings:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   // Medal colors for top 3
@@ -86,9 +128,10 @@ export function GlobalRankingsList({
           {rankings.map((book, index) => {
             const rank = index + 1;
             return (
-              <div
+              <button
                 key={book.id}
-                className="flex gap-4 p-4 rounded-lg border border-gold-600/20 bg-cream-100 transition-all"
+                onClick={() => handleBookClick(book)}
+                className="w-full flex gap-4 p-4 rounded-lg border border-gold-600/20 bg-cream-100 transition-all hover:bg-cream-200 hover:border-gold-600/40 cursor-pointer text-left"
               >
                 {/* Rank */}
                 <div
@@ -143,7 +186,7 @@ export function GlobalRankingsList({
                     </div>
                   </div>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -160,6 +203,79 @@ export function GlobalRankingsList({
           top.
         </p>
       </div>
+
+      {/* Individual Rankings Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-inria text-dark-900">
+              Individual Rankings
+            </DialogTitle>
+            {selectedBook && (
+              <div className="flex gap-3 mt-3 pb-3 border-b border-gold-600/20">
+                {selectedBook.coverUrl && (
+                  <Image
+                    src={selectedBook.coverUrl}
+                    alt={selectedBook.title}
+                    width={60}
+                    height={90}
+                    className="rounded shadow-sm object-cover"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-dark-900 text-base">
+                    {selectedBook.title}
+                  </h3>
+                  <p className="text-sm text-dark-600">
+                    {selectedBook.author}
+                  </p>
+                </div>
+              </div>
+            )}
+          </DialogHeader>
+
+          <div className="mt-4">
+            {isLoading ? (
+              <div className="text-center py-8 text-dark-500">
+                Loading rankings...
+              </div>
+            ) : individualRankings.length === 0 ? (
+              <div className="text-center py-8 text-dark-500">
+                No members have ranked this book yet.
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {individualRankings.map((ranking) => (
+                  <div
+                    key={ranking.userId}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-cream-100 border border-gold-600/20"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={ranking.userImage || undefined} />
+                      <AvatarFallback className="bg-gold-200 text-dark-900 font-medium">
+                        {ranking.userName.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-dark-900 truncate">
+                        {ranking.userName}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-dark-500">Ranked:</span>
+                      <span className="font-bold font-inria text-lg text-dark-900">
+                        #{ranking.rank}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

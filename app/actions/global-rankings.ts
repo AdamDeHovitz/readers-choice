@@ -171,3 +171,85 @@ export async function getYearsWithRankings(
     return [];
   }
 }
+
+interface IndividualRanking {
+  userId: string;
+  userName: string;
+  userImage: string | null;
+  rank: number | null;
+}
+
+/**
+ * Get individual member rankings for a specific book
+ */
+export async function getIndividualBookRankings(
+  bookClubId: string,
+  bookId: string,
+  year: number
+): Promise<IndividualRanking[]> {
+  try {
+    // Get all members of the book club
+    const { data: members, error: membersError } = await supabase
+      .from("members")
+      .select(
+        `
+        user_id,
+        users (
+          id,
+          name,
+          image
+        )
+      `
+      )
+      .eq("book_club_id", bookClubId);
+
+    if (membersError || !members) {
+      console.error("Error fetching members:", membersError);
+      return [];
+    }
+
+    // Get all rankings for this book
+    const { data: rankings, error: rankingsError } = await supabase
+      .from("personal_rankings")
+      .select("user_id, rank")
+      .eq("book_club_id", bookClubId)
+      .eq("book_id", bookId)
+      .eq("year", year);
+
+    if (rankingsError) {
+      console.error("Error fetching rankings:", rankingsError);
+      return [];
+    }
+
+    // Create a map of user rankings
+    const rankingsMap = new Map<string, number | null>();
+    rankings?.forEach((r) => {
+      rankingsMap.set(r.user_id, r.rank);
+    });
+
+    // Combine member info with their rankings
+    const individualRankings: IndividualRanking[] = members
+      .map((member) => {
+        const user = member.users as any;
+        return {
+          userId: member.user_id,
+          userName: user?.name || "Unknown User",
+          userImage: user?.image || null,
+          rank: rankingsMap.get(member.user_id) ?? null,
+        };
+      })
+      .filter((r) => r.rank !== null) // Only show members who ranked this book
+      .sort((a, b) => {
+        // Sort by rank (ascending - lower rank is better)
+        if (a.rank === null && b.rank === null) return 0;
+        if (a.rank === null) return 1;
+        if (b.rank === null) return -1;
+        return a.rank - b.rank;
+      });
+
+    return individualRankings;
+  } catch (error) {
+    console.error("Error fetching individual rankings:", error);
+    return [];
+  }
+}
