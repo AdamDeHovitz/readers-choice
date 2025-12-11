@@ -76,17 +76,18 @@ export function BookClubNav({
       <nav className="bg-gold-600 border-b border-gold-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Left: Book Club Name */}
-            <div className="flex items-center gap-4">
+            {/* Left: Site Title & Book Club Name */}
+            <div className="flex items-center gap-3">
               <Link
                 href="/dashboard"
-                className="text-dark-900 hover:text-dark-600 font-inria text-sm"
+                className="text-lg font-bold font-inria text-dark-900 hover:text-dark-600 transition-colors"
               >
-                ← Dashboard
+                Readers&apos; Choice
               </Link>
-              <h1 className="text-lg font-bold font-inria text-dark-900 hidden sm:block">
+              <span className="text-dark-900/30 hidden sm:block">|</span>
+              <h2 className="text-base font-medium font-inria text-dark-900 hidden sm:block">
                 {bookClubName}
-              </h1>
+              </h2>
             </div>
 
             {/* Desktop Navigation */}

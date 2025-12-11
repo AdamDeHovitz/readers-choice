@@ -102,6 +102,35 @@ export async function createInviteLink(bookClubId: string) {
 }
 
 /**
+ * Check if user is already a member of a book club
+ */
+export async function checkMembership(bookClubId: string, userId: string) {
+  try {
+    const supabase = createSupabaseClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
+
+    const { data: member } = await supabase
+      .from("members")
+      .select("id")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", userId)
+      .single();
+
+    return !!member;
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * Get invite link details by code
  */
 export async function getInviteLinkDetails(code: string) {

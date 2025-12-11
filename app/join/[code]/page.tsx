@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import {
   getInviteLinkDetails,
   joinBookClubViaInvite,
+  checkMembership,
 } from "@/app/actions/invites";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,14 +59,21 @@ export default async function JoinPage({
     redirect(`/login?callbackUrl=/join/${code}`);
   }
 
+  // Check if user is already a member
+  const isMember = await checkMembership(inviteDetails.bookClubId, session.user.id!);
+  if (isMember) {
+    // User is already a member, redirect to the book club
+    redirect(`/book-clubs/${inviteDetails.bookClubId}`);
+  }
+
   return (
     <div className="min-h-screen bg-cream-100">
       <nav className="bg-white border-b border-gold-600/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold font-inria text-dark-900">
+            <Link href="/dashboard" className="text-xl font-bold font-inria text-dark-900 hover:text-gold-700 transition-colors">
               Readers&apos; Choice
-            </h1>
+            </Link>
             <div className="flex items-center gap-4">
               <span className="text-sm text-dark-600">{session.user.name}</span>
               <SignOutButton />
