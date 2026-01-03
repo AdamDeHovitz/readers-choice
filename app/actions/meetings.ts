@@ -4,6 +4,58 @@ import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
+interface Book {
+  id: string;
+  title: string;
+  author: string;
+  cover_url: string | null;
+  description: string | null;
+  page_count: number | null;
+  published_year: number | null;
+}
+
+interface Theme {
+  id: string;
+  name: string;
+}
+
+interface Meeting {
+  id: string;
+  meeting_date: string;
+  nomination_deadline: string | null;
+  voting_deadline: string | null;
+  is_finalized: boolean;
+  finalized_at: string | null;
+  selected_book_id: string | null;
+  created_at: string;
+  details: string | null;
+  themes: Theme | null;
+  selected_book: Book | null;
+}
+
+interface BookOption {
+  id: string;
+  meeting_id: string;
+  book_id: string;
+  added_by: string | null;
+  created_at: string;
+  books: Book;
+  votes: { id: string; user_id: string }[];
+}
+
+function getAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+}
+
 /**
  * Create a new meeting for a book club
  */
@@ -26,16 +78,7 @@ export async function createMeeting(formData: FormData) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin
     const { data: member } = await supabase
@@ -121,16 +164,7 @@ export async function logPastMeeting(
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin
     const { data: member } = await supabase
@@ -212,16 +246,7 @@ export async function getBookClubMeetings(bookClubId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if user is a member
     const { data: member } = await supabase
@@ -269,8 +294,10 @@ export async function getBookClubMeetings(bookClubId: string) {
 
     if (error) throw error;
 
+    // Supabase types can be tricky with joins, so we cast to unknown then Meeting[]
+    // But since we defined interfaces, we can try to map carefully
     return (
-      meetings?.map((meeting: any) => ({
+      (meetings as unknown as Meeting[])?.map((meeting) => ({
         id: meeting.id,
         meetingDate: meeting.meeting_date,
         nominationDeadline: meeting.nomination_deadline,
@@ -316,19 +343,10 @@ export async function getMeetingDetails(meetingId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get meeting details
-    const { data: meeting, error: meetingError } = await supabase
+    const { data: meetingData, error: meetingError } = await supabase
       .from("meetings")
       .select(
         `
@@ -347,21 +365,26 @@ export async function getMeetingDetails(meetingId: string) {
       .single();
 
     if (meetingError) throw meetingError;
+    // Temporary cast to handle nested joins not in strict Meeting type
+    const meeting = meetingData as unknown as Meeting & {
+      book_clubs: { id: string; name: string };
+    };
 
     const bookClubId = meeting.book_clubs.id;
 
     // Parallelize membership check, book options, and selected book queries
-    const [memberResult, bookOptionsResult, selectedBookResult] = await Promise.all([
-      supabase
-        .from("members")
-        .select("is_admin")
-        .eq("book_club_id", bookClubId)
-        .eq("user_id", session.user.id)
-        .single(),
-      supabase
-        .from("book_options")
-        .select(
-          `
+    const [memberResult, bookOptionsResult, selectedBookResult] =
+      await Promise.all([
+        supabase
+          .from("members")
+          .select("is_admin")
+          .eq("book_club_id", bookClubId)
+          .eq("user_id", session.user.id)
+          .single(),
+        supabase
+          .from("book_options")
+          .select(
+            `
           id,
           created_at,
           added_by,
@@ -378,16 +401,18 @@ export async function getMeetingDetails(meetingId: string) {
             user_id
           )
         `
-        )
-        .eq("meeting_id", meetingId),
-      meeting.selected_book_id
-        ? supabase
-            .from("books")
-            .select("id, title, author, cover_url, description, published_year")
-            .eq("id", meeting.selected_book_id)
-            .single()
-        : Promise.resolve({ data: null }),
-    ]);
+          )
+          .eq("meeting_id", meetingId),
+        meeting.selected_book_id
+          ? supabase
+              .from("books")
+              .select(
+                "id, title, author, cover_url, description, published_year"
+              )
+              .eq("id", meeting.selected_book_id)
+              .single()
+          : Promise.resolve({ data: null }),
+      ]);
 
     if (!memberResult.data) {
       return null;
@@ -396,7 +421,7 @@ export async function getMeetingDetails(meetingId: string) {
     if (bookOptionsResult.error) throw bookOptionsResult.error;
 
     const member = memberResult.data;
-    const bookOptions = bookOptionsResult.data;
+    const bookOptions = bookOptionsResult.data as unknown as BookOption[];
     const selectedBook = selectedBookResult.data
       ? {
           id: selectedBookResult.data.id,
@@ -429,7 +454,7 @@ export async function getMeetingDetails(meetingId: string) {
           }
         : null,
       bookOptions:
-        bookOptions?.map((option: any) => {
+        bookOptions?.map((option) => {
           const book = option.books;
           return {
             id: option.id,
@@ -444,7 +469,7 @@ export async function getMeetingDetails(meetingId: string) {
             },
             voteCount: option.votes?.length || 0,
             userHasVoted: option.votes?.some(
-              (v: any) => v.user_id === session.user.id
+              (v) => v.user_id === session.user.id
             ),
             createdAt: option.created_at,
             added_by: option.added_by,
@@ -469,16 +494,7 @@ export async function deleteMeeting(meetingId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get meeting to check book club membership
     const { data: meeting } = await supabase
@@ -532,16 +548,7 @@ export async function addBookOption(meetingId: string, bookId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get meeting's book club
     const { data: meeting } = await supabase
@@ -598,16 +605,7 @@ export async function voteForBook(bookOptionId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get book option's meeting
     const { data: bookOption } = await supabase
@@ -628,7 +626,7 @@ export async function voteForBook(bookOptionId: string) {
       return { error: "Book option not found" };
     }
 
-    const meeting = bookOption.meetings as any;
+    const meeting = (bookOption as any).meetings;
     if (meeting.is_finalized) {
       return { error: "Voting has closed" };
     }
@@ -686,16 +684,7 @@ export async function finalizeMeeting(meetingId: string, selectedBookId: string)
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get meeting
     const { data: meeting } = await supabase
@@ -765,16 +754,7 @@ export async function updateMeeting(
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get meeting and check permissions
     const { data: meeting } = await supabase
@@ -877,16 +857,7 @@ export async function updateMeeting(
  */
 export async function getBookClubState(bookClubId: string) {
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     const now = new Date().toISOString();
 
@@ -985,16 +956,7 @@ export async function getBookClubState(bookClubId: string) {
  */
 export async function getUpcomingMeeting(bookClubId: string) {
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     const now = new Date().toISOString();
 
@@ -1037,38 +999,13 @@ export async function getUpcomingMeeting(bookClubId: string) {
 }
 
 /**
- * Get previous finalized meeting details
+ * Get previous meeting details
  */
 export async function getPreviousMeeting(bookClubId: string) {
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     const now = new Date().toISOString();
-
-    // First, let's get all finalized meetings to debug
-    const { data: allMeetings, error: debugError } = await supabase
-      .from("meetings")
-      .select(`
-        id,
-        meeting_date,
-        is_finalized,
-        selected_book_id
-      `)
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", true)
-      .not("selected_book_id", "is", null)
-      .order("meeting_date", { ascending: false });
-
-    console.log("All finalized meetings with books:", JSON.stringify(allMeetings, null, 2));
 
     const { data: meeting, error } = await supabase
       .from("meetings")
@@ -1097,8 +1034,6 @@ export async function getPreviousMeeting(bookClubId: string) {
       return null;
     }
 
-    console.log("Previous meeting returned:", JSON.stringify(meeting, null, 2));
-
     return meeting;
   } catch (error) {
     console.error("Error in getPreviousMeeting:", error);
@@ -1112,16 +1047,7 @@ export async function getPreviousMeeting(bookClubId: string) {
  */
 export async function getLatestFinalizedMeeting(bookClubId: string) {
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     const { data: meeting, error } = await supabase
       .from("meetings")

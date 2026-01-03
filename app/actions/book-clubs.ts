@@ -4,6 +4,28 @@ import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 
+// Type definitions for better type safety
+interface BookClub {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+  members?: { count: number }[];
+}
+
+function getAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+}
+
 export async function createBookClub(formData: FormData) {
   const session = await auth();
 
@@ -19,17 +41,7 @@ export async function createBookClub(formData: FormData) {
   }
 
   try {
-    // Use service role key to bypass RLS - server action is already protected by auth
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Create the book club
     const { data: bookClub, error: bookClubError } = await supabase
@@ -69,17 +81,7 @@ export async function getMyBookClubs() {
   }
 
   try {
-    // Use service role key to bypass RLS - server action is already protected by auth
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     const { data, error } = await supabase
       .from("members")
@@ -102,7 +104,7 @@ export async function getMyBookClubs() {
     if (error) throw error;
 
     return (
-      data?.map((member: any) => {
+      data?.map((member) => {
         const bookClub = Array.isArray(member.book_clubs)
           ? member.book_clubs[0]
           : member.book_clubs;
@@ -127,16 +129,7 @@ export async function getBookClubDetails(bookClubId: string) {
 
   try {
     // Use service role key to bypass RLS - allows public viewing
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Get book club info
     const { data: bookClub, error: clubError } = await supabase
@@ -170,13 +163,13 @@ export async function getBookClubDetails(bookClubId: string) {
 
     // Check if current user is a member (if logged in)
     const currentUserMember = session?.user?.id
-      ? members?.find((m: any) => m.user_id === session.user.id)
+      ? members?.find((m) => m.user_id === session.user.id)
       : null;
 
     return {
       ...bookClub,
       members:
-        members?.map((m: any) => {
+        members?.map((m) => {
           const user = Array.isArray(m.users) ? m.users[0] : m.users;
           return {
             id: user.id,
@@ -208,16 +201,7 @@ export async function toggleMemberAdmin(
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin
     const { data: currentMember } = await supabase
@@ -269,16 +253,7 @@ export async function removeMember(bookClubId: string, userId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin or removing themselves
     const { data: currentMember } = await supabase
@@ -336,16 +311,7 @@ export async function updateBookClubDescription(
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin
     const { data: currentMember } = await supabase
@@ -383,16 +349,7 @@ export async function deleteBookClub(bookClubId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if current user is an admin
     const { data: currentMember } = await supabase
@@ -430,18 +387,9 @@ export async function getAllBookClubs() {
   const session = await auth();
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
-    // Get all book clubs with member count
+    // 1. Fetch all book clubs with their member count
     const { data: bookClubs, error } = await supabase
       .from("book_clubs")
       .select(
@@ -449,7 +397,8 @@ export async function getAllBookClubs() {
         id,
         name,
         description,
-        created_at
+        created_at,
+        members(count)
       `
       )
       .order("created_at", { ascending: false });
@@ -458,40 +407,28 @@ export async function getAllBookClubs() {
 
     if (!bookClubs) return [];
 
-    // Get member counts and check if current user is a member
-    const bookClubsWithDetails = await Promise.all(
-      bookClubs.map(async (club) => {
-        // Get member count
-        const { count } = await supabase
-          .from("members")
-          .select("*", { count: "exact", head: true })
-          .eq("book_club_id", club.id);
+    // 2. Fetch current user's memberships efficiently
+    const memberBookClubIds = new Set<string>();
+    if (session?.user?.id) {
+      const { data: userMemberships } = await supabase
+        .from("members")
+        .select("book_club_id")
+        .eq("user_id", session.user.id);
 
-        // Check if current user is a member (if logged in)
-        let isMember = false;
-        if (session?.user?.id) {
-          const { data: membership } = await supabase
-            .from("members")
-            .select("user_id")
-            .eq("book_club_id", club.id)
-            .eq("user_id", session.user.id)
-            .single();
+      if (userMemberships) {
+        userMemberships.forEach((m) => memberBookClubIds.add(m.book_club_id));
+      }
+    }
 
-          isMember = !!membership;
-        }
-
-        return {
-          id: club.id,
-          name: club.name,
-          description: club.description,
-          createdAt: club.created_at,
-          memberCount: count || 0,
-          isMember,
-        };
-      })
-    );
-
-    return bookClubsWithDetails;
+    // 3. Combine the data
+    return bookClubs.map((club) => ({
+      id: club.id,
+      name: club.name,
+      description: club.description,
+      createdAt: club.created_at,
+      memberCount: club.members?.[0]?.count || 0,
+      isMember: memberBookClubIds.has(club.id),
+    }));
   } catch (error) {
     console.error("Error fetching all book clubs:", error);
     return [];
@@ -510,16 +447,7 @@ export async function joinBookClub(bookClubId: string) {
   }
 
   try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const supabase = getAdminClient();
 
     // Check if user is already a member
     const { data: existingMember } = await supabase

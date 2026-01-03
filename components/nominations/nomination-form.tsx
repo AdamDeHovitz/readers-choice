@@ -17,7 +17,7 @@ interface ExistingNomination {
     author: string;
     cover_url: string | null;
   };
-  added_by: string;
+  added_by: string | null;
 }
 
 interface NominationFormProps {
