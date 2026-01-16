@@ -63,7 +63,7 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
       <DialogTrigger asChild>
         <Button>Suggest Theme</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[calc(100dvh-2rem)] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
         <DialogHeader>
           <DialogTitle>Suggest a Theme</DialogTitle>
           <DialogDescription>
