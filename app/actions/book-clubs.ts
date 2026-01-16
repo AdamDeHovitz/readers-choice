@@ -1,10 +1,9 @@
 "use server";
 
-import { auth } from "@/auth";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { authenticatedAction, publicAction } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
 
-// Type definitions for better type safety
+// Type definitions
 interface BookClub {
   id: string;
   name: string;
@@ -13,26 +12,7 @@ interface BookClub {
   members?: { count: number }[];
 }
 
-function getAdminClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}
-
 export async function createBookClub(formData: FormData) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized - Please sign in again" };
-  }
-
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
 
@@ -40,9 +20,7 @@ export async function createBookClub(formData: FormData) {
     return { error: "Book club name is required" };
   }
 
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Create the book club
     const { data: bookClub, error: bookClubError } = await supabase
       .from("book_clubs")
@@ -65,24 +43,19 @@ export async function createBookClub(formData: FormData) {
 
     if (memberError) throw memberError;
 
-    revalidatePath("/dashboard");
-    return { success: true, bookClubId: bookClub.id };
-  } catch (error) {
-    console.error("Error creating book club:", error);
-    return { error: "Failed to create book club. Please try again." };
+    return { bookClubId: bookClub.id };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath("/dashboard");
+  return { success: true, bookClubId: result.data.bookClubId };
 }
 
 export async function getMyBookClubs() {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return [];
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     const { data, error } = await supabase
       .from("members")
       .select(
@@ -118,19 +91,17 @@ export async function getMyBookClubs() {
         };
       }) || []
     );
-  } catch (error) {
-    console.error("Error fetching book clubs:", error);
+  });
+
+  if (!result.success) {
     return [];
   }
+
+  return result.data;
 }
 
 export async function getBookClubDetails(bookClubId: string) {
-  const session = await auth();
-
-  try {
-    // Use service role key to bypass RLS - allows public viewing
-    const supabase = getAdminClient();
-
+  const result = await publicAction(async ({ session, supabase }) => {
     // Get book club info
     const { data: bookClub, error: clubError } = await supabase
       .from("book_clubs")
@@ -183,10 +154,13 @@ export async function getBookClubDetails(bookClubId: string) {
       currentUserIsAdmin: currentUserMember?.is_admin || false,
       currentUserIsMember: !!currentUserMember,
     };
-  } catch (error) {
-    console.error("Error fetching book club details:", error);
+  });
+
+  if (!result.success) {
     return null;
   }
+
+  return result.data;
 }
 
 export async function toggleMemberAdmin(
@@ -194,15 +168,7 @@ export async function toggleMemberAdmin(
   userId: string,
   isAdmin: boolean
 ) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Check if current user is an admin
     const { data: currentMember } = await supabase
       .from("members")
@@ -212,7 +178,7 @@ export async function toggleMemberAdmin(
       .single();
 
     if (!currentMember?.is_admin) {
-      return { error: "Only admins can manage member roles" };
+      throw new Error("Only admins can manage member roles");
     }
 
     // Can't demote yourself if you're the only admin
@@ -224,7 +190,7 @@ export async function toggleMemberAdmin(
         .eq("is_admin", true);
 
       if ((adminCount?.length || 0) <= 1) {
-        return { error: "Cannot remove the last admin" };
+        throw new Error("Cannot remove the last admin");
       }
     }
 
@@ -236,25 +202,19 @@ export async function toggleMemberAdmin(
       .eq("user_id", userId);
 
     if (error) throw error;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
     return { success: true };
-  } catch (error) {
-    console.error("Error updating member role:", error);
-    return { error: "Failed to update member role" };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath(`/book-clubs/${bookClubId}`);
+  return { success: true };
 }
 
 export async function removeMember(bookClubId: string, userId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Check if current user is an admin or removing themselves
     const { data: currentMember } = await supabase
       .from("members")
@@ -267,7 +227,7 @@ export async function removeMember(bookClubId: string, userId: string) {
     const isAdmin = currentMember?.is_admin;
 
     if (!isSelfRemoval && !isAdmin) {
-      return { error: "Only admins can remove other members" };
+      throw new Error("Only admins can remove other members");
     }
 
     // If removing yourself as admin, check you're not the last admin
@@ -279,7 +239,7 @@ export async function removeMember(bookClubId: string, userId: string) {
         .eq("is_admin", true);
 
       if ((adminCount?.length || 0) <= 1) {
-        return { error: "Cannot remove the last admin" };
+        throw new Error("Cannot remove the last admin");
       }
     }
 
@@ -291,28 +251,22 @@ export async function removeMember(bookClubId: string, userId: string) {
       .eq("user_id", userId);
 
     if (error) throw error;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
     return { success: true };
-  } catch (error) {
-    console.error("Error removing member:", error);
-    return { error: "Failed to remove member" };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath(`/book-clubs/${bookClubId}`);
+  return { success: true };
 }
 
 export async function updateBookClubDescription(
   bookClubId: string,
   description: string
 ) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Check if current user is an admin
     const { data: currentMember } = await supabase
       .from("members")
@@ -322,7 +276,7 @@ export async function updateBookClubDescription(
       .single();
 
     if (!currentMember?.is_admin) {
-      return { error: "Only admins can edit book club details" };
+      throw new Error("Only admins can edit book club details");
     }
 
     // Update the description
@@ -332,25 +286,19 @@ export async function updateBookClubDescription(
       .eq("id", bookClubId);
 
     if (error) throw error;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
     return { success: true };
-  } catch (error) {
-    console.error("Error updating book club description:", error);
-    return { error: "Failed to update description" };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath(`/book-clubs/${bookClubId}`);
+  return { success: true };
 }
 
 export async function deleteBookClub(bookClubId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Check if current user is an admin
     const { data: currentMember } = await supabase
       .from("members")
@@ -360,35 +308,32 @@ export async function deleteBookClub(bookClubId: string) {
       .single();
 
     if (!currentMember?.is_admin) {
-      return { error: "Only admins can delete book clubs" };
+      throw new Error("Only admins can delete book clubs");
     }
 
-    // Delete the book club (cascading deletes will handle related data)
+    // Delete the book club
     const { error } = await supabase
       .from("book_clubs")
       .delete()
       .eq("id", bookClubId);
 
     if (error) throw error;
-
-    revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
-    console.error("Error deleting book club:", error);
-    return { error: "Failed to delete book club" };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath("/dashboard");
+  return { success: true };
 }
 
 /**
  * Get all book clubs (public - for browse page)
- * Shows if current user is already a member
  */
 export async function getAllBookClubs() {
-  const session = await auth();
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await publicAction(async ({ session, supabase }) => {
     // 1. Fetch all book clubs with their member count
     const { data: bookClubs, error } = await supabase
       .from("book_clubs")
@@ -429,26 +374,20 @@ export async function getAllBookClubs() {
       memberCount: club.members?.[0]?.count || 0,
       isMember: memberBookClubIds.has(club.id),
     }));
-  } catch (error) {
-    console.error("Error fetching all book clubs:", error);
+  });
+
+  if (!result.success) {
     return [];
   }
+
+  return result.data;
 }
 
 /**
  * Join a book club (public)
- * Anyone can join any book club
  */
 export async function joinBookClub(bookClubId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Please sign in to join a book club" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
+  const result = await authenticatedAction(async ({ session, supabase }) => {
     // Check if user is already a member
     const { data: existingMember } = await supabase
       .from("members")
@@ -458,7 +397,7 @@ export async function joinBookClub(bookClubId: string) {
       .single();
 
     if (existingMember) {
-      return { error: "You are already a member of this book club" };
+      throw new Error("You are already a member of this book club");
     }
 
     // Add user as a regular member (not admin)
@@ -469,13 +408,15 @@ export async function joinBookClub(bookClubId: string) {
     });
 
     if (error) throw error;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
-    revalidatePath("/browse");
-    revalidatePath("/dashboard");
     return { success: true };
-  } catch (error) {
-    console.error("Error joining book club:", error);
-    return { error: "Failed to join book club. Please try again." };
+  });
+
+  if (!result.success) {
+    return { error: result.error };
   }
+
+  revalidatePath(`/book-clubs/${bookClubId}`);
+  revalidatePath("/browse");
+  revalidatePath("/dashboard");
+  return { success: true };
 }

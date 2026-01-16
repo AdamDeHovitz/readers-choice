@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { getBookClubDetails } from "@/app/actions/book-clubs";
 import {
   getBookClubState,
-  getUpcomingMeeting,
   getBookClubMeetings,
 } from "@/app/actions/meetings";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
@@ -72,14 +71,10 @@ export default async function BookClubPage({
     );
   }
 
-  // Extract state and fetch upcoming meeting if needed
+  // Extract state and use the meeting data already returned by getBookClubState
   const state = stateResult.state;
+  const upcomingMeeting = stateResult.meeting;
   const now = new Date();
-
-  let upcomingMeeting = null;
-  if (state === "nominating" || state === "voting") {
-    upcomingMeeting = await getUpcomingMeeting(id);
-  }
 
   // Filter finalized meetings with selected books
   const finalizedMeetings = allMeetings.filter(
