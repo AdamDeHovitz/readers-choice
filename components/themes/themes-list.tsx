@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
 import { Button } from "@/components/ui/button";
-import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
+import {
+  ArrowUpIcon,
+  CheckCircle2Icon,
+  Trash2Icon,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Image from "next/image";
 
 interface Theme {
@@ -34,11 +40,27 @@ interface ThemesListProps {
 
 type FilterType = "all" | "used" | "unused";
 
-export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) {
+export function ThemesList({
+  themes,
+  currentUserId,
+  isAdmin,
+}: ThemesListProps) {
   const router = useRouter();
   const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
-  const [deletingStates, setDeletingStates] = useState<Record<string, boolean>>({});
+  const [deletingStates, setDeletingStates] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>(
+    {}
+  );
   const [filter, setFilter] = useState<FilterType>("unused");
+
+  function toggleExpanded(themeId: string) {
+    setExpandedThemes((prev) => ({
+      ...prev,
+      [themeId]: !prev[themeId],
+    }));
+  }
 
   async function handleUpvote(themeId: string) {
     setVotingStates((prev) => ({ ...prev, [themeId]: true }));
@@ -86,7 +108,7 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
 
   if (themes.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="py-12 text-center">
         <p className="text-dark-600">
           No themes suggested yet. Be the first to suggest one!
         </p>
@@ -100,10 +122,10 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
   return (
     <div className="space-y-4">
       {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-gold-600/20 pb-2">
+      <div className="border-gold-600/20 flex gap-2 border-b pb-2">
         <button
           onClick={() => setFilter("all")}
-          className={`px-4 py-2 rounded-t-lg font-medium font-inria text-sm transition-colors ${
+          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === "all"
               ? "bg-gold-600 text-dark-900"
               : "text-dark-600 hover:bg-cream-200"
@@ -113,7 +135,7 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
         </button>
         <button
           onClick={() => setFilter("unused")}
-          className={`px-4 py-2 rounded-t-lg font-medium font-inria text-sm transition-colors ${
+          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === "unused"
               ? "bg-gold-600 text-dark-900"
               : "text-dark-600 hover:bg-cream-200"
@@ -123,7 +145,7 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
         </button>
         <button
           onClick={() => setFilter("used")}
-          className={`px-4 py-2 rounded-t-lg font-medium font-inria text-sm transition-colors ${
+          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             filter === "used"
               ? "bg-gold-600 text-dark-900"
               : "text-dark-600 hover:bg-cream-200"
@@ -135,20 +157,20 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
 
       {/* Compact Themes Grid */}
       {sortedThemes.length === 0 ? (
-        <div className="text-center py-8">
+        <div className="py-8 text-center">
           <p className="text-dark-600">
             No {filter === "all" ? "" : filter} themes found.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {sortedThemes.map((theme) => (
             <div
               key={theme.id}
-              className="flex items-center gap-3 p-3 bg-white border border-gold-600/20 rounded-lg hover:shadow-sm transition-shadow"
+              className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3 transition-shadow hover:shadow-sm"
             >
               {/* Upvote section */}
-              <div className="flex flex-col items-center gap-0.5 min-w-[44px]">
+              <div className="flex min-w-[44px] flex-col items-center gap-0.5">
                 <Button
                   variant={theme.userHasUpvoted ? "default" : "outline"}
                   size="icon-sm"
@@ -158,21 +180,49 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
                 >
                   <ArrowUpIcon className="h-3.5 w-3.5" />
                 </Button>
-                <span className="text-xs font-medium font-inria text-dark-600">
+                <span className="font-inria text-dark-600 text-xs font-medium">
                   {theme.upvoteCount}
                 </span>
               </div>
 
               {/* Theme info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="text-base font-semibold font-inria text-dark-900 truncate flex-1">
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 flex items-start gap-2">
+                  <h3
+                    className={`font-inria text-dark-900 flex-1 text-base font-semibold select-none ${
+                      expandedThemes[theme.id]
+                        ? "break-words whitespace-normal"
+                        : "truncate"
+                    }`}
+                    title={theme.name}
+                  >
                     {theme.name}
                   </h3>
+
+                  {/* Expand/Collapse Toggle */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleExpanded(theme.id);
+                    }}
+                    className="text-gold-600 hover:text-gold-700 hover:bg-gold-50 h-6 w-6 shrink-0 p-0"
+                    title={expandedThemes[theme.id] ? "Collapse" : "Expand"}
+                  >
+                    {expandedThemes[theme.id] ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+
                   {theme.timesUsed > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-rust-700 shrink-0">
+                    <div className="text-rust-700 flex shrink-0 items-center gap-1 text-xs">
                       <CheckCircle2Icon className="h-3.5 w-3.5" />
-                      <span className="font-medium font-inria">{theme.timesUsed}x</span>
+                      <span className="font-inria font-medium">
+                        {theme.timesUsed}x
+                      </span>
                     </div>
                   )}
                   {/* Show delete button if user is the submitter or an admin, and theme is unused */}
@@ -183,7 +233,7 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
                         size="icon-sm"
                         onClick={() => handleDelete(theme.id, theme.name)}
                         disabled={deletingStates[theme.id]}
-                        className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+                        className="h-7 w-7 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                         title="Delete theme"
                       >
                         <Trash2Icon className="h-3.5 w-3.5" />
@@ -204,16 +254,17 @@ export function ThemesList({ themes, currentUserId, isAdmin }: ThemesListProps) 
                     />
                   ) : (
                     <div
-                      className="w-4 h-4 rounded-full bg-gold-200 flex items-center justify-center"
+                      className="bg-gold-200 flex h-4 w-4 items-center justify-center rounded-full"
                       title={`Suggested by ${theme.submittedBy.name}`}
                     >
-                      <span className="text-[8px] font-bold font-inria text-gold-700">
+                      <span className="font-inria text-gold-700 text-[8px] font-bold">
                         {theme.submittedBy.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
                   )}
-                  <span className="text-xs text-dark-500">
-                    {theme.upvoteCount} {theme.upvoteCount === 1 ? "vote" : "votes"}
+                  <span className="text-dark-500 text-xs">
+                    {theme.upvoteCount}{" "}
+                    {theme.upvoteCount === 1 ? "vote" : "votes"}
                   </span>
                 </div>
               </div>
