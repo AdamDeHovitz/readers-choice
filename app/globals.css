@@ -31,6 +31,9 @@
   --color-dark-700: #373420;
   --color-dark-900: #1d1a05;
 
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #ffffff;
+
   /* Font families */
   --font-inria: var(--font-inria-serif);
   --font-voga: var(--font-voga-display);
