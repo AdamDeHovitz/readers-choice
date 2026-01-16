@@ -5,10 +5,17 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/login", "/test-connection"];
-  const isPublicRoute = publicRoutes.some((route) =>
-    pathname === route || pathname.startsWith(route + "/")
-  ) || pathname.startsWith("/join/");
+  const publicRoutes = [
+    "/",
+    "/login",
+    "/test-connection",
+    "/browse",
+    "/book-clubs",
+  ];
+  const isPublicRoute =
+    publicRoutes.some(
+      (route) => pathname === route || pathname.startsWith(route + "/")
+    ) || pathname.startsWith("/join/");
 
   // API routes and static files - always allow
   if (
