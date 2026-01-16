@@ -4,13 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
 import { Button } from "@/components/ui/button";
-import {
-  ArrowUpIcon,
-  CheckCircle2Icon,
-  Trash2Icon,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 
 interface Theme {
@@ -189,34 +183,20 @@ export function ThemesList({
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex items-start gap-2">
                   <h3
-                    className={`font-inria text-dark-900 flex-1 text-base font-semibold select-none ${
+                    className={`font-inria text-dark-900 hover:text-rust-700 flex-1 cursor-pointer text-base font-semibold transition-colors select-none ${
                       expandedThemes[theme.id]
                         ? "break-words whitespace-normal"
                         : "truncate"
                     }`}
-                    title={theme.name}
+                    onClick={() => toggleExpanded(theme.id)}
+                    title={
+                      expandedThemes[theme.id]
+                        ? "Click to collapse"
+                        : "Click to expand"
+                    }
                   >
                     {theme.name}
                   </h3>
-
-                  {/* Expand/Collapse Toggle */}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleExpanded(theme.id);
-                    }}
-                    className="text-gold-600 hover:text-gold-700 hover:bg-gold-50 h-6 w-6 shrink-0 p-0"
-                    title={expandedThemes[theme.id] ? "Collapse" : "Expand"}
-                  >
-                    {expandedThemes[theme.id] ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-
                   {theme.timesUsed > 0 && (
                     <div className="text-rust-700 flex shrink-0 items-center gap-1 text-xs">
                       <CheckCircle2Icon className="h-3.5 w-3.5" />
