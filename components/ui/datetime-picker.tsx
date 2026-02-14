@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Input } from "@/components/ui/input";
+import { DatePicker } from "@/components/ui/date-picker";
 import { cn } from "@/lib/utils";
 
 // Generate time slots in 30-minute increments
@@ -114,11 +114,10 @@ export function DateTimePicker({
       )}
 
       {/* Date picker */}
-      <Input
+      <DatePicker
         id={id}
-        type="date"
         value={date}
-        onChange={(e) => setDate(e.target.value)}
+        onChange={setDate}
         required={required}
         disabled={disabled}
         className="flex-1"
