@@ -58,14 +58,13 @@ const OPEN_LIBRARY_COVERS = "https://covers.openlibrary.org/b/id";
  * Search for books using Open Library API
  * Returns work-level results (one per book, not per edition)
  */
-export async function searchBooks(
-  query: string
-): Promise<BookSearchResult[]> {
+export async function searchBooks(query: string): Promise<BookSearchResult[]> {
   try {
     const params = new URLSearchParams({
-      q: query,
-      limit: "5", // Reduced for faster response
-      fields: "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median",
+      title: query, // Use title-specific search for better relevance
+      limit: "10", // Fetch more results to filter duplicates
+      fields:
+        "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median",
     });
 
     // Add timeout for faster failure
@@ -89,9 +88,19 @@ export async function searchBooks(
       return [];
     }
 
-    // Format results without fetching detailed work info for performance
-    // Details will be fetched when a book is selected
-    return data.docs.map((doc) => formatOpenLibraryWork(doc));
+    // Deduplicate by work ID (API sometimes returns same work multiple times)
+    const seenWorkIds = new Set<string>();
+    const uniqueDocs = data.docs.filter((doc) => {
+      const workId = doc.key.replace("/works/", "");
+      if (seenWorkIds.has(workId)) {
+        return false;
+      }
+      seenWorkIds.add(workId);
+      return true;
+    });
+
+    // Format results and limit to 5
+    return uniqueDocs.slice(0, 5).map((doc) => formatOpenLibraryWork(doc));
   } catch (error) {
     console.error("Error searching Open Library:", error);
     return [];
@@ -101,9 +110,7 @@ export async function searchBooks(
 /**
  * Get detailed work information including description
  */
-async function getWorkDetails(
-  workId: string
-): Promise<OpenLibraryWork | null> {
+async function getWorkDetails(workId: string): Promise<OpenLibraryWork | null> {
   try {
     const response = await fetch(`${OPEN_LIBRARY_API}/works/${workId}.json`);
 
