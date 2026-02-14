@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
@@ -67,10 +67,9 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="meetingDate">Meeting Date & Time</Label>
-            <Input
+            <DateTimePicker
               id="meetingDate"
               name="meetingDate"
-              type="datetime-local"
               required
               disabled={isSubmitting}
             />
@@ -85,7 +84,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               disabled={isSubmitting}
               id="themeName"
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               Popular unused themes shown first
             </p>
           </div>
@@ -99,44 +98,44 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               disabled={isSubmitting}
               rows={3}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               Add any additional details or instructions for this meeting
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nominationDeadline">Nomination Deadline (Optional)</Label>
-            <Input
+            <Label htmlFor="nominationDeadline">
+              Nomination Deadline (Optional)
+            </Label>
+            <DateTimePicker
               id="nominationDeadline"
               name="nominationDeadline"
-              type="datetime-local"
               disabled={isSubmitting}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               When should nominations close? After this, members can only vote.
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="votingDeadline">Voting Deadline (Optional)</Label>
-            <Input
+            <DateTimePicker
               id="votingDeadline"
               name="votingDeadline"
-              type="datetime-local"
               disabled={isSubmitting}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               When should voting close? Usually set to meeting time.
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"
