@@ -82,4 +82,33 @@ describe("searchBooks", () => {
     );
     expect(book1984).toBeDefined();
   });
+
+  it("should find 'My Brilliant Friend' by Elena Ferrante (translated work)", async () => {
+    const results = await searchBooks("my brilliant friend");
+
+    expect(results.length).toBeGreaterThan(0);
+
+    // Should find Ferrante's book (original Italian title: L'amica geniale)
+    const ferrante = results.find((book) =>
+      book.author.toLowerCase().includes("ferrante")
+    );
+    expect(ferrante).toBeDefined();
+    expect(ferrante?.title.toLowerCase()).toContain("brilliant friend");
+  });
+
+  it("should still find 'The Art of Fielding' with parallel search (direct title match)", async () => {
+    const results = await searchBooks("the art of fielding");
+
+    // Should find Harbach's book
+    const harbach = results.find((book) =>
+      book.author.toLowerCase().includes("harbach")
+    );
+    expect(harbach).toBeDefined();
+
+    // Should NOT return Wizard of Oz (which q= search returns)
+    const wizardOfOz = results.find((book) =>
+      book.title.toLowerCase().includes("wizard")
+    );
+    expect(wizardOfOz).toBeUndefined();
+  });
 });

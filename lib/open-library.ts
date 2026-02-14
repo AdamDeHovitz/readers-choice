@@ -13,6 +13,10 @@ export interface OpenLibrarySearchDoc {
   cover_i?: number; // cover image ID
   isbn?: string[];
   number_of_pages_median?: number;
+  edition_count?: number;
+  editions?: {
+    docs: Array<{ title: string; language?: string[] }>;
+  };
 }
 
 export interface OpenLibrarySearchResponse {
@@ -54,53 +58,224 @@ export interface BookSearchResult {
 const OPEN_LIBRARY_API = "https://openlibrary.org";
 const OPEN_LIBRARY_COVERS = "https://covers.openlibrary.org/b/id";
 
+// Common words to skip when matching query to results
+const STOP_WORDS = new Set([
+  "the",
+  "a",
+  "an",
+  "of",
+  "and",
+  "or",
+  "in",
+  "on",
+  "at",
+  "to",
+  "for",
+  "by",
+  "is",
+]);
+
 /**
- * Search for books using Open Library API
- * Returns work-level results (one per book, not per edition)
+ * Extract significant words from a query (skip common words)
  */
-export async function searchBooks(query: string): Promise<BookSearchResult[]> {
+function getSignificantWords(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/\s+/)
+    .filter((w) => w.length > 2 && !STOP_WORDS.has(w));
+}
+
+/**
+ * Check if a search result matches the query (title or edition title contains significant words)
+ */
+function resultMatchesQuery(
+  doc: OpenLibrarySearchDoc,
+  significantWords: string[]
+): boolean {
+  if (significantWords.length === 0) return true;
+
+  const titleLower = doc.title.toLowerCase();
+  const editionTitle = doc.editions?.docs?.[0]?.title?.toLowerCase() || "";
+
+  // Require at least half of significant words to match
+  const matchCount = significantWords.filter(
+    (w) => titleLower.includes(w) || editionTitle.includes(w)
+  ).length;
+
+  return matchCount >= Math.ceil(significantWords.length / 2);
+}
+
+/**
+ * Get the best display title (prefer English edition title if it matches query better)
+ */
+function getBestTitle(doc: OpenLibrarySearchDoc, query: string): string {
+  const editionTitle = doc.editions?.docs?.[0]?.title;
+  if (!editionTitle) return doc.title;
+
+  const queryLower = query.toLowerCase();
+  const editionLower = editionTitle.toLowerCase();
+  const workLower = doc.title.toLowerCase();
+
+  // Prefer edition title if it contains the query (or vice versa)
+  const editionMatches =
+    editionLower.includes(queryLower) ||
+    queryLower.includes(editionLower.split(":")[0].trim());
+  const workMatches =
+    workLower.includes(queryLower) || queryLower.includes(workLower);
+
+  if (editionMatches && !workMatches) return editionTitle;
+  return doc.title;
+}
+
+/**
+ * Score a search result for ranking (higher = better match)
+ */
+function scoreResult(doc: OpenLibrarySearchDoc, query: string): number {
+  const displayTitle = getBestTitle(doc, query).toLowerCase();
+  const queryLower = query.toLowerCase().trim();
+
+  let titleScore = 0;
+  if (displayTitle === queryLower) {
+    titleScore = 1;
+  } else if (displayTitle.startsWith(queryLower)) {
+    titleScore = 0.95;
+  } else if (displayTitle.includes(queryLower)) {
+    titleScore = 0.85;
+  } else {
+    const words = getSignificantWords(query);
+    const matches = words.filter((w) => displayTitle.includes(w)).length;
+    titleScore = words.length > 0 ? (matches / words.length) * 0.7 : 0;
+  }
+
+  const popularityScore = Math.min(
+    Math.log10((doc.edition_count || 1) + 1) / 2,
+    1
+  );
+  return titleScore * 0.7 + popularityScore * 0.3;
+}
+
+/**
+ * Fetch results using title= search (for direct title matches)
+ */
+async function fetchTitleSearch(
+  query: string
+): Promise<OpenLibrarySearchDoc[]> {
+  const params = new URLSearchParams({
+    title: query,
+    limit: "10",
+    fields:
+      "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median,edition_count",
+  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const params = new URLSearchParams({
-      title: query, // Use title-specific search for better relevance
-      limit: "10", // Fetch more results to filter duplicates
-      fields:
-        "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median",
-    });
-
-    // Add timeout for faster failure
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
     const response = await fetch(`${OPEN_LIBRARY_API}/search.json?${params}`, {
       signal: controller.signal,
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      next: { revalidate: 3600 },
     });
 
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      throw new Error(`Open Library API error: ${response.statusText}`);
-    }
-
-    const data: OpenLibrarySearchResponse = await response.json();
-
-    if (!data.docs || data.docs.length === 0) {
       return [];
     }
 
-    // Deduplicate by work ID (API sometimes returns same work multiple times)
-    const seenWorkIds = new Set<string>();
-    const uniqueDocs = data.docs.filter((doc) => {
-      const workId = doc.key.replace("/works/", "");
-      if (seenWorkIds.has(workId)) {
-        return false;
-      }
-      seenWorkIds.add(workId);
-      return true;
+    const data: OpenLibrarySearchResponse = await response.json();
+    return data.docs || [];
+  } catch {
+    clearTimeout(timeoutId);
+    return [];
+  }
+}
+
+/**
+ * Fetch results using q= search with editions (for translated titles)
+ */
+async function fetchQSearch(query: string): Promise<OpenLibrarySearchDoc[]> {
+  const params = new URLSearchParams({
+    q: query,
+    limit: "15",
+    fields:
+      "key,title,author_name,first_publish_year,cover_i,isbn,number_of_pages_median,edition_count,editions,editions.title,editions.language",
+  });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(`${OPEN_LIBRARY_API}/search.json?${params}`, {
+      signal: controller.signal,
+      next: { revalidate: 3600 },
     });
 
-    // Format results and limit to 5
-    return uniqueDocs.slice(0, 5).map((doc) => formatOpenLibraryWork(doc));
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data: OpenLibrarySearchResponse = await response.json();
+    return data.docs || [];
+  } catch {
+    clearTimeout(timeoutId);
+    return [];
+  }
+}
+
+/**
+ * Search for books using Open Library API
+ * Returns work-level results (one per book, not per edition)
+ *
+ * Uses parallel search strategy:
+ * - title= search finds direct title matches
+ * - q= search finds translated works via edition titles
+ * Results are merged, deduplicated, scored, and ranked
+ */
+export async function searchBooks(query: string): Promise<BookSearchResult[]> {
+  try {
+    if (!query.trim()) {
+      return [];
+    }
+
+    const significantWords = getSignificantWords(query);
+
+    // Run both searches in parallel (no added latency vs single search)
+    const [titleResults, qResults] = await Promise.all([
+      fetchTitleSearch(query),
+      fetchQSearch(query),
+    ]);
+
+    // Filter q= results to only keep relevant matches
+    const filteredQResults = qResults.filter((doc) =>
+      resultMatchesQuery(doc, significantWords)
+    );
+
+    // Merge and deduplicate by work ID
+    const seenIds = new Set<string>();
+    const allResults: OpenLibrarySearchDoc[] = [];
+
+    for (const doc of [...titleResults, ...filteredQResults]) {
+      const workId = doc.key.replace("/works/", "");
+      if (!seenIds.has(workId)) {
+        seenIds.add(workId);
+        allResults.push(doc);
+      }
+    }
+
+    // Score, sort, and return top 5
+    const scored = allResults.map((doc) => ({
+      doc,
+      score: scoreResult(doc, query),
+    }));
+    scored.sort((a, b) => b.score - a.score);
+
+    return scored
+      .slice(0, 5)
+      .map(({ doc }) =>
+        formatOpenLibraryWork(doc, undefined, undefined, query)
+      );
   } catch (error) {
     console.error("Error searching Open Library:", error);
     return [];
@@ -170,7 +345,8 @@ export async function getBookById(
 function formatOpenLibraryWork(
   doc: OpenLibrarySearchDoc,
   work?: OpenLibraryWork | null,
-  edition?: OpenLibraryEdition | null
+  edition?: OpenLibraryEdition | null,
+  query?: string
 ): BookSearchResult {
   // Extract work ID from key (e.g., "/works/OL45804W" -> "OL45804W")
   const workId = doc.key.replace("/works/", "");
@@ -202,9 +378,12 @@ function formatOpenLibraryWork(
   // Get published year
   const publishedYear = doc.first_publish_year;
 
+  // Use best title (may prefer English edition title for translated works)
+  const title = query ? getBestTitle(doc, query) : doc.title;
+
   return {
     id: workId,
-    title: doc.title,
+    title,
     author,
     coverUrl,
     description,
