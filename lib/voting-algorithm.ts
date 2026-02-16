@@ -201,8 +201,11 @@ export function runHybridIRV(
     );
 
     let toEliminate: string;
-    let eliminationReason: EliminationRound["eliminated"]["reason"] =
-      "lowest_support";
+    let eliminationReason:
+      | "lowest_support"
+      | "tiebreaker_first_choice"
+      | "tiebreaker_approval"
+      | "tiebreaker_random" = "lowest_support";
 
     if (tiedForLowest.length === 1) {
       toEliminate = tiedForLowest[0].bookId;
