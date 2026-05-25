@@ -5,9 +5,13 @@ import { signIn } from "next-auth/react";
 
 interface CredentialsFormProps {
   onSwitchToRegister: () => void;
+  callbackUrl?: string;
 }
 
-export function CredentialsForm({ onSwitchToRegister }: CredentialsFormProps) {
+export function CredentialsForm({
+  onSwitchToRegister,
+  callbackUrl = "/dashboard",
+}: CredentialsFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,6 +25,7 @@ export function CredentialsForm({ onSwitchToRegister }: CredentialsFormProps) {
     const result = await signIn("credentials", {
       email,
       password,
+      callbackUrl,
       redirect: false,
     });
 
@@ -29,7 +34,7 @@ export function CredentialsForm({ onSwitchToRegister }: CredentialsFormProps) {
     if (result?.error) {
       setError("Invalid email or password");
     } else if (result?.ok) {
-      window.location.href = "/dashboard";
+      window.location.href = result.url ?? callbackUrl;
     }
   }
 
