@@ -2,13 +2,19 @@
 
 import { signIn } from "next-auth/react";
 
-export function SignInButton() {
+interface SignInButtonProps {
+  callbackUrl?: string;
+}
+
+export function SignInButton({
+  callbackUrl = "/dashboard",
+}: SignInButtonProps) {
   return (
     <button
-      onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
-      className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white border-2 border-gold-600/20 rounded-lg font-medium font-inria text-dark-600 hover:bg-cream-100 hover:border-gold-600/20 transition-all duration-200 shadow-sm hover:shadow"
+      onClick={() => signIn("google", { callbackUrl })}
+      className="border-gold-600/20 font-inria text-dark-600 hover:bg-cream-100 hover:border-gold-600/20 flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 font-medium shadow-sm transition-all duration-200 hover:shadow"
     >
-      <svg className="w-5 h-5" viewBox="0 0 24 24">
+      <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path
           fill="currentColor"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"

@@ -5,9 +5,13 @@ import { signIn } from "next-auth/react";
 
 interface RegisterFormProps {
   onSwitchToLogin: () => void;
+  callbackUrl?: string;
 }
 
-export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
+export function RegisterForm({
+  onSwitchToLogin,
+  callbackUrl = "/dashboard",
+}: RegisterFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,13 +41,14 @@ export function RegisterForm({ onSwitchToLogin }: RegisterFormProps) {
     const result = await signIn("credentials", {
       email,
       password,
+      callbackUrl,
       redirect: false,
     });
 
     setLoading(false);
 
     if (result?.ok) {
-      window.location.href = "/dashboard";
+      window.location.href = result.url ?? callbackUrl;
     } else {
       setError("Account created but login failed. Please try logging in.");
     }

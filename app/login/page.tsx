@@ -1,72 +1,26 @@
-"use client";
+import { LoginForm } from "@/components/auth/login-form";
 
-import { useState } from "react";
-import { SignInButton } from "@/components/auth/sign-in-button";
-import { CredentialsForm } from "@/components/auth/credentials-form";
-import { RegisterForm } from "@/components/auth/register-form";
+interface LoginPageProps {
+  searchParams: Promise<{
+    callbackUrl?: string | string[];
+  }>;
+}
 
-type AuthMode = "google" | "credentials" | "register";
+function getSafeCallbackUrl(
+  callbackUrl: string | string[] | undefined
+): string {
+  const value = Array.isArray(callbackUrl) ? callbackUrl[0] : callbackUrl;
 
-export default function LoginPage() {
-  const [mode, setMode] = useState<AuthMode>("google");
+  if (value?.startsWith("/") && !value.startsWith("//")) {
+    return value;
+  }
 
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
-      <div className="w-full max-w-md">
-        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-xl">
-          <div className="space-y-2 text-center">
-            <h1 className="font-inria text-dark-900 text-3xl font-bold">
-              Readers&apos; Choice
-            </h1>
-            <p className="text-dark-600">
-              Your joyful book club community awaits
-            </p>
-          </div>
+  return "/dashboard";
+}
 
-          {mode !== "register" && (
-            <div className="border-dark-200 flex border-b">
-              <button
-                onClick={() => setMode("google")}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                  mode === "google"
-                    ? "text-gold-600 border-gold-600 border-b-2"
-                    : "text-dark-500 hover:text-dark-700"
-                }`}
-              >
-                Google
-              </button>
-              <button
-                onClick={() => setMode("credentials")}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
-                  mode === "credentials"
-                    ? "text-gold-600 border-gold-600 border-b-2"
-                    : "text-dark-500 hover:text-dark-700"
-                }`}
-              >
-                Email & Password
-              </button>
-            </div>
-          )}
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams;
+  const callbackUrl = getSafeCallbackUrl(params.callbackUrl);
 
-          <div className="pt-4">
-            {mode === "google" && (
-              <>
-                <SignInButton />
-                <p className="text-dark-500 mt-6 text-center text-sm">
-                  Sign in to create or join book clubs, vote on books, and rank
-                  your favorites
-                </p>
-              </>
-            )}
-            {mode === "credentials" && (
-              <CredentialsForm onSwitchToRegister={() => setMode("register")} />
-            )}
-            {mode === "register" && (
-              <RegisterForm onSwitchToLogin={() => setMode("credentials")} />
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <LoginForm callbackUrl={callbackUrl} />;
 }
