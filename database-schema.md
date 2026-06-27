@@ -1,11 +1,13 @@
 # Readers' Choice - Database Schema
 
 ## Overview
+
 This document describes the PostgreSQL database schema for the Readers' Choice book club platform.
 
 ## Tables
 
 ### users
+
 Stores user information from Google OAuth.
 
 ```sql
@@ -24,6 +26,7 @@ CREATE INDEX idx_users_google_id ON users(google_id);
 ```
 
 ### book_clubs
+
 Information about each book club.
 
 ```sql
@@ -40,6 +43,7 @@ CREATE INDEX idx_book_clubs_created_by ON book_clubs(created_by);
 ```
 
 ### members
+
 Junction table between users and book_clubs with admin privileges.
 
 ```sql
@@ -58,6 +62,7 @@ CREATE INDEX idx_members_admin ON members(book_club_id, is_admin) WHERE is_admin
 ```
 
 ### books
+
 Information about books with external API reference.
 
 ```sql
@@ -68,7 +73,9 @@ CREATE TABLE books (
   isbn TEXT,
   cover_url TEXT,
   description TEXT,
+  page_count INTEGER,
   published_year INTEGER,
+  google_books_id VARCHAR,
   external_id TEXT, -- ID from Google Books API or Open Library
   external_source TEXT, -- 'google_books' or 'open_library'
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -82,6 +89,7 @@ CREATE INDEX idx_books_external ON books(external_id, external_source);
 ```
 
 ### themes
+
 Suggested themes for book club meetings.
 
 ```sql
@@ -100,6 +108,7 @@ CREATE INDEX idx_themes_submitted_by ON themes(submitted_by);
 ```
 
 ### theme_votes
+
 Upvotes on themes.
 
 ```sql
@@ -116,6 +125,7 @@ CREATE INDEX idx_theme_votes_user_id ON theme_votes(user_id);
 ```
 
 ### meetings
+
 Book club meeting dates with theme and selected book.
 
 ```sql
@@ -139,6 +149,7 @@ CREATE INDEX idx_meetings_finalized ON meetings(book_club_id, is_finalized);
 ```
 
 ### book_options
+
 Books that can be voted on for a specific meeting.
 
 ```sql
@@ -147,6 +158,8 @@ CREATE TABLE book_options (
   meeting_id UUID REFERENCES meetings(id) ON DELETE CASCADE,
   book_id UUID REFERENCES books(id) ON DELETE CASCADE,
   added_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  description_override TEXT,
+  page_count_override INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(meeting_id, book_id)
 );
@@ -156,6 +169,7 @@ CREATE INDEX idx_book_options_book_id ON book_options(book_id);
 ```
 
 ### votes
+
 User votes on book options for meetings.
 
 ```sql
@@ -173,6 +187,7 @@ CREATE INDEX idx_votes_user_id ON votes(user_id);
 ```
 
 ### personal_rankings
+
 User rankings for books by year (extracted from meeting_date).
 
 ```sql
@@ -195,6 +210,7 @@ CREATE INDEX idx_personal_rankings_book_club_year ON personal_rankings(book_club
 ## Row Level Security (RLS) Policies
 
 ### users
+
 ```sql
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
@@ -210,6 +226,7 @@ CREATE POLICY "Users can update own profile"
 ```
 
 ### book_clubs
+
 ```sql
 ALTER TABLE book_clubs ENABLE ROW LEVEL SECURITY;
 
@@ -243,6 +260,7 @@ CREATE POLICY "Admins can update book clubs"
 ```
 
 ### members
+
 ```sql
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 
@@ -288,6 +306,7 @@ CREATE POLICY "Users can leave book clubs"
 ```
 
 ### meetings
+
 ```sql
 ALTER TABLE meetings ENABLE ROW LEVEL SECURITY;
 
@@ -316,6 +335,7 @@ CREATE POLICY "Admins can manage meetings"
 ```
 
 ### votes
+
 ```sql
 ALTER TABLE votes ENABLE ROW LEVEL SECURITY;
 
@@ -358,6 +378,7 @@ CREATE POLICY "Users can delete their votes"
 ```
 
 ### personal_rankings
+
 ```sql
 ALTER TABLE personal_rankings ENABLE ROW LEVEL SECURITY;
 
@@ -382,6 +403,7 @@ CREATE POLICY "Users can manage their rankings"
 ## Helper Views
 
 ### view_vote_counts
+
 Aggregate vote counts for book options.
 
 ```sql
@@ -397,6 +419,7 @@ GROUP BY book_options.id, book_options.meeting_id, book_options.book_id;
 ```
 
 ### view_theme_vote_counts
+
 Aggregate vote counts for themes.
 
 ```sql
@@ -414,6 +437,7 @@ GROUP BY themes.id, themes.book_club_id, themes.name;
 ## Database Functions
 
 ### function: get_year_from_meeting
+
 Extract year from meeting date.
 
 ```sql
@@ -426,6 +450,7 @@ $$ LANGUAGE SQL STABLE;
 ```
 
 ### function: calculate_global_rankings
+
 Calculate global rankings for a book club and year using a fair scoring system.
 
 ```sql
@@ -447,17 +472,20 @@ $$ LANGUAGE SQL STABLE;
 ## Notes
 
 ### On Attendance
+
 - We deliberately avoid explicit attendance tracking to keep things casual
 - Books marked as "not read" (rank = NULL) indicate the user didn't attend that meeting
 - This allows users to opt-in to rankings rather than being marked absent
 
 ### On Ranking Algorithm
+
 - Global rankings should account for varying participation
 - Consider using Borda count or similar weighted scoring
 - Books with fewer rankers shouldn't be unfairly penalized
 - This will be refined during implementation
 
 ### External Book APIs
+
 - Support both Google Books API and Open Library
 - Store external_id and external_source for reference
 - Cache book metadata to reduce API calls

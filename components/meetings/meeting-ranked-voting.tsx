@@ -26,6 +26,8 @@ import { saveRankedVotes } from "@/app/actions/meeting-voting";
 import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
+import { sanitizeDescription } from "@/lib/sanitize-description";
+import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
 
 interface BookOption {
   id: string;
@@ -34,6 +36,8 @@ interface BookOption {
     title: string;
     author: string;
     coverUrl: string | null;
+    description: string | null;
+    pageCount: number | null;
     publishedYear: number | null;
   };
 }
@@ -42,16 +46,19 @@ interface MeetingRankedVotingProps {
   meetingId: string;
   bookOptions: BookOption[];
   initialRankings: { bookOptionId: string; rank: number }[];
+  currentUserIsAdmin: boolean;
 }
 
 function SortableBookItem({
   bookOption,
   rank,
   onRemove,
+  currentUserIsAdmin,
 }: {
   bookOption: BookOption;
   rank: number;
   onRemove: (id: string) => void;
+  currentUserIsAdmin: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
@@ -94,7 +101,6 @@ function SortableBookItem({
         />
       )}
 
-      {/* Book info */}
       <div className="min-w-0 flex-1">
         <h4 className="font-inria text-dark-900 truncate text-sm font-semibold">
           {bookOption.book.title}
@@ -102,17 +108,47 @@ function SortableBookItem({
         <p className="text-dark-600 truncate text-xs">
           {bookOption.book.author}
         </p>
+        {(bookOption.book.pageCount || bookOption.book.publishedYear) && (
+          <p className="text-dark-500 text-xs">
+            {bookOption.book.pageCount
+              ? `${bookOption.book.pageCount} pages`
+              : null}
+            {bookOption.book.pageCount && bookOption.book.publishedYear
+              ? " · "
+              : null}
+            {bookOption.book.publishedYear
+              ? `Published ${bookOption.book.publishedYear}`
+              : null}
+          </p>
+        )}
+        {bookOption.book.description && (
+          <div
+            className="text-dark-600 mt-1 line-clamp-2 text-xs"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeDescription(bookOption.book.description),
+            }}
+          />
+        )}
       </div>
 
-      {/* Remove button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onRemove(bookOption.id)}
-        className="shrink-0 text-xs"
-      >
-        Remove
-      </Button>
+      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+        {currentUserIsAdmin && (
+          <EditBookOptionMetadataDialog
+            bookOptionId={bookOption.id}
+            bookTitle={bookOption.book.title}
+            currentDescription={bookOption.book.description}
+            currentPageCount={bookOption.book.pageCount}
+          />
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onRemove(bookOption.id)}
+          className="text-xs"
+        >
+          Remove
+        </Button>
+      </div>
     </div>
   );
 }
@@ -120,9 +156,11 @@ function SortableBookItem({
 function SortableUnrankedBookItem({
   bookOption,
   onAdd,
+  currentUserIsAdmin,
 }: {
   bookOption: BookOption;
   onAdd: (id: string) => void;
+  currentUserIsAdmin: boolean;
 }) {
   const {
     attributes,
@@ -166,7 +204,6 @@ function SortableUnrankedBookItem({
         />
       )}
 
-      {/* Book info */}
       <div className="min-w-0 flex-1">
         <h4 className="font-inria text-dark-600 truncate text-sm font-semibold">
           {bookOption.book.title}
@@ -174,17 +211,47 @@ function SortableUnrankedBookItem({
         <p className="text-dark-500 truncate text-xs">
           {bookOption.book.author}
         </p>
+        {(bookOption.book.pageCount || bookOption.book.publishedYear) && (
+          <p className="text-dark-500 text-xs">
+            {bookOption.book.pageCount
+              ? `${bookOption.book.pageCount} pages`
+              : null}
+            {bookOption.book.pageCount && bookOption.book.publishedYear
+              ? " · "
+              : null}
+            {bookOption.book.publishedYear
+              ? `Published ${bookOption.book.publishedYear}`
+              : null}
+          </p>
+        )}
+        {bookOption.book.description && (
+          <div
+            className="text-dark-600 mt-1 line-clamp-2 text-xs"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeDescription(bookOption.book.description),
+            }}
+          />
+        )}
       </div>
 
-      {/* Add button */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onAdd(bookOption.id)}
-        className="shrink-0 text-xs"
-      >
-        Add to Ranking
-      </Button>
+      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+        {currentUserIsAdmin && (
+          <EditBookOptionMetadataDialog
+            bookOptionId={bookOption.id}
+            bookTitle={bookOption.book.title}
+            currentDescription={bookOption.book.description}
+            currentPageCount={bookOption.book.pageCount}
+          />
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAdd(bookOption.id)}
+          className="text-xs"
+        >
+          Add to Ranking
+        </Button>
+      </div>
     </div>
   );
 }
@@ -241,6 +308,7 @@ export function MeetingRankedVoting({
   meetingId,
   bookOptions,
   initialRankings,
+  currentUserIsAdmin,
 }: MeetingRankedVotingProps) {
   // Sort initial rankings by rank
   const sortedInitial = [...initialRankings].sort((a, b) => a.rank - b.rank);
@@ -445,6 +513,7 @@ export function MeetingRankedVoting({
                       bookOption={bookOption}
                       rank={index + 1}
                       onRemove={handleRemove}
+                      currentUserIsAdmin={currentUserIsAdmin}
                     />
                   ))}
                 </div>
@@ -476,6 +545,7 @@ export function MeetingRankedVoting({
                     key={bookOption.id}
                     bookOption={bookOption}
                     onAdd={handleAdd}
+                    currentUserIsAdmin={currentUserIsAdmin}
                   />
                 ))}
               </div>
