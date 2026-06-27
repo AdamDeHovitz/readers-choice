@@ -38,6 +38,8 @@ interface BookOption {
   meeting_id: string;
   book_id: string;
   added_by: string | null;
+  description_override: string | null;
+  page_count_override: number | null;
   created_at: string;
   books: Book;
   votes: { id: string; user_id: string }[];
@@ -388,12 +390,15 @@ export async function getMeetingDetails(meetingId: string) {
           id,
           created_at,
           added_by,
+          description_override,
+          page_count_override,
           books!inner (
             id,
             title,
             author,
             cover_url,
             description,
+            page_count,
             published_year
           ),
           votes (
@@ -407,7 +412,7 @@ export async function getMeetingDetails(meetingId: string) {
           ? supabase
               .from("books")
               .select(
-                "id, title, author, cover_url, description, published_year"
+                "id, title, author, cover_url, description, page_count, published_year"
               )
               .eq("id", meeting.selected_book_id)
               .single()
@@ -429,6 +434,7 @@ export async function getMeetingDetails(meetingId: string) {
           author: selectedBookResult.data.author,
           coverUrl: selectedBookResult.data.cover_url,
           description: selectedBookResult.data.description,
+          pageCount: selectedBookResult.data.page_count,
           publishedYear: selectedBookResult.data.published_year,
         }
       : null;
@@ -463,7 +469,8 @@ export async function getMeetingDetails(meetingId: string) {
               title: book.title,
               author: book.author,
               coverUrl: book.cover_url,
-              description: book.description,
+              description: option.description_override,
+              pageCount: option.page_count_override,
               publishedYear: book.published_year,
               cover_url: book.cover_url,
             },
@@ -480,6 +487,77 @@ export async function getMeetingDetails(meetingId: string) {
   } catch (error) {
     console.error("Error fetching meeting details:", error);
     return null;
+  }
+}
+
+export async function updateBookOptionMetadata(
+  bookOptionId: string,
+  description: string,
+  pageCount: number | null
+) {
+  const session = await auth();
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  if (pageCount !== null && (!Number.isInteger(pageCount) || pageCount <= 0)) {
+    return { error: "Page count must be a positive whole number" };
+  }
+
+  try {
+    const supabase = getAdminClient();
+
+    const { data: bookOption, error: optionError } = await supabase
+      .from("book_options")
+      .select(
+        `
+        id,
+        meeting_id,
+        meetings!inner (
+          book_club_id
+        )
+      `
+      )
+      .eq("id", bookOptionId)
+      .single();
+
+    if (optionError) throw optionError;
+    if (!bookOption) {
+      return { error: "Book option not found" };
+    }
+
+    const meeting = Array.isArray(bookOption.meetings)
+      ? bookOption.meetings[0]
+      : bookOption.meetings;
+
+    const { data: member, error: memberError } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", meeting.book_club_id)
+      .eq("user_id", session.user.id)
+      .single();
+
+    if (memberError) throw memberError;
+    if (!member?.is_admin) {
+      return { error: "Only admins can edit book details" };
+    }
+
+    const { error: updateError } = await supabase
+      .from("book_options")
+      .update({
+        description_override: description.trim() || null,
+        page_count_override: pageCount,
+      })
+      .eq("id", bookOptionId);
+
+    if (updateError) throw updateError;
+
+    revalidatePath(`/meetings/${bookOption.meeting_id}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating book option metadata:", error);
+    return { error: "Failed to update book details" };
   }
 }
 
@@ -653,10 +731,7 @@ export async function voteForBook(bookOptionId: string) {
 
     if (existingVote) {
       // Remove vote
-      await supabase
-        .from("votes")
-        .delete()
-        .eq("id", existingVote.id);
+      await supabase.from("votes").delete().eq("id", existingVote.id);
     } else {
       // Add vote
       await supabase.from("votes").insert({
@@ -676,7 +751,10 @@ export async function voteForBook(bookOptionId: string) {
 /**
  * Finalize a meeting and select the winning book
  */
-export async function finalizeMeeting(meetingId: string, selectedBookId: string) {
+export async function finalizeMeeting(
+  meetingId: string,
+  selectedBookId: string
+) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -864,14 +942,16 @@ export async function getBookClubState(bookClubId: string) {
     // Get the next upcoming meeting
     const { data: upcomingMeeting } = await supabase
       .from("meetings")
-      .select(`
+      .select(
+        `
         id,
         meeting_date,
         nomination_deadline,
         voting_deadline,
         is_finalized,
         theme:themes(id, name)
-      `)
+      `
+      )
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", false)
       .gte("meeting_date", now)
@@ -882,7 +962,8 @@ export async function getBookClubState(bookClubId: string) {
     // Get the most recent finalized meeting (for book display)
     const { data: previousMeeting } = await supabase
       .from("meetings")
-      .select(`
+      .select(
+        `
         id,
         meeting_date,
         theme:themes(id, name),
@@ -892,7 +973,8 @@ export async function getBookClubState(bookClubId: string) {
           author,
           cover_url
         )
-      `)
+      `
+      )
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", true)
       .order("meeting_date", { ascending: false })
@@ -962,7 +1044,8 @@ export async function getUpcomingMeeting(bookClubId: string) {
 
     const { data: meeting, error } = await supabase
       .from("meetings")
-      .select(`
+      .select(
+        `
         id,
         meeting_date,
         nomination_deadline,
@@ -978,7 +1061,8 @@ export async function getUpcomingMeeting(bookClubId: string) {
             cover_url
           )
         )
-      `)
+      `
+      )
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", false)
       .gte("meeting_date", now)
@@ -1009,7 +1093,8 @@ export async function getPreviousMeeting(bookClubId: string) {
 
     const { data: meeting, error } = await supabase
       .from("meetings")
-      .select(`
+      .select(
+        `
         id,
         meeting_date,
         is_finalized,
@@ -1020,7 +1105,8 @@ export async function getPreviousMeeting(bookClubId: string) {
           author,
           cover_url
         )
-      `)
+      `
+      )
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", true)
       .not("selected_book_id", "is", null)
@@ -1051,7 +1137,8 @@ export async function getLatestFinalizedMeeting(bookClubId: string) {
 
     const { data: meeting, error } = await supabase
       .from("meetings")
-      .select(`
+      .select(
+        `
         id,
         meeting_date,
         is_finalized,
@@ -1062,7 +1149,8 @@ export async function getLatestFinalizedMeeting(bookClubId: string) {
           author,
           cover_url
         )
-      `)
+      `
+      )
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", true)
       .not("selected_book_id", "is", null)

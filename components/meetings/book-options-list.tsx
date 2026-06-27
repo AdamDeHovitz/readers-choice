@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { VotingMethodToggle } from "./voting-method-toggle";
 import { MeetingRankedVoting } from "./meeting-ranked-voting";
 import { VotingResultsDisplay } from "./voting-results";
+import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
 import Image from "next/image";
 import { sanitizeDescription } from "@/lib/sanitize-description";
 
@@ -23,6 +24,7 @@ interface BookOption {
     author: string;
     coverUrl: string | null;
     description: string | null;
+    pageCount: number | null;
     publishedYear: number | null;
   };
   voteCount: number;
@@ -156,6 +158,7 @@ export function BookOptionsList({
           meetingId={meetingId}
           bookOptions={bookOptions}
           initialRankings={userRankedVotes}
+          currentUserIsAdmin={currentUserIsAdmin}
         />
 
         {/* Admin finalize section */}
@@ -255,7 +258,7 @@ export function BookOptionsList({
         const isWinner = isFinalized && option.book.id === selectedBookId;
         const isVoting = votingForId === option.id;
         const isFinalizing = finalizingBookId === option.book.id;
-        const isExpanded = expandedDescriptions.has(option.book.id);
+        const isExpanded = expandedDescriptions.has(option.id);
         const hasLongDescription =
           option.book.description && option.book.description.length > 150;
 
@@ -320,18 +323,36 @@ export function BookOptionsList({
                       <p className="text-dark-600 mb-1 text-sm">
                         by {option.book.author}
                       </p>
-                      {option.book.publishedYear && (
+                      {(option.book.pageCount || option.book.publishedYear) && (
                         <p className="text-dark-500 text-xs">
-                          Published {option.book.publishedYear}
+                          {option.book.pageCount
+                            ? `${option.book.pageCount} pages`
+                            : null}
+                          {option.book.pageCount && option.book.publishedYear
+                            ? " · "
+                            : null}
+                          {option.book.publishedYear
+                            ? `Published ${option.book.publishedYear}`
+                            : null}
                         </p>
                       )}
                     </div>
 
-                    {isWinner && (
-                      <span className="bg-rust-100 text-cream-100 font-inria flex-shrink-0 rounded-full px-3 py-1 text-sm font-medium">
-                        Selected
-                      </span>
-                    )}
+                    <div className="flex shrink-0 items-center gap-2">
+                      {isWinner && (
+                        <span className="bg-rust-100 text-cream-100 font-inria rounded-full px-3 py-1 text-sm font-medium">
+                          Selected
+                        </span>
+                      )}
+                      {currentUserIsAdmin && (
+                        <EditBookOptionMetadataDialog
+                          bookOptionId={option.id}
+                          bookTitle={option.book.title}
+                          currentDescription={option.book.description}
+                          currentPageCount={option.book.pageCount}
+                        />
+                      )}
+                    </div>
                   </div>
 
                   {option.book.description && (
@@ -344,7 +365,7 @@ export function BookOptionsList({
                       />
                       {hasLongDescription && (
                         <button
-                          onClick={() => toggleDescription(option.book.id)}
+                          onClick={() => toggleDescription(option.id)}
                           className="text-gold-700 hover:text-gold-800 mt-1 text-xs font-medium"
                         >
                           {isExpanded ? "Show less" : "Show more"}

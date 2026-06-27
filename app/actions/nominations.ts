@@ -10,10 +10,7 @@ import type { BookSearchResult } from "@/lib/open-library";
  * Nominate a book for a meeting
  * This adds the book to the database and creates a book_option entry
  */
-export async function nominateBook(
-  meetingId: string,
-  book: BookSearchResult
-) {
+export async function nominateBook(meetingId: string, book: BookSearchResult) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -65,7 +62,9 @@ export async function nominateBook(
       .single();
 
     if (!member) {
-      return { error: "You must be a member of this book club to nominate books" };
+      return {
+        error: "You must be a member of this book club to nominate books",
+      };
     }
 
     // Add book to database (or get existing book ID)
@@ -87,11 +86,19 @@ export async function nominateBook(
       return { error: "This book has already been nominated for this meeting" };
     }
 
+    const { data: savedBook } = await supabase
+      .from("books")
+      .select("description, page_count")
+      .eq("id", bookResult.bookId)
+      .single();
+
     // Add book option
     const { error: optionError } = await supabase.from("book_options").insert({
       meeting_id: meetingId,
       book_id: bookResult.bookId,
       added_by: session.user.id,
+      description_override: savedBook?.description || null,
+      page_count_override: savedBook?.page_count || null,
     });
 
     if (optionError) throw optionError;
