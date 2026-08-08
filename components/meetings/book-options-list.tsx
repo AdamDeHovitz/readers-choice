@@ -80,14 +80,14 @@ export function BookOptionsList({
 
   // Load voting results when voting is closed
   useEffect(() => {
-    if (showVoteCounts && !isFinalized && !votingResults) {
+    if (showVoteCounts && !votingResults) {
       setLoadingResults(true);
       calculateMeetingResults(meetingId).then((results) => {
         setVotingResults(results);
         setLoadingResults(false);
       });
     }
-  }, [showVoteCounts, isFinalized, meetingId, votingResults]);
+  }, [showVoteCounts, meetingId, votingResults]);
 
   if (bookOptions.length === 0) {
     return (
@@ -251,6 +251,17 @@ export function BookOptionsList({
           <p className="text-dark-600 text-sm">
             Vote counts are hidden until voting closes
           </p>
+        </div>
+      )}
+
+      {/* Ranked choice results after finalization */}
+      {isFinalized && votingResults && (
+        <VotingResultsDisplay results={votingResults} />
+      )}
+
+      {isFinalized && loadingResults && !votingResults && (
+        <div className="py-6 text-center">
+          <p className="text-dark-500">Calculating results...</p>
         </div>
       )}
 
