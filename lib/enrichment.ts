@@ -4,7 +4,7 @@
  * from Open Library books
  */
 
-import { searchBooks as searchGoogleBooks, getBookById as getGoogleBook } from "./google-books";
+import { searchBooks as searchGoogleBooks } from "./google-books";
 import type { BookSearchResult } from "./open-library";
 
 /**
@@ -19,7 +19,9 @@ export async function enrichBookDescription(
     if (book.isbn) {
       const googleBook = await searchGoogleBooksByISBN(book.isbn);
       if (googleBook?.description) {
-        console.log(`Enriched "${book.title}" description via ISBN from Google Books`);
+        console.log(
+          `Enriched "${book.title}" description via ISBN from Google Books`
+        );
         return googleBook.description;
       }
     }
@@ -30,7 +32,9 @@ export async function enrichBookDescription(
       book.author
     );
     if (googleBook?.description) {
-      console.log(`Enriched "${book.title}" description via title+author from Google Books`);
+      console.log(
+        `Enriched "${book.title}" description via title+author from Google Books`
+      );
       return googleBook.description;
     }
 
