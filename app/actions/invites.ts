@@ -3,18 +3,7 @@
 import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-
-/**
- * Generate a random invite code
- */
-function generateInviteCode(): string {
-  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-  let code = "";
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
-}
+import { generateInviteCode, isWellFormedInviteCode } from "@/lib/invite-code";
 
 /**
  * Create an invite link for a book club
@@ -72,7 +61,7 @@ export async function createInviteLink(bookClubId: string) {
         .from("invite_links")
         .select("id")
         .eq("code", code)
-        .single();
+        .maybeSingle();
 
       if (!existing) break;
 
@@ -138,6 +127,10 @@ export async function checkMembership(bookClubId: string) {
  * Get invite link details by code
  */
 export async function getInviteLinkDetails(code: string) {
+  if (!isWellFormedInviteCode(code)) {
+    return null;
+  }
+
   try {
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

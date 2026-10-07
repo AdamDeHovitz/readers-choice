@@ -52,7 +52,7 @@ export default async function JoinPage({
 
   // If not logged in, redirect to login with callback
   if (!session?.user) {
-    redirect(`/login?callbackUrl=/join/${code}`);
+    redirect(`/login?callbackUrl=/join/${encodeURIComponent(code)}`);
   }
 
   // Check if user is already a member
