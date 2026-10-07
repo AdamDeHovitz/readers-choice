@@ -1,35 +1,26 @@
 "use server";
 
-import { auth } from "@/auth";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { addBookToDatabase } from "./books";
 import { revalidatePath } from "next/cache";
 import type { BookSearchResult } from "@/lib/open-library";
+import { authenticatedAction } from "@/lib/safe-action";
+import {
+  isNominationClosed,
+  normalizeNominationNote,
+} from "@/lib/nomination-note";
 
 /**
- * Nominate a book for a meeting
- * This adds the book to the database and creates a book_option entry
+ * Nominate a book for a meeting, with an optional note from the nominator.
+ * This adds the book to the database and creates a book_option entry.
  */
-export async function nominateBook(meetingId: string, book: BookSearchResult) {
-  const session = await auth();
+export async function nominateBook(
+  meetingId: string,
+  book: BookSearchResult,
+  note?: string | null
+) {
+  return authenticatedAction(async ({ session, supabase }) => {
+    const nominationNote = normalizeNominationNote(note);
 
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    // Get meeting details
     const { data: meeting } = await supabase
       .from("meetings")
       .select("book_club_id, is_finalized, nomination_deadline")
@@ -37,23 +28,13 @@ export async function nominateBook(meetingId: string, book: BookSearchResult) {
       .single();
 
     if (!meeting) {
-      return { error: "Meeting not found" };
+      throw new Error("Meeting not found");
     }
 
-    if (meeting.is_finalized) {
-      return { error: "Meeting has been finalized" };
+    if (isNominationClosed(meeting)) {
+      throw new Error("Nomination period has ended");
     }
 
-    // Check if nomination deadline has passed
-    if (meeting.nomination_deadline) {
-      const deadline = new Date(meeting.nomination_deadline);
-      const now = new Date();
-      if (now > deadline) {
-        return { error: "Nomination period has ended" };
-      }
-    }
-
-    // Check if user is a member of the book club
     const { data: member } = await supabase
       .from("members")
       .select("id")
@@ -62,28 +43,27 @@ export async function nominateBook(meetingId: string, book: BookSearchResult) {
       .single();
 
     if (!member) {
-      return {
-        error: "You must be a member of this book club to nominate books",
-      };
+      throw new Error(
+        "You must be a member of this book club to nominate books"
+      );
     }
 
     // Add book to database (or get existing book ID)
     const bookResult = await addBookToDatabase(book);
 
     if (bookResult.error || !bookResult.bookId) {
-      return { error: "Failed to add book to database" };
+      throw new Error("Failed to add book to database");
     }
 
-    // Check if this book has already been nominated for this meeting
     const { data: existingOption } = await supabase
       .from("book_options")
       .select("id")
       .eq("meeting_id", meetingId)
       .eq("book_id", bookResult.bookId)
-      .single();
+      .maybeSingle();
 
     if (existingOption) {
-      return { error: "This book has already been nominated for this meeting" };
+      throw new Error("This book has already been nominated for this meeting");
     }
 
     const { data: savedBook } = await supabase
@@ -92,24 +72,67 @@ export async function nominateBook(meetingId: string, book: BookSearchResult) {
       .eq("id", bookResult.bookId)
       .single();
 
-    // Add book option
     const { error: optionError } = await supabase.from("book_options").insert({
       meeting_id: meetingId,
       book_id: bookResult.bookId,
       added_by: session.user.id,
       description_override: savedBook?.description || null,
       page_count_override: savedBook?.page_count || null,
+      nomination_note: nominationNote,
     });
 
-    if (optionError) throw optionError;
+    if (optionError) {
+      console.error("Error nominating book:", optionError);
+      throw new Error("Failed to nominate book");
+    }
 
     revalidatePath(`/book-clubs/${meeting.book_club_id}`);
-    revalidatePath(`/book-clubs/${meeting.book_club_id}/nominate`);
     revalidatePath(`/meetings/${meetingId}`);
+  });
+}
 
-    return { success: true };
-  } catch (error) {
-    console.error("Error nominating book:", error);
-    return { error: "Failed to nominate book" };
-  }
+/**
+ * Update the note on your own nomination while nominations are open.
+ */
+export async function updateNominationNote(
+  bookOptionId: string,
+  note: string | null
+) {
+  return authenticatedAction(async ({ session, supabase }) => {
+    const nominationNote = normalizeNominationNote(note);
+
+    const { data: option } = await supabase
+      .from("book_options")
+      .select(
+        "added_by, meeting_id, meetings!inner(is_finalized, nomination_deadline)"
+      )
+      .eq("id", bookOptionId)
+      .single();
+
+    // Only the nominator may edit; book_options.added_by implies membership.
+    if (!option || option.added_by !== session.user.id) {
+      throw new Error("You can only edit notes on your own nominations");
+    }
+
+    const meeting = option.meetings as unknown as {
+      is_finalized: boolean | null;
+      nomination_deadline: string | null;
+    };
+
+    if (isNominationClosed(meeting)) {
+      throw new Error("Nomination period has ended");
+    }
+
+    const { error } = await supabase
+      .from("book_options")
+      .update({ nomination_note: nominationNote })
+      .eq("id", bookOptionId);
+
+    if (error) {
+      console.error("Error updating nomination note:", error);
+      throw new Error("Failed to update nomination note");
+    }
+
+    revalidatePath(`/meetings/${option.meeting_id}`);
+  });
 }

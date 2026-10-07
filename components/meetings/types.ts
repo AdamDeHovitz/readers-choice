@@ -13,6 +13,11 @@ export interface MeetingBook {
 export interface MeetingBookOption {
   id: string;
   book: MeetingBook;
+  /** User id of the member who nominated it. */
+  addedBy: string | null;
+  nominatorName: string | null;
+  /** Plain-text note the nominator attached (never HTML). */
+  nominationNote: string | null;
 }
 
 /** A book option with approval-vote tallies for the current user. */

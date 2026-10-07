@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { BookCover } from "@/components/books/book-cover";
 import { BookMeta } from "@/components/books/book-meta";
 import { sanitizeDescription } from "@/lib/sanitize-description";
+import { NominationNote } from "@/components/nominations/nomination-note";
 import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
 import type { MeetingBookOptionWithVotes } from "./types";
 
@@ -107,6 +108,12 @@ export function BookOptionCard({
                 )}
               </div>
             </div>
+
+            <NominationNote
+              note={option.nominationNote}
+              nominatorName={option.nominatorName}
+              className="mb-3"
+            />
 
             {option.book.description && (
               <div className="mb-3">

@@ -92,16 +92,19 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="details">Details (Optional)</Label>
+            <Label htmlFor="details">
+              Details & Nomination Guidance (Optional)
+            </Label>
             <Textarea
               id="details"
               name="details"
-              placeholder="e.g., Read the first half only, specific chapters to discuss..."
+              placeholder="e.g., When you nominate, add a note saying what your personal obsession is and how the book connects to it."
               disabled={isSubmitting}
               rows={3}
             />
             <p className="text-dark-500 text-xs">
-              Add any additional details or instructions for this meeting
+              Shown at the top of the meeting page. Use it to tell members what
+              to include in their nomination notes, or for reading instructions.
             </p>
           </div>
 

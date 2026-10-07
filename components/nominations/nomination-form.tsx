@@ -9,31 +9,27 @@ import { useRouter } from "next/navigation";
 import type { BookSearchResult } from "@/lib/open-library";
 import { CheckCircle2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
-
-interface ExistingNomination {
-  id: string;
-  book: {
-    id: string;
-    title: string;
-    author: string;
-    cover_url: string | null;
-  };
-  added_by: string | null;
-}
+import type { MeetingBookOption } from "@/components/meetings/types";
+import { NominationNote } from "./nomination-note";
+import { NominationNoteField } from "./nomination-note-field";
+import { EditableNominationNote } from "./editable-nomination-note";
 
 interface NominationFormProps {
   meetingId: string;
-  existingNominations: ExistingNomination[];
+  existingNominations: MeetingBookOption[];
+  currentUserId: string;
 }
 
 export function NominationForm({
   meetingId,
   existingNominations,
+  currentUserId,
 }: NominationFormProps) {
   const router = useRouter();
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     null
   );
+  const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -59,15 +55,16 @@ export function NominationForm({
     setIsSubmitting(true);
     setError(null);
 
-    const result = await nominateBook(meetingId, selectedBook);
+    const result = await nominateBook(meetingId, selectedBook, note);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {
       setSuccess(true);
       setIsSubmitting(false);
       setSelectedBook(null);
+      setNote("");
       // Refresh the page after a short delay to show the new nomination
       setTimeout(() => {
         router.refresh();
@@ -117,9 +114,21 @@ export function NominationForm({
                 key={nomination.id}
                 title={nomination.book.title}
                 author={nomination.book.author}
-                coverUrl={nomination.book.cover_url || undefined}
-                onClick={() => {}}
-              />
+                coverUrl={nomination.book.coverUrl || undefined}
+              >
+                {nomination.addedBy === currentUserId ? (
+                  <EditableNominationNote
+                    bookOptionId={nomination.id}
+                    note={nomination.nominationNote}
+                    nominatorName={nomination.nominatorName}
+                  />
+                ) : (
+                  <NominationNote
+                    note={nomination.nominationNote}
+                    nominatorName={nomination.nominatorName}
+                  />
+                )}
+              </BookCard>
             ))}
           </div>
         </div>
@@ -136,9 +145,17 @@ export function NominationForm({
             author={selectedBook.author}
             coverUrl={selectedBook.coverUrl}
             publishedYear={selectedBook.publishedYear}
-            onClick={() => {}}
             selected
           />
+
+          <div className="mt-4">
+            <NominationNoteField
+              id="nomination-note"
+              value={note}
+              onChange={setNote}
+              disabled={isSubmitting}
+            />
+          </div>
 
           {error && (
             <Alert variant="destructive" className="mt-4">
@@ -157,6 +174,7 @@ export function NominationForm({
             <Button
               onClick={() => {
                 setSelectedBook(null);
+                setNote("");
                 setError(null);
               }}
               variant="outline"

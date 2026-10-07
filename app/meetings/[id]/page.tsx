@@ -20,7 +20,7 @@ export default async function MeetingPage({
   const session = await auth();
   const { id } = await params;
 
-  if (!session?.user) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
@@ -184,6 +184,7 @@ export default async function MeetingPage({
                 <NominationForm
                   meetingId={meeting.id}
                   existingNominations={meeting.bookOptions}
+                  currentUserId={session.user.id}
                 />
               </CardContent>
             </Card>
