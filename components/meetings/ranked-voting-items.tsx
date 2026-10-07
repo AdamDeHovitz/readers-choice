@@ -8,6 +8,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { BookMeta } from "@/components/books/book-meta";
 import { sanitizeDescription } from "@/lib/sanitize-description";
+import { NominationNote } from "@/components/nominations/nomination-note";
 import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
 import type { MeetingBook, MeetingBookOption } from "./types";
 
@@ -28,12 +29,13 @@ function CoverThumbnail({ book }: { book: MeetingBook }) {
 }
 
 function BookDetails({
-  book,
+  bookOption,
   muted = false,
 }: {
-  book: MeetingBook;
+  bookOption: MeetingBookOption;
   muted?: boolean;
 }) {
+  const { book } = bookOption;
   return (
     <div className="min-w-0 flex-1">
       <h4
@@ -50,6 +52,12 @@ function BookDetails({
         pageCount={book.pageCount}
         publishedYear={book.publishedYear}
         className="text-dark-500 text-xs"
+      />
+      <NominationNote
+        note={bookOption.nominationNote}
+        nominatorName={bookOption.nominatorName}
+        compact
+        className="mt-1"
       />
       {book.description && (
         <div
@@ -138,7 +146,7 @@ export function SortableRankedBookItem({
       </div>
 
       <CoverThumbnail book={bookOption.book} />
-      <BookDetails book={bookOption.book} />
+      <BookDetails bookOption={bookOption} />
       <BookOptionActions
         bookOption={bookOption}
         currentUserIsAdmin={currentUserIsAdmin}
@@ -190,7 +198,7 @@ export function SortableUnrankedBookItem({
       </div>
 
       <CoverThumbnail book={bookOption.book} />
-      <BookDetails book={bookOption.book} muted />
+      <BookDetails bookOption={bookOption} muted />
       <BookOptionActions
         bookOption={bookOption}
         currentUserIsAdmin={currentUserIsAdmin}

@@ -48,8 +48,10 @@ interface BookOption {
   added_by: string | null;
   description_override: string | null;
   page_count_override: number | null;
+  nomination_note: string | null;
   created_at: string;
   books: Book;
+  nominator: { name: string } | null;
   votes: { id: string; user_id: string }[];
 }
 
@@ -400,6 +402,10 @@ export async function getMeetingDetails(meetingId: string) {
           added_by,
           description_override,
           page_count_override,
+          nomination_note,
+          nominator:users!book_options_added_by_fkey (
+            name
+          ),
           books!inner (
             id,
             title,
@@ -480,14 +486,15 @@ export async function getMeetingDetails(meetingId: string) {
               description: option.description_override,
               pageCount: option.page_count_override,
               publishedYear: book.published_year,
-              cover_url: book.cover_url,
             },
             voteCount: option.votes?.length || 0,
             userHasVoted: option.votes?.some(
               (v) => v.user_id === session.user.id
             ),
             createdAt: option.created_at,
-            added_by: option.added_by,
+            addedBy: option.added_by,
+            nominatorName: option.nominator?.name ?? null,
+            nominationNote: option.nomination_note,
           };
         }) || [],
       currentUserIsAdmin: member.is_admin,
@@ -1078,55 +1085,6 @@ export async function getBookClubState(bookClubId: string) {
       meeting: null,
       book: null,
     };
-  }
-}
-
-/**
- * Get upcoming meeting details
- */
-export async function getUpcomingMeeting(bookClubId: string) {
-  try {
-    const supabase = getAdminClient();
-
-    const now = new Date().toISOString();
-
-    const { data: meeting, error } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        nomination_deadline,
-        voting_deadline,
-        theme:themes(id, name),
-        bookOptions:book_options(
-          id,
-          added_by,
-          book:books(
-            id,
-            title,
-            author,
-            cover_url
-          )
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", false)
-      .gte("meeting_date", now)
-      .order("meeting_date", { ascending: true })
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error("Error fetching upcoming meeting:", error);
-      return null;
-    }
-
-    return meeting;
-  } catch (error) {
-    console.error("Error in getUpcomingMeeting:", error);
-    return null;
   }
 }
 

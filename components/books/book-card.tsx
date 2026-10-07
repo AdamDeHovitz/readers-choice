@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookCover } from "./book-cover";
 
@@ -8,6 +9,8 @@ interface BookCardProps {
   publishedYear?: number;
   onClick?: () => void;
   selected?: boolean;
+  /** Extra content shown under the book info (e.g. a nomination note). */
+  children?: ReactNode;
 }
 
 export function BookCard({
@@ -17,10 +20,11 @@ export function BookCard({
   publishedYear,
   onClick,
   selected = false,
+  children,
 }: BookCardProps) {
   return (
     <Card
-      className={`cursor-pointer transition-all hover:shadow-md ${
+      className={`${onClick ? "cursor-pointer transition-all hover:shadow-md" : ""} ${
         selected ? "ring-rust-600 ring-2" : ""
       }`}
       onClick={onClick}
@@ -40,6 +44,7 @@ export function BookCard({
             {publishedYear && (
               <p className="text-dark-500 text-xs">{publishedYear}</p>
             )}
+            {children && <div className="mt-3">{children}</div>}
           </div>
         </div>
       </CardContent>
