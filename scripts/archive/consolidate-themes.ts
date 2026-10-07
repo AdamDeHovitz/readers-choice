@@ -10,7 +10,7 @@
 
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { areThemesFuzzyMatch } from "../lib/fuzzy-match";
+import { areThemesFuzzyMatch } from "../../lib/fuzzy-match";
 
 // Load environment variables
 dotenv.config({ path: ".env.local" });

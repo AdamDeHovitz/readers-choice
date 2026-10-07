@@ -1,11 +1,11 @@
 /**
  * One-time migration script to fix encoding issues in existing book descriptions
- * Run with: npx tsx scripts/fix-book-descriptions.ts
+ * Run with: npx tsx scripts/archive/fix-book-descriptions.ts
  */
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeApiHtml } from "../lib/normalize-text";
+import { normalizeApiHtml } from "../../lib/normalize-text";
 
 // Load .env.local file
 config({ path: ".env.local" });

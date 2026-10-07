@@ -1,6 +1,6 @@
 /**
  * Script to find and delete duplicate meetings
- * Run with: npx tsx scripts/clean-duplicates.ts
+ * Run with: npx tsx scripts/archive/clean-duplicates.ts
  */
 
 import { config } from "dotenv";

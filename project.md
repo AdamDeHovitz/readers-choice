@@ -1,18 +1,22 @@
 # Overview
-You are making a beautiful mobile-first website that sparks joy. The website is used for organizing a community around a book club. 
+
+You are making a beautiful mobile-first website that sparks joy. The website is used for organizing a community around a book club.
 
 The website will have the following features:
 
 # Features
 
 ## Book Club Record
+
 For each book club group, there will be a list of members and meeting dates. Each date will have an assigned theme and will reference a book. Books should be stored in a seperate table, and be associated with an external website/api such that we can load metadata associated with the book.
 
 ## Year Ranking: Personal
+
 For each year that a book club has operated, as determined by the meeting dates, users should be able to rank their favorite books read in that year. This is done by dragging books into a desired order. Books can also be marked as not read, since not all users attend every book club. Books that were not read are moved out of the ranked list, but can be unmarked as needed.
 
 ## Year Ranking: Global
-Users can also see the overall book club ranking of books read. This is constructed based on individual user rankings. We should think hard through various options on how to create this ranking such that books 
+
+Users can also see the overall book club ranking of books read. This is constructed based on individual user rankings. We should think hard through various options on how to create this ranking such that books
 that happened to have been read more or less or not penalized.
 
 ## Admin contros
@@ -39,7 +43,7 @@ Ideally there would be a way to link a user account with their goodreads or stor
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS + shadcn/ui
 - **Authentication**: NextAuth.js v5

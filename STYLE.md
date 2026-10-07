@@ -1,11 +1,13 @@
 # Readers' Choice - Coding Style Guide
 
 ## Overview
+
 This style guide ensures consistency and maintainability across the Readers' Choice codebase. The goal is to write clean, readable, and joyful code that sparks the same delight as the app itself.
 
 ## General Principles
 
 ### Code Quality
+
 - Write code that is self-documenting through clear naming
 - Prefer readability over cleverness
 - Keep functions small and focused on a single responsibility
@@ -13,6 +15,7 @@ This style guide ensures consistency and maintainability across the Readers' Cho
 - Write code with accessibility in mind
 
 ### Mobile-First Approach
+
 - Always design and develop for mobile screens first
 - Use responsive design patterns with Tailwind's breakpoint system
 - Test on mobile viewports during development
@@ -20,6 +23,7 @@ This style guide ensures consistency and maintainability across the Readers' Cho
 ## TypeScript
 
 ### Type Safety
+
 - Always use explicit types for function parameters and return values
 - Avoid `any` types - use `unknown` if the type is truly unknown
 - Prefer interfaces for object shapes, types for unions/intersections
@@ -44,6 +48,7 @@ function getMember(id: any): any {
 ```
 
 ### Naming Conventions
+
 - **Components**: PascalCase (e.g., `BookCard`, `MeetingList`)
 - **Files**: kebab-case for utility files, PascalCase for components
   - Components: `book-card.tsx`
@@ -56,6 +61,7 @@ function getMember(id: any): any {
 ## React & Next.js
 
 ### Component Structure
+
 - Use React Server Components by default
 - Mark components as `"use client"` only when necessary (interactivity, hooks, browser APIs)
 - Prefer function components over class components
@@ -79,6 +85,7 @@ export function BookCard({ title, author, coverUrl }: BookCardProps) {
 ```
 
 ### File Organization
+
 ```
 app/
 ├── (auth)/           # Route groups for organization
@@ -97,18 +104,20 @@ components/
 └── book-card.tsx    # Custom components
 
 lib/
-├── utils.ts         # Utility functions
-├── db.ts           # Database utilities
-└── api.ts          # API helpers
+├── utils.ts         # Utility functions (cn, etc.)
+├── safe-action.ts   # authenticatedAction / publicAction wrappers
+└── open-library.ts  # External API helpers
 ```
 
 ### Props & State
+
 - Destructure props in function signatures
 - Use TypeScript interfaces for prop types
 - Keep component state minimal and close to where it's used
 - Lift state up only when necessary
 
 ### Hooks
+
 - Follow the Rules of Hooks
 - Custom hooks should start with `use` (e.g., `useBookRankings`)
 - Keep hooks focused and composable
@@ -116,6 +125,7 @@ lib/
 ## Styling with Tailwind CSS
 
 ### Class Organization
+
 - Use the `cn()` utility from `lib/utils.ts` to combine classes
 - Order Tailwind classes logically:
   1. Layout (flex, grid, block)
@@ -139,6 +149,7 @@ lib/
 ```
 
 ### Responsive Design
+
 - Use Tailwind's breakpoint prefixes (`sm:`, `md:`, `lg:`, `xl:`)
 - Mobile-first: write base classes for mobile, add breakpoint classes for larger screens
 
@@ -147,6 +158,7 @@ lib/
 ```
 
 ### Custom Styles
+
 - Prefer Tailwind utilities over custom CSS
 - Use CSS variables (in globals.css) for theme values
 - Avoid inline styles unless dynamically computed
@@ -154,20 +166,22 @@ lib/
 ## Database & API
 
 ### Supabase
+
 - Use TypeScript types generated from database schema
 - Always handle errors from database queries
-- Use Row Level Security (RLS) for data protection
-- Prefer server-side database queries (Server Components, Server Actions)
+- Query the database only from server code (Server Components, Server Actions)
+- Server code uses the service-role key, which **bypasses Row Level Security**, and NextAuth never sets `auth.uid()`. Do not rely on RLS for data protection: **authorization is enforced in server actions** — check the session and the user's club membership/admin role before reading or writing club data
+- Schema changes go through `supabase/migrations/` (see the migration convention in `AGENTS.md`)
 
 ```typescript
 // Good
 const { data: books, error } = await supabase
-  .from('books')
-  .select('*')
-  .eq('book_club_id', clubId);
+  .from("books")
+  .select("*")
+  .eq("book_club_id", clubId);
 
 if (error) {
-  console.error('Failed to fetch books:', error);
+  console.error("Failed to fetch books:", error);
   return [];
 }
 
@@ -175,35 +189,53 @@ return books;
 ```
 
 ### Server Actions
+
 - Use Server Actions for mutations
 - Name actions with descriptive verbs (e.g., `createMeeting`, `updateRanking`)
-- Always validate and sanitize user input
-- Return consistent result types
+- Every exported `"use server"` function is a public endpoint: always validate and sanitize user input, and authorize the caller inside the action
+- Wrap actions in `authenticatedAction` (or `publicAction`) from `lib/safe-action.ts`. It checks the session, provides the service-role Supabase client, catches thrown errors, and returns a consistent `{ success: true, data } | { success: false, error }` result
 
 ```typescript
-'use server';
+"use server";
 
-export async function createMeeting(formData: FormData) {
-  const session = await auth();
-  if (!session) {
-    return { error: 'Unauthorized' };
-  }
+import { authenticatedAction } from "@/lib/safe-action";
 
-  // Validate and process
-  // ...
+export async function createMeeting(bookClubId: string, meetingDate: string) {
+  return authenticatedAction(async ({ session, supabase }) => {
+    // Authorize: RLS is bypassed, so check the caller's role explicitly
+    const { data: member } = await supabase
+      .from("members")
+      .select("is_admin")
+      .eq("book_club_id", bookClubId)
+      .eq("user_id", session.user.id)
+      .single();
 
-  return { success: true, meetingId };
+    if (!member?.is_admin) {
+      throw new Error("Only admins can create meetings");
+    }
+
+    const { data, error } = await supabase
+      .from("meetings")
+      .insert({ book_club_id: bookClubId, meeting_date: meetingDate })
+      .select("id")
+      .single();
+
+    if (error) throw error;
+    return { meetingId: data.id };
+  });
 }
 ```
 
 ## Error Handling
 
 ### Client-Side
+
 - Use error boundaries for component errors
 - Show user-friendly error messages
 - Log errors for debugging
 
 ### Server-Side
+
 - Always handle database errors
 - Return error states to the client
 - Use try-catch blocks for async operations
@@ -213,19 +245,21 @@ try {
   const result = await performOperation();
   return { success: true, data: result };
 } catch (error) {
-  console.error('Operation failed:', error);
-  return { success: false, error: 'Operation failed. Please try again.' };
+  console.error("Operation failed:", error);
+  return { success: false, error: "Operation failed. Please try again." };
 }
 ```
 
 ## Comments & Documentation
 
 ### When to Comment
+
 - Complex algorithms or business logic
 - Non-obvious workarounds
 - TODO items for future improvements
 
 ### When NOT to Comment
+
 - Don't comment what the code obviously does
 - Don't leave commented-out code (use git history)
 
@@ -242,16 +276,19 @@ books.forEach(book => {
 ## Testing
 
 ### Unit Tests
+
 - Test utility functions and complex logic
 - Use descriptive test names: `it('should calculate correct ranking when some books are unread')`
 
 ### Integration Tests
+
 - Test critical user flows
 - Test authentication and authorization
 
 ## Git Practices
 
 ### Commits
+
 - Write clear, concise commit messages
 - Use conventional commits format: `feat:`, `fix:`, `docs:`, `refactor:`, etc.
 - Keep commits focused on a single change
@@ -263,6 +300,7 @@ docs: update README with deployment instructions
 ```
 
 ### Branches
+
 - Use descriptive branch names: `feature/book-voting`, `fix/ranking-calculation`
 - Keep branches short-lived
 - Merge frequently to avoid conflicts
@@ -270,12 +308,14 @@ docs: update README with deployment instructions
 ## Performance
 
 ### Next.js Optimization
+
 - Use dynamic imports for large components
 - Implement loading states with `loading.tsx`
 - Use Next.js Image component for images
 - Cache expensive computations
 
 ### Database
+
 - Use appropriate indexes
 - Limit query results when possible
 - Avoid N+1 queries
@@ -283,26 +323,31 @@ docs: update README with deployment instructions
 ## Accessibility
 
 ### Semantic HTML
+
 - Use semantic elements (`<nav>`, `<article>`, `<button>`)
 - Proper heading hierarchy (`h1` → `h2` → `h3`)
 
 ### ARIA & Keyboard
+
 - Add ARIA labels where needed
 - Ensure keyboard navigation works
 - Test with screen readers when possible
 
 ### Color & Contrast
+
 - Ensure sufficient color contrast
 - Don't rely solely on color for information
 
 ## Security
 
 ### Authentication
+
 - Never expose sensitive credentials
 - Use environment variables for API keys
 - Implement proper session management
 
 ### Input Validation
+
 - Validate all user input on the server
 - Sanitize data before database insertion
 - Protect against SQL injection (use Supabase parameterized queries)
@@ -311,6 +356,7 @@ docs: update README with deployment instructions
 ## Code Review
 
 ### Before Submitting
+
 - [ ] Code follows this style guide
 - [ ] Tests pass (`npm run build` and `npm run lint`)
 - [ ] No console.logs left in production code
@@ -318,6 +364,7 @@ docs: update README with deployment instructions
 - [ ] Responsive design tested on mobile
 
 ### Reviewing Code
+
 - Be respectful and constructive
 - Ask questions rather than make demands
 - Acknowledge good patterns and solutions
