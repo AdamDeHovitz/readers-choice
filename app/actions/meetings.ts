@@ -403,7 +403,7 @@ export async function getMeetingDetails(meetingId: string) {
           description_override,
           page_count_override,
           nomination_note,
-          nominator:users (
+          nominator:users!book_options_added_by_fkey (
             name
           ),
           books!inner (

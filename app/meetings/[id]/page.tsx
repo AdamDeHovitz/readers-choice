@@ -10,6 +10,8 @@ import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button
 import { BookOptionsList } from "@/components/meetings/book-options-list";
 import { NominationForm } from "@/components/nominations/nomination-form";
 import { redirect } from "next/navigation";
+import { isNominationClosed } from "@/lib/nomination-note";
+import { isVotingClosed } from "@/lib/ballot-validation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MeetingPage({
@@ -32,7 +34,6 @@ export default async function MeetingPage({
 
   const meetingDate = new Date(meeting.meetingDate);
   const isPast = meetingDate < new Date();
-  const now = new Date();
 
   // Determine meeting phase
   const nominationDeadline = meeting.nominationDeadline
@@ -42,14 +43,19 @@ export default async function MeetingPage({
     ? new Date(meeting.votingDeadline)
     : null;
 
-  const nominationsOpen =
-    !meeting.isFinalized && (!nominationDeadline || nominationDeadline > now);
+  // Same deadline rules the server actions enforce (deadline instant is open)
+  const nominationsOpen = !isNominationClosed({
+    is_finalized: meeting.isFinalized,
+    nomination_deadline: meeting.nominationDeadline,
+  });
 
   const votingOpen =
-    !meeting.isFinalized &&
-    nominationDeadline &&
-    nominationDeadline <= now &&
-    (!votingDeadline || votingDeadline > now);
+    !nominationsOpen &&
+    nominationDeadline !== null &&
+    !isVotingClosed({
+      is_finalized: meeting.isFinalized,
+      voting_deadline: meeting.votingDeadline,
+    });
 
   // Fetch user's voting preference and ranked votes in parallel
   const [userVotingMethod, userRankedVotes] = await Promise.all([

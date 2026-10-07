@@ -9,6 +9,18 @@ import {
   normalizeNominationNote,
 } from "@/lib/nomination-note";
 
+function assertNominationsOpen(meeting: {
+  is_finalized: boolean | null;
+  nomination_deadline: string | null;
+}) {
+  if (meeting.is_finalized) {
+    throw new Error("Meeting has been finalized");
+  }
+  if (isNominationClosed(meeting)) {
+    throw new Error("Nomination period has ended");
+  }
+}
+
 /**
  * Nominate a book for a meeting, with an optional note from the nominator.
  * This adds the book to the database and creates a book_option entry.
@@ -31,9 +43,7 @@ export async function nominateBook(
       throw new Error("Meeting not found");
     }
 
-    if (isNominationClosed(meeting)) {
-      throw new Error("Nomination period has ended");
-    }
+    assertNominationsOpen(meeting);
 
     const { data: member } = await supabase
       .from("members")
@@ -104,24 +114,34 @@ export async function updateNominationNote(
     const { data: option } = await supabase
       .from("book_options")
       .select(
-        "added_by, meeting_id, meetings!inner(is_finalized, nomination_deadline)"
+        "added_by, meeting_id, meetings!inner(book_club_id, is_finalized, nomination_deadline)"
       )
       .eq("id", bookOptionId)
       .single();
 
-    // Only the nominator may edit; book_options.added_by implies membership.
     if (!option || option.added_by !== session.user.id) {
       throw new Error("You can only edit notes on your own nominations");
     }
 
     const meeting = option.meetings as unknown as {
+      book_club_id: string;
       is_finalized: boolean | null;
       nomination_deadline: string | null;
     };
 
-    if (isNominationClosed(meeting)) {
-      throw new Error("Nomination period has ended");
+    // Nominators who have since left the club can't keep editing.
+    const { data: member } = await supabase
+      .from("members")
+      .select("id")
+      .eq("book_club_id", meeting.book_club_id)
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (!member) {
+      throw new Error("You must be a member of this book club");
     }
+
+    assertNominationsOpen(meeting);
 
     const { error } = await supabase
       .from("book_options")
