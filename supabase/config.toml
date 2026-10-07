@@ -1,0 +1,50 @@
+# Local Supabase stack for development and agent testing (see AGENTS.md).
+# Only what the app uses is enabled: Postgres, the PostgREST API that
+# supabase-js talks to, and Studio for browsing data. Auth is NextAuth, not
+# Supabase Auth, and nothing uses storage, realtime or edge functions.
+# Full reference: https://supabase.com/docs/guides/local-development/cli/config
+project_id = "readers-choice"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Must match production (SHOW server_version).
+major_version = 17
+
+[db.migrations]
+enabled = true
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[studio]
+enabled = true
+port = 54323
+
+# The app uses NextAuth, but the CLI only issues API keys (needed for
+# SUPABASE_SERVICE_ROLE_KEY) when the auth service is running.
+[auth]
+enabled = true
+
+[storage]
+enabled = false
+
+[realtime]
+enabled = false
+
+[local_smtp]
+enabled = false
+
+[edge_runtime]
+enabled = false
+
+[analytics]
+enabled = false
