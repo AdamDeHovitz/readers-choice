@@ -7,28 +7,33 @@ A beautiful, mobile-first book club management application that helps communitie
 ## ✨ Features
 
 ### Book Club Management
+
 - **Create and Join Book Clubs**: Start your own club or join existing ones via invite links
 - **Member Management**: Admins can promote members, manage permissions, and remove users
 - **Multiple Clubs**: Users can participate in multiple book clubs simultaneously
 
 ### Meeting Organization
+
 - **Schedule Meetings**: Set dates, themes, and deadlines for nominations and voting
 - **Book Nominations**: Search and add books using the Open Library and Google Books APIs
 - **Democratic Voting**: Members vote on book options for each meeting
 - **Meeting History**: Track past meetings and selected books
 
 ### Theme System
+
 - **Suggest Themes**: Members can propose themes for future meetings
 - **Theme Voting**: Upvote your favorite themes
 - **Smart Matching**: Fuzzy matching prevents duplicate themes (e.g., "Mystery" vs "Mysteries")
 
 ### Personal & Global Rankings
+
 - **Year-Based Rankings**: Rank your favorite books by year using drag-and-drop
 - **Mark as Unread**: Track which meetings you missed
 - **Global Rankings**: See community favorites calculated using Borda Count scoring
 - **Visual Medals**: Top 3 books display with medal indicators
 
 ### Modern User Experience
+
 - **Google OAuth**: Secure authentication with Google accounts
 - **Mobile-First Design**: Beautiful, responsive UI optimized for all devices
 - **Real-Time Updates**: Instant feedback on votes and changes
@@ -37,6 +42,7 @@ A beautiful, mobile-first book club management application that helps communitie
 ## 🛠 Technologies Used
 
 ### Frontend
+
 - **[Next.js 16](https://nextjs.org/)** - React framework with App Router
 - **[React 19](https://react.dev/)** - UI library
 - **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
@@ -47,13 +53,15 @@ A beautiful, mobile-first book club management application that helps communitie
 - **[Lucide Icons](https://lucide.dev/)** - Beautiful icon set
 
 ### Backend & Infrastructure
-- **[Supabase](https://supabase.com/)** - PostgreSQL database with Row Level Security
-- **[NextAuth.js v5](https://next-auth.js.org/)** - Authentication with Google OAuth
+
+- **[Supabase](https://supabase.com/)** - PostgreSQL database (accessed server-side only)
+- **[NextAuth.js v5](https://next-auth.js.org/)** - Authentication with Google OAuth and email/password
 - **[Vercel](https://vercel.com/)** - Deployment platform
 - **[Open Library API](https://openlibrary.org/developers/api)** - Book search and metadata
 - **[Google Books API](https://developers.google.com/books)** - Additional book data enrichment
 
 ### Development Tools
+
 - **[ESLint](https://eslint.org/)** - Code linting
 - **[Prettier](https://prettier.io/)** - Code formatting
 - **[Turbopack](https://turbo.build/pack)** - Fast bundler for development
@@ -63,6 +71,7 @@ A beautiful, mobile-first book club management application that helps communitie
 Want to run your own instance of Readers' Choice? Follow these steps:
 
 ### Prerequisites
+
 - **Node.js** 18+ and npm
 - **Supabase** account (free tier available)
 - **Google Cloud** account for OAuth (free)
@@ -81,16 +90,18 @@ npm install
 1. Create a new project at [supabase.com](https://supabase.com)
 2. Go to **Project Settings > API** and copy:
    - Project URL (`NEXT_PUBLIC_SUPABASE_URL`)
-   - `anon` public key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-   - `service_role` key (`SUPABASE_SERVICE_ROLE_KEY`)
+   - `service_role` key (`SUPABASE_SERVICE_ROLE_KEY`) — keep this secret; it is only used server-side
 
-3. Create the database schema by running the SQL migrations in order from `supabase/migrations/`:
-   - Navigate to **SQL Editor** in Supabase Dashboard
-   - Copy and execute each migration file sequentially
+3. Create the database schema by applying the migrations in `supabase/migrations/` in filename (version) order. The recommended way is the [Supabase CLI](https://supabase.com/docs/guides/cli), which also records each version in the project's migration history:
 
-4. **Configure Row Level Security (RLS)**:
-   - The migrations include RLS policies
-   - Ensure they're applied correctly in your Supabase project
+   ```bash
+   supabase link --project-ref <your-project-ref>
+   supabase db push
+   ```
+
+   Alternatively, paste each file into the dashboard **SQL Editor** in order (this does not record migration history). Deploying the app never runs migrations, so apply new ones whenever you pull schema changes.
+
+4. **Security model**: the app only talks to Supabase from server code using the service-role key, which bypasses Row Level Security, and NextAuth does not set `auth.uid()`. **Authorization is enforced in the app's server actions**, not by RLS. The migrations still enable RLS and lock down sensitive tables so that the public API exposes nothing useful — there is no extra RLS setup to do.
 
 ### 3. Set Up Google OAuth
 
@@ -112,7 +123,6 @@ Create a `.env.local` file in the root directory:
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 
 # NextAuth
@@ -148,24 +158,27 @@ The application uses PostgreSQL with the following main tables:
 - **book_clubs** - Book club information
 - **members** - Club membership and admin status
 - **meetings** - Scheduled and past meetings
-- **themes** - Meeting themes with voting
+- **themes** / **theme_votes** - Meeting themes and their upvotes
 - **books** - Book metadata from APIs
-- **book_options** - Books nominated for meetings
-- **votes** - Member votes on book options
-- **rankings** - Personal year-based book rankings
+- **book_options** - Books nominated for meetings (with per-meeting metadata overrides)
+- **votes** / **meeting_ranked_votes** / **meeting_voting_preferences** - Approval and ranked-choice ballots
+- **personal_rankings** - Personal year-based book rankings
+- **invite_links** - Shareable club invite codes
 
-For detailed schema and relationships, see `supabase/migrations/`.
+See `database-schema.md` for an overview; `supabase/migrations/` is the source of truth.
 
 ## 🤝 Contributing
 
 We welcome contributions! Here's how you can help:
 
 ### Reporting Issues
+
 - Check the [existing issues](https://github.com/AdamDeHovitz/readers-choice/issues) first
 - Create a new issue with a clear description and steps to reproduce (for bugs)
 - Feature requests are also welcome!
 
 ### Submitting Pull Requests
+
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes following the existing code style
@@ -175,9 +188,11 @@ We welcome contributions! Here's how you can help:
 7. Push to your fork and submit a pull request
 
 ### Good First Issues
+
 Check out issues labeled `good first issue` to get started. The current issue list is a great place to find contribution opportunities!
 
 ### Development Guidelines
+
 - Follow the coding standards in `STYLE.md`
 - Adhere to the design system in `DESIGN_GUIDE.md`
 - Write clean, reusable code

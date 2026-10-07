@@ -1,6 +1,6 @@
 /**
  * Script to bulk add past meetings to a book club
- * Run with: npx tsx scripts/add-meetings.ts
+ * Run with: npx tsx scripts/archive/add-meetings.ts
  */
 
 import { config } from "dotenv";

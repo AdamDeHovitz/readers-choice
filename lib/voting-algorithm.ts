@@ -75,19 +75,42 @@ export function runHybridIRV(
   rankedBallots: RankedBallot[],
   randomSeed?: number
 ): VotingResult {
-  // Build voter data structures
+  // Position of each candidate; also used to break ties between equal ranks
+  const bookOrder = new Map<string, number>();
+  for (const bookId of bookIds) {
+    if (!bookOrder.has(bookId)) bookOrder.set(bookId, bookOrder.size);
+  }
+
+  // Build voter data structures. Votes for books that are not candidates are
+  // ignored; a voter left with no candidate votes is exhausted in round 1.
   const approvalByVoter: Map<string, Set<string>> = new Map();
   const rankedByVoter: Map<string, { bookId: string; rank: number }[]> =
     new Map();
 
   for (const ballot of approvalBallots) {
-    approvalByVoter.set(ballot.odId, new Set(ballot.approvedBookIds));
+    approvalByVoter.set(
+      ballot.odId,
+      new Set(ballot.approvedBookIds.filter((id) => bookOrder.has(id)))
+    );
   }
 
   for (const ballot of rankedBallots) {
-    // Sort by rank ascending
-    const sorted = [...ballot.rankings].sort((a, b) => a.rank - b.rank);
-    rankedByVoter.set(ballot.odId, sorted);
+    // Sort by rank ascending. Equal ranks are ordered by candidate position so
+    // the outcome never depends on the order rows were loaded in.
+    const sorted = ballot.rankings
+      .filter((r) => bookOrder.has(r.bookId))
+      .sort(
+        (a, b) =>
+          a.rank - b.rank || bookOrder.get(a.bookId)! - bookOrder.get(b.bookId)!
+      );
+    // A book ranked more than once only counts at its best rank
+    const seen = new Set<string>();
+    const deduped = sorted.filter((r) => {
+      if (seen.has(r.bookId)) return false;
+      seen.add(r.bookId);
+      return true;
+    });
+    rankedByVoter.set(ballot.odId, deduped);
   }
 
   const approvalVoterCount = approvalByVoter.size;
@@ -99,17 +122,23 @@ export function runHybridIRV(
   const totalVoters = allVoterIds.size;
 
   // Track state
-  const activeBookIds = new Set(bookIds);
+  const activeBookIds = new Set(bookOrder.keys());
   const exhaustedVoters = new Set<string>();
   const rounds: EliminationRound[] = [];
   let roundNumber = 0;
   let winner: string | null = null;
 
-  // Seeded random for deterministic testing
-  let randomState = randomSeed ?? Math.random() * 1000000;
+  // Seeded random (mulberry32) for deterministic testing. 32-bit integer math
+  // via Math.imul keeps every step exact; a plain multiply would overflow the
+  // 2^53 range of doubles and lose precision.
+  let randomState =
+    (randomSeed ?? Math.floor(Math.random() * 0x100000000)) >>> 0;
   function seededRandom(): number {
-    randomState = (randomState * 1103515245 + 12345) % 2147483648;
-    return randomState / 2147483648;
+    randomState = (randomState + 0x6d2b79f5) >>> 0;
+    let t = randomState;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 0x100000000;
   }
 
   while (activeBookIds.size > 1 && !winner) {

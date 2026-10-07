@@ -4,6 +4,7 @@
  */
 
 import { normalizeApiText } from "./normalize-text";
+import { parseYear } from "./utils";
 
 export interface OpenLibrarySearchDoc {
   key: string; // work ID like "/works/OL45804W"
@@ -40,6 +41,7 @@ export interface OpenLibraryEdition {
   isbn_13?: string[];
   isbn_10?: string[];
   publish_date?: string;
+  works?: Array<{ key: string }>;
 }
 
 export interface BookSearchResult {
@@ -287,7 +289,9 @@ export async function searchBooks(query: string): Promise<BookSearchResult[]> {
  */
 async function getWorkDetails(workId: string): Promise<OpenLibraryWork | null> {
   try {
-    const response = await fetch(`${OPEN_LIBRARY_API}/works/${workId}.json`);
+    const response = await fetch(
+      `${OPEN_LIBRARY_API}/works/${encodeURIComponent(workId)}.json`
+    );
 
     if (!response.ok) {
       return null;
@@ -313,7 +317,7 @@ export async function getBookById(
 
     // Get first edition for additional metadata like page count
     const editionsResponse = await fetch(
-      `${OPEN_LIBRARY_API}/works/${workId}/editions.json?limit=1`
+      `${OPEN_LIBRARY_API}/works/${encodeURIComponent(workId)}/editions.json?limit=1`
     );
 
     let edition: OpenLibraryEdition | null = null;
@@ -327,9 +331,7 @@ export async function getBookById(
       key: work.key,
       title: work.title,
       cover_i: work.covers?.[0],
-      first_publish_year: work.first_publish_date
-        ? parseInt(work.first_publish_date.split("-")[0])
-        : undefined,
+      first_publish_year: parseYear(work.first_publish_date),
     };
 
     return formatOpenLibraryWork(searchDoc, work, edition);
@@ -416,7 +418,9 @@ export async function searchByISBN(
   isbn: string
 ): Promise<BookSearchResult | null> {
   try {
-    const response = await fetch(`${OPEN_LIBRARY_API}/isbn/${isbn}.json`);
+    const response = await fetch(
+      `${OPEN_LIBRARY_API}/isbn/${encodeURIComponent(isbn)}.json`
+    );
 
     if (!response.ok) {
       return null;
@@ -425,7 +429,7 @@ export async function searchByISBN(
     const edition: OpenLibraryEdition = await response.json();
 
     // Get the work ID from the edition
-    const workKey = (edition as any).works?.[0]?.key;
+    const workKey = edition.works?.[0]?.key;
     if (!workKey) {
       return null;
     }

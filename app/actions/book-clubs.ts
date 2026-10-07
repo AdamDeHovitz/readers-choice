@@ -358,40 +358,5 @@ export async function getAllBookClubs() {
   return result.data;
 }
 
-/**
- * Join a book club (public)
- */
-export async function joinBookClub(bookClubId: string) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Check if user is already a member
-    const { data: existingMember } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (existingMember) {
-      throw new Error("You are already a member of this book club");
-    }
-
-    // Add user as a regular member (not admin)
-    const { error } = await supabase.from("members").insert({
-      user_id: session.user.id,
-      book_club_id: bookClubId,
-      is_admin: false,
-    });
-
-    if (error) throw error;
-    return { success: true };
-  });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath(`/book-clubs/${bookClubId}`);
-  revalidatePath("/browse");
-  revalidatePath("/dashboard");
-  return { success: true };
-}
+// Joining a club requires an invite code; see joinBookClubViaInvite in
+// app/actions/invites.ts.
