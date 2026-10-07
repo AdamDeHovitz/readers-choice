@@ -14,23 +14,23 @@
 
 - **Goal**: Help communities organize reading groups, vote on books/themes, and track history.
 - **Aesthetic**: Warm, literary, vintage book feel (Rust/Gold/Cream palette).
-- **Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, shadcn/ui, Supabase (PostgreSQL + RLS), NextAuth.js v5.
+- **Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, shadcn/ui, Supabase (PostgreSQL, service-role access from server only), NextAuth.js v5.
 
 ## 3. Current Status
 
 ### Phase 1: Foundation & Setup ✅ COMPLETED
 
-- ✅ Next.js 15+ with App Router & TypeScript
+- ✅ Next.js 16 with App Router & TypeScript
 - ✅ Tailwind CSS v4 + shadcn/ui
 - ✅ Database Schema (Users, Book Clubs, Members, Meetings, Books, Themes, Rankings)
-- ✅ Auth (NextAuth v5 + Google OAuth + RLS)
+- ✅ Auth (NextAuth v5 + Google OAuth + email/password; authorization enforced in server actions)
 
 ### Phase 2: Core Features ✅ COMPLETED
 
 - ✅ Book Club Creation & Member Management (Admin roles)
 - ✅ Meeting Management (Schedule, Themes, Voting)
 - ✅ Book Integration (Google Books API, Open Library)
-- ✅ Voting System (Books & Themes)
+- ✅ Voting System (Books — approval + ranked-choice IRV — & Themes)
 - ✅ Ranking System (Personal drag-and-drop & Global Borda Count)
 - ✅ Invite Links & Public Join Flow
 
@@ -52,7 +52,9 @@
   - `ui/`: shadcn/ui primitives.
   - `book-clubs/`, `meetings/`: Feature-specific components.
 - `lib/`: Utilities.
-  - `supabase/`: DB Clients.
+  - `safe-action.ts`: `authenticatedAction` / `publicAction` wrappers (session check + service-role Supabase client).
+- `scripts/`: Maintenance scripts (`scripts/archive/` holds finished one-offs; don't re-run blindly).
+- `database-schema.md`: Schema overview (keep in sync when migrations change tables).
 - `supabase/migrations/`: SQL Source of Truth.
   - Filenames are `<14-digit version>_<name>.sql`, where the version matches the row in the live project's `supabase_migrations.schema_migrations`. Apply new migrations with Supabase MCP `apply_migration` (or `supabase db push`), then name the file with the version it recorded. Deploying app code does **not** run migrations.
   - Server code uses the service-role key, which bypasses RLS, and NextAuth never sets `auth.uid()`. **Authorization is enforced in server actions**, not by RLS; every exported `"use server"` function is a public endpoint and must check the session and club membership itself.

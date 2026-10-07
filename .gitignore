@@ -34,3 +34,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .local/
+
+# personal agent/tool settings
+.claude/settings.local.json
+.claude/worktrees/

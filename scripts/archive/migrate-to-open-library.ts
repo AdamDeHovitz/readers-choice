@@ -11,7 +11,7 @@
 
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
-import { searchByISBN } from "../lib/open-library";
+import { searchByISBN } from "../../lib/open-library";
 
 // Load environment variables
 config({ path: ".env.local" });
@@ -213,7 +213,7 @@ async function runMigration(dryRun: boolean = true) {
 
   if (dryRun) {
     console.log("\n⚠️  This was a DRY RUN. No changes were made.");
-    console.log("To apply changes, run: node -r dotenv/config node_modules/.bin/tsx scripts/migrate-to-open-library.ts --live");
+    console.log("To apply changes, run: node -r dotenv/config node_modules/.bin/tsx scripts/archive/migrate-to-open-library.ts --live");
   } else {
     console.log("\n✓ Migration complete!");
   }
