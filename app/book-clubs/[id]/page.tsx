@@ -1,13 +1,9 @@
 import { auth } from "@/auth";
 import { getBookClubDetails } from "@/app/actions/book-clubs";
-import {
-  getBookClubState,
-  getBookClubMeetings,
-} from "@/app/actions/meetings";
+import { getBookClubState, getBookClubMeetings } from "@/app/actions/meetings";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { HeroSection } from "@/components/book-clubs/hero-section";
 import { BookDisplay } from "@/components/book-clubs/book-display";
-import { JoinClubButton } from "@/components/book-clubs/join-club-button";
 import { redirect } from "next/navigation";
 
 export default async function BookClubPage({
@@ -29,38 +25,37 @@ export default async function BookClubPage({
     redirect("/browse");
   }
 
-  // If not logged in or not a member, show limited view with join button
+  // If not logged in or not a member, show a limited view. Joining requires an
+  // invite link from a club admin.
   if (!session?.user || !bookClub.currentUserIsMember) {
     return (
-      <div className="min-h-screen bg-cream-100">
-        <header className="bg-cream-100 border-b border-gold-600/20">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <h1 className="text-4xl font-voga text-dark-900 uppercase tracking-wider">
+      <div className="bg-cream-100 min-h-screen">
+        <header className="bg-cream-100 border-gold-600/20 border-b">
+          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <h1 className="font-voga text-dark-900 text-4xl tracking-wider uppercase">
               {bookClub.name}
             </h1>
             {bookClub.description && (
-              <p className="text-dark-600 mt-2 font-inria">
+              <p className="text-dark-600 font-inria mt-2">
                 {bookClub.description}
               </p>
             )}
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white border border-gold-600/20 rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-inria font-semibold text-dark-900 mb-4">
-              {session?.user ? "Join this book club" : "Sign in to join"}
+        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+          <div className="border-gold-600/20 rounded-lg border bg-white p-8 text-center">
+            <h2 className="font-inria text-dark-900 mb-4 text-2xl font-semibold">
+              Invite required
             </h2>
-            <p className="text-dark-600 mb-6 font-inria">
-              {session?.user
-                ? `Join ${bookClub.name} to see meetings, vote on books, and participate in discussions.`
-                : "Sign in to join this book club and start reading with the community."}
+            <p className="text-dark-600 font-inria mb-6">
+              {bookClub.name} is invite-only. Ask a club admin for an invite
+              link to join and see meetings, vote on books, and participate in
+              discussions.
             </p>
-            {session?.user ? (
-              <JoinClubButton bookClubId={id} />
-            ) : (
+            {!session?.user && (
               <a href="/login" className="inline-block">
-                <button className="bg-rust-600 text-cream-100 border-2 border-dark-900 px-6 py-3 rounded-lg font-medium font-inria hover:bg-rust-700 transition-colors">
+                <button className="bg-rust-600 text-cream-100 border-dark-900 font-inria hover:bg-rust-700 rounded-lg border-2 px-6 py-3 font-medium transition-colors">
                   Sign In
                 </button>
               </a>
@@ -83,7 +78,15 @@ export default async function BookClubPage({
 
   // Determine what book to display
   let bookToDisplay = null;
-  let bookMeeting: { id: string; meetingDate: string; isFinalized: boolean; themeName?: string | null; details?: string | null } | undefined = undefined;
+  let bookMeeting:
+    | {
+        id: string;
+        meetingDate: string;
+        isFinalized: boolean;
+        themeName?: string | null;
+        details?: string | null;
+      }
+    | undefined = undefined;
   let bookLabel: "Current Book" | "Previous Book" | "Upcoming" = "Current Book";
 
   if (finalizedMeetings.length > 0) {
@@ -96,13 +99,15 @@ export default async function BookClubPage({
     if (upcomingFinalizedMeetings.length > 0) {
       // Show the next upcoming finalized meeting
       meetingToDisplay = upcomingFinalizedMeetings.sort(
-        (a, b) => new Date(a.meetingDate).getTime() - new Date(b.meetingDate).getTime()
+        (a, b) =>
+          new Date(a.meetingDate).getTime() - new Date(b.meetingDate).getTime()
       )[0];
       bookLabel = "Upcoming";
     } else {
       // Show the most recent past finalized meeting
       meetingToDisplay = finalizedMeetings.sort(
-        (a, b) => new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime()
+        (a, b) =>
+          new Date(b.meetingDate).getTime() - new Date(a.meetingDate).getTime()
       )[0];
       bookLabel = "Previous Book";
     }
@@ -128,7 +133,7 @@ export default async function BookClubPage({
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={id}
         bookClubName={bookClub.name}
