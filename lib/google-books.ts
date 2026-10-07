@@ -4,6 +4,7 @@
  */
 
 import { normalizeApiHtml } from "./normalize-text";
+import { parseYear } from "./utils";
 
 export interface GoogleBook {
   id: string;
@@ -43,9 +44,7 @@ const GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes";
 /**
  * Search for books using Google Books API
  */
-export async function searchBooks(
-  query: string
-): Promise<BookSearchResult[]> {
+export async function searchBooks(query: string): Promise<BookSearchResult[]> {
   try {
     const params = new URLSearchParams({
       q: query,
@@ -80,7 +79,9 @@ export async function getBookById(
   googleBooksId: string
 ): Promise<BookSearchResult | null> {
   try {
-    const response = await fetch(`${GOOGLE_BOOKS_API}/${googleBooksId}`);
+    const response = await fetch(
+      `${GOOGLE_BOOKS_API}/${encodeURIComponent(googleBooksId)}`
+    );
 
     if (!response.ok) {
       throw new Error(`Google Books API error: ${response.statusText}`);
@@ -97,7 +98,7 @@ export async function getBookById(
 /**
  * Format a Google Books response into our internal format
  */
-function formatGoogleBook(book: GoogleBook): BookSearchResult {
+export function formatGoogleBook(book: GoogleBook): BookSearchResult {
   const { volumeInfo } = book;
 
   // Get ISBN (prefer ISBN-13 over ISBN-10)
@@ -110,22 +111,15 @@ function formatGoogleBook(book: GoogleBook): BookSearchResult {
   const isbn = isbn13 || isbn10;
 
   // Get published year
-  const publishedYear = volumeInfo.publishedDate
-    ? parseInt(volumeInfo.publishedDate.split("-")[0])
-    : undefined;
+  const publishedYear = parseYear(volumeInfo.publishedDate);
 
   // Get authors (join multiple authors with comma)
-  const author =
-    volumeInfo.authors?.join(", ") || "Unknown Author";
+  const author = volumeInfo.authors?.join(", ") || "Unknown Author";
 
   // Get cover image (prefer thumbnail over small thumbnail)
-  const coverUrl = volumeInfo.imageLinks?.thumbnail?.replace(
-    "http://",
-    "https://"
-  ) || volumeInfo.imageLinks?.smallThumbnail?.replace(
-    "http://",
-    "https://"
-  );
+  const rawCover =
+    volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail;
+  const coverUrl = rawCover?.replace(/^http:\/\//, "https://");
 
   return {
     id: book.id,

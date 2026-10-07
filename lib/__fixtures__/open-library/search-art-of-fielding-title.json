@@ -1,0 +1,84 @@
+{
+  "num_found": 132,
+  "start": 0,
+  "docs": [
+    {
+      "author_name": ["Chad Harbach"],
+      "cover_i": 8330636,
+      "edition_count": 3,
+      "first_publish_year": 2011,
+      "isbn": ["9780316126670"],
+      "key": "/works/OL15936402W",
+      "number_of_pages_median": 512,
+      "title": "The Art of Fielding"
+    },
+    {
+      "author_name": ["Chad Harbach"],
+      "cover_i": 11332414,
+      "edition_count": 10,
+      "first_publish_year": 2011,
+      "isbn": ["9780316204729"],
+      "key": "/works/OL19949436W",
+      "number_of_pages_median": 520,
+      "title": "The art of fielding"
+    },
+    {
+      "author_name": ["Clare Walker Leslie"],
+      "cover_i": 3914118,
+      "edition_count": 3,
+      "first_publish_year": 1984,
+      "isbn": ["9780787205799"],
+      "key": "/works/OL1859506W",
+      "number_of_pages_median": 190,
+      "title": "The art of field sketching"
+    },
+    {
+      "author_name": ["Chad Harbach"],
+      "edition_count": 0,
+      "key": "/works/OL17698075W",
+      "title": "The Art of Fielding"
+    },
+    {
+      "edition_count": 1,
+      "isbn": ["9781617939297"],
+      "key": "/works/OL32004836W",
+      "title": "The Art of Fielding"
+    },
+    {
+      "author_name": ["Chadwick, Henry"],
+      "cover_i": 9710781,
+      "edition_count": 1,
+      "first_publish_year": 1885,
+      "key": "/works/OL17001812W",
+      "number_of_pages_median": 83,
+      "title": "The art of fielding"
+    },
+    {
+      "edition_count": 1,
+      "isbn": ["9571356093"],
+      "key": "/works/OL35302547W",
+      "title": "The Art of Fielding (Chinese Edition)"
+    },
+    {
+      "author_name": ["Kristin Link"],
+      "edition_count": 1,
+      "isbn": ["164326379X"],
+      "key": "/works/OL45986757W",
+      "title": "Discover the Art of Field Sketching"
+    },
+    {
+      "author_name": ["Mary Jane Mapes"],
+      "edition_count": 1,
+      "first_publish_year": 1994,
+      "isbn": ["0964163306"],
+      "key": "/works/OL9237154W",
+      "number_of_pages_median": 77,
+      "title": "The Art of Fielding Questions With Finesse"
+    },
+    {
+      "edition_count": 1,
+      "key": "/works/OL35319659W",
+      "title": "The Art of Victory; The Life and Achievements of Field-Marshal Sukorov"
+    }
+  ]
+}

@@ -313,7 +313,6 @@ describe("Hybrid IRV Voting Algorithm", () => {
       ];
       const rankedBallots: RankedBallot[] = [];
 
-      // With seed, result should be deterministic
       const result1 = runHybridIRV(
         bookIds,
         approvalBallots,
@@ -327,16 +326,58 @@ describe("Hybrid IRV Voting Algorithm", () => {
         12345
       );
 
-      expect(result1.winner).toBe(result2.winner);
+      // Same seed, same outcome
+      expect(result1).toEqual(result2);
 
-      // Different seed should potentially give different result
-      const result3 = runHybridIRV(
-        bookIds,
-        approvalBallots,
-        rankedBallots,
-        67890
+      // Winner is one of the tied books, and the round records the random tiebreak
+      expect(["A", "B"]).toContain(result1.winner);
+      expect(result1.rounds).toHaveLength(1);
+      const eliminated = result1.rounds[0].eliminated;
+      expect(eliminated?.reason).toBe("tiebreaker_random");
+      expect(["A", "B"]).toContain(eliminated?.bookId);
+      expect(eliminated?.bookId).not.toBe(result1.winner);
+      expect(result1.rounds[0].winner).toBe(result1.winner);
+    });
+
+    it("should let some seed select each tied book", () => {
+      const bookIds = ["A", "B", "C"];
+      const approvalBallots: ApprovalBallot[] = [
+        { odId: "voter1", approvedBookIds: ["A"] },
+        { odId: "voter2", approvedBookIds: ["B"] },
+        { odId: "voter3", approvedBookIds: ["C"] },
+      ];
+
+      const winners = new Set<string | null>();
+      for (let seed = 0; seed < 50; seed++) {
+        const result = runHybridIRV(bookIds, approvalBallots, [], seed);
+        winners.add(result.winner);
+        // Every elimination in a perfect three-way tie is random
+        for (const round of result.rounds.filter((r) => r.eliminated)) {
+          expect(round.eliminated?.reason).toBe("tiebreaker_random");
+        }
+      }
+
+      expect(winners).toEqual(new Set(["A", "B", "C"]));
+    });
+
+    it("should not fall back to random when an earlier tiebreaker decides", () => {
+      // A and B tie on support; first-choice and approval counts also tie, but
+      // only between A and B. C is clearly lowest, so no random draw is needed.
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [
+          { odId: "v1", approvedBookIds: ["A"] },
+          { odId: "v2", approvedBookIds: ["A"] },
+          { odId: "v3", approvedBookIds: ["B"] },
+          { odId: "v4", approvedBookIds: ["B"] },
+        ],
+        [],
+        7
       );
-      // Note: might still be same winner by chance, but algorithm uses random
+      expect(result.rounds[0].eliminated).toEqual({
+        bookId: "C",
+        reason: "lowest_support",
+      });
     });
   });
 
@@ -597,6 +638,162 @@ describe("Hybrid IRV Voting Algorithm", () => {
       // Round 2: 4 active voters, need 3. A=2, C=2. Tie.
 
       expect(result.rounds[0].majorityThreshold).toBe(3); // 5 voters, need 3
+    });
+  });
+  describe("Ballot validation edge cases", () => {
+    it("should return no winner and no rounds when there are no books", () => {
+      const result = runHybridIRV(
+        [],
+        [{ odId: "v1", approvedBookIds: ["A"] }],
+        [{ odId: "v2", rankings: [{ bookId: "A", rank: 1 }] }]
+      );
+
+      expect(result.winner).toBeNull();
+      expect(result.rounds).toEqual([]);
+      expect(result.voterBreakdown).toEqual({
+        approvalVoters: 1,
+        rankedVoters: 1,
+        totalVoters: 2,
+      });
+    });
+
+    it("should ignore duplicate book IDs in the candidate list", () => {
+      const result = runHybridIRV(
+        ["A", "A", "B"],
+        [
+          { odId: "v1", approvedBookIds: ["A"] },
+          { odId: "v2", approvedBookIds: ["A"] },
+          { odId: "v3", approvedBookIds: ["B"] },
+        ],
+        []
+      );
+      expect(result.winner).toBe("A");
+      expect(result.rounds[0].bookSupport).toHaveLength(2);
+    });
+
+    it("should ignore approvals of unknown book IDs", () => {
+      const result = runHybridIRV(
+        ["A", "B"],
+        [
+          { odId: "v1", approvedBookIds: ["A", "ghost"] },
+          { odId: "v2", approvedBookIds: ["ghost"] },
+          { odId: "v3", approvedBookIds: ["B"] },
+          { odId: "v4", approvedBookIds: ["A"] },
+        ],
+        []
+      );
+
+      const round1 = result.rounds[0];
+      expect(round1.bookSupport.map((b) => b.bookId).sort()).toEqual([
+        "A",
+        "B",
+      ]);
+      // v2 only voted for an unknown book and is exhausted immediately
+      expect(round1.exhaustedVoters).toBe(1);
+      expect(round1.activeVoters).toBe(3);
+      expect(round1.majorityThreshold).toBe(2);
+      expect(result.winner).toBe("A");
+    });
+
+    it("should skip unknown book IDs in rankings and use the next valid choice", () => {
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [],
+        [
+          {
+            odId: "v1",
+            rankings: [
+              { bookId: "ghost", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+          { odId: "v2", rankings: [{ bookId: "B", rank: 1 }] },
+          { odId: "v3", rankings: [{ bookId: "A", rank: 1 }] },
+        ]
+      );
+
+      const support = result.rounds[0].bookSupport;
+      expect(support.find((b) => b.bookId === "B")?.support).toBe(2);
+      expect(support.find((b) => b.bookId === "ghost")).toBeUndefined();
+      expect(result.winner).toBe("B");
+    });
+
+    it("should exhaust a ranked voter whose rankings are all unknown", () => {
+      const result = runHybridIRV(
+        ["A", "B"],
+        [],
+        [
+          { odId: "v1", rankings: [{ bookId: "ghost", rank: 1 }] },
+          { odId: "v2", rankings: [{ bookId: "A", rank: 1 }] },
+        ]
+      );
+      expect(result.rounds[0].exhaustedVoters).toBe(1);
+      expect(result.rounds[0].activeVoters).toBe(1);
+      expect(result.winner).toBe("A");
+    });
+
+    it("should break duplicate ranks by candidate order, not ballot order", () => {
+      const forward: RankedBallot[] = [
+        {
+          odId: "v1",
+          rankings: [
+            { bookId: "A", rank: 1 },
+            { bookId: "B", rank: 1 },
+          ],
+        },
+      ];
+      const reversed: RankedBallot[] = [
+        {
+          odId: "v1",
+          rankings: [
+            { bookId: "B", rank: 1 },
+            { bookId: "A", rank: 1 },
+          ],
+        },
+      ];
+
+      const r1 = runHybridIRV(["A", "B"], [], forward);
+      const r2 = runHybridIRV(["A", "B"], [], reversed);
+
+      expect(r1.winner).toBe("A");
+      expect(r2.winner).toBe("A");
+      expect(r1).toEqual(r2);
+
+      // Candidate order decides, so listing B first flips the result
+      expect(runHybridIRV(["B", "A"], [], reversed).winner).toBe("B");
+    });
+
+    it("should count a book ranked twice only once, at its best rank", () => {
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [],
+        [
+          {
+            odId: "v1",
+            rankings: [
+              { bookId: "C", rank: 3 },
+              { bookId: "A", rank: 1 },
+              { bookId: "A", rank: 2 },
+            ],
+          },
+          { odId: "v2", rankings: [{ bookId: "B", rank: 1 }] },
+          { odId: "v3", rankings: [{ bookId: "B", rank: 1 }] },
+          { odId: "v4", rankings: [{ bookId: "C", rank: 1 }] },
+          { odId: "v5", rankings: [{ bookId: "C", rank: 1 }] },
+        ]
+      );
+
+      const round1 = result.rounds[0];
+      expect(round1.bookSupport.find((b) => b.bookId === "A")?.support).toBe(1);
+      expect(round1.eliminated).toEqual({
+        bookId: "A",
+        reason: "lowest_support",
+      });
+      // v1 transfers to C, their next distinct choice
+      expect(round1.transfers).toEqual([
+        { fromBookId: "A", toBookId: "C", count: 1 },
+      ]);
+      expect(result.winner).toBe("C");
     });
   });
 });
