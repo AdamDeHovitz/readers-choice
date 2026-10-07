@@ -340,6 +340,27 @@ export async function getBookById(
 }
 
 /**
+ * Work descriptions can be a string or an object with a value property
+ */
+function extractDescription(work: OpenLibraryWork): string | undefined {
+  const raw =
+    typeof work.description === "string"
+      ? work.description
+      : work.description?.value;
+  return normalizeApiText(raw) || undefined;
+}
+
+/**
+ * Fetch a work's description directly from Open Library
+ */
+export async function getWorkDescription(
+  workId: string
+): Promise<string | undefined> {
+  const work = await getWorkDetails(workId);
+  return work ? extractDescription(work) : undefined;
+}
+
+/**
  * Format Open Library response into our internal format
  */
 function formatOpenLibraryWork(
@@ -359,15 +380,7 @@ function formatOpenLibraryWork(
     ? `${OPEN_LIBRARY_COVERS}/${doc.cover_i}-M.jpg`
     : undefined;
 
-  // Get description (can be string or object with value property)
-  let description: string | undefined;
-  if (work?.description) {
-    if (typeof work.description === "string") {
-      description = normalizeApiText(work.description) || undefined;
-    } else if (work.description.value) {
-      description = normalizeApiText(work.description.value) || undefined;
-    }
-  }
+  const description = work ? extractDescription(work) : undefined;
 
   // Get ISBN from doc or edition
   const isbn = doc.isbn?.[0] || edition?.isbn_13?.[0] || edition?.isbn_10?.[0];

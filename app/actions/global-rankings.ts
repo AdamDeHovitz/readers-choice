@@ -1,5 +1,6 @@
 "use server";
 
+import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -12,6 +13,23 @@ const supabase = createClient(
     },
   }
 );
+
+/**
+ * Rankings are members' personal opinions, so only club members may read them
+ */
+async function isCurrentUserMember(bookClubId: string): Promise<boolean> {
+  const session = await auth();
+  if (!session?.user?.id) return false;
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("id")
+    .eq("book_club_id", bookClubId)
+    .eq("user_id", session.user.id)
+    .maybeSingle();
+
+  return !!member;
+}
 
 interface GlobalRankingBook {
   id: string;
@@ -35,6 +53,8 @@ export async function getGlobalRankings(
   bookClubId: string,
   year: number
 ): Promise<GlobalRankingBook[]> {
+  if (!(await isCurrentUserMember(bookClubId))) return [];
+
   try {
     // Get all personal rankings for this book club and year
     const { data: rankings, error: rankingsError } = await supabase
@@ -66,7 +86,10 @@ export async function getGlobalRankings(
     }
 
     // Group rankings by user to calculate Borda points
-    const userRankings = new Map<string, Array<{ bookId: string; rank: number }>>();
+    const userRankings = new Map<
+      string,
+      Array<{ bookId: string; rank: number }>
+    >();
 
     rankings.forEach((ranking) => {
       const userId = ranking.user_id;
@@ -83,12 +106,15 @@ export async function getGlobalRankings(
     });
 
     // Calculate Borda Count points for each book
-    const bookPoints = new Map<string, {
-      book: any;
-      totalPoints: number;
-      numberOfRankings: number;
-      totalRank: number; // Sum of ranks for average calculation
-    }>();
+    const bookPoints = new Map<
+      string,
+      {
+        book: any;
+        totalPoints: number;
+        numberOfRankings: number;
+        totalRank: number; // Sum of ranks for average calculation
+      }
+    >();
 
     userRankings.forEach((userBooks) => {
       const maxPoints = userBooks.length;
@@ -152,6 +178,8 @@ export async function getGlobalRankings(
 export async function getYearsWithRankings(
   bookClubId: string
 ): Promise<number[]> {
+  if (!(await isCurrentUserMember(bookClubId))) return [];
+
   try {
     const { data, error } = await supabase
       .from("personal_rankings")
@@ -187,6 +215,8 @@ export async function getIndividualBookRankings(
   bookId: string,
   year: number
 ): Promise<IndividualRanking[]> {
+  if (!(await isCurrentUserMember(bookClubId))) return [];
+
   try {
     // Get all rankings for this book with user information
     const { data: rankings, error: rankingsError } = await supabase

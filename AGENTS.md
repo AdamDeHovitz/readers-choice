@@ -39,6 +39,7 @@
 - 🔄 Unit & Integration Tests (Need expansion)
 - 🔄 Performance Optimization (Server Components, Image optimization)
 - 🔄 Mobile UX refinement
+- ✅ Security hardening (locked down `users` table, safe description sanitizer, auth checks on actions)
 - ✅ Per-nomination book metadata overrides (admin-editable descriptions and page counts on meeting voting pages)
 
 ## 4. Architecture & Key Files
@@ -53,6 +54,8 @@
 - `lib/`: Utilities.
   - `supabase/`: DB Clients.
 - `supabase/migrations/`: SQL Source of Truth.
+  - Filenames are `<14-digit version>_<name>.sql`, where the version matches the row in the live project's `supabase_migrations.schema_migrations`. Apply new migrations with Supabase MCP `apply_migration` (or `supabase db push`), then name the file with the version it recorded. Deploying app code does **not** run migrations.
+  - Server code uses the service-role key, which bypasses RLS, and NextAuth never sets `auth.uid()`. **Authorization is enforced in server actions**, not by RLS; every exported `"use server"` function is a public endpoint and must check the session and club membership itself.
 
 ### Key Routes
 

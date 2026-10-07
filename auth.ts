@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { verifyPassword } from "@/lib/password";
+import { normalizeEmail, verifyPassword } from "@/lib/password";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -33,7 +33,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const { data: user } = await supabase
           .from("users")
           .select("id, email, name, avatar_url, password_hash")
-          .eq("email", credentials.email)
+          .eq("email", normalizeEmail(credentials.email as string))
           .single();
 
         if (!user?.password_hash) return null;
@@ -77,30 +77,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           }
         );
 
-        // Check if user exists
+        const email = normalizeEmail(user.email);
+        const googleId = account?.providerAccountId;
+        if (!googleId) return false;
+
         const { data: existingUser } = await supabase
           .from("users")
-          .select("id")
-          .eq("email", user.email)
-          .single();
+          .select("id, google_id")
+          .eq("email", email)
+          .maybeSingle();
 
         if (!existingUser) {
-          // Create new user
-          await supabase.from("users").insert({
-            email: user.email,
+          const { error } = await supabase.from("users").insert({
+            email,
             name: user.name,
             avatar_url: user.image,
-            google_id: account?.providerAccountId || "",
+            google_id: googleId,
           });
+          if (error) throw error;
         } else {
-          // Update existing user
-          await supabase
+          // First Google sign-in for an account created with a password: Google
+          // has now proven ownership of the email, but the password was set
+          // without verification and may belong to someone who pre-registered
+          // this address. Drop it so only the verified owner keeps access.
+          const linking = existingUser.google_id
+            ? {}
+            : { google_id: googleId, password_hash: null };
+
+          const { error } = await supabase
             .from("users")
-            .update({
-              name: user.name,
-              avatar_url: user.image,
-            })
-            .eq("email", user.email);
+            .update({ name: user.name, avatar_url: user.image, ...linking })
+            .eq("id", existingUser.id);
+          if (error) throw error;
         }
 
         return true;
@@ -134,7 +142,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const { data: userData } = await supabase
           .from("users")
           .select("id")
-          .eq("email", user.email)
+          .eq("email", normalizeEmail(user.email))
           .single();
 
         if (userData) {
