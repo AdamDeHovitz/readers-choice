@@ -165,7 +165,7 @@ The application uses PostgreSQL with the following main tables:
 - **personal_rankings** - Personal year-based book rankings
 - **invite_links** - Shareable club invite codes
 
-See `database-schema.md` for an overview; `supabase/migrations/` is the source of truth.
+`supabase/migrations/` is the source of truth for the schema.
 
 ## 🤝 Contributing
 
@@ -193,7 +193,7 @@ Check out issues labeled `good first issue` to get started. The current issue li
 
 ### Development Guidelines
 
-- Follow the coding standards in `STYLE.md`
+- Follow the conventions in `AGENTS.md`
 - Adhere to the design system in `DESIGN_GUIDE.md`
 - Write clean, reusable code
 - Add comments for complex logic

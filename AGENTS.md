@@ -1,88 +1,32 @@
-# Readers' Choice - AI Agent Context
+# Readers' Choice
 
-## 1. Core Mandates
+Mobile-first book club app: clubs, meetings, book nominations and voting (approval + ranked-choice), themes, personal and club-wide year rankings. Next.js 16 App Router, React 19, strict TypeScript, Tailwind v4 + shadcn/ui, Supabase Postgres, NextAuth v5 (Google + email/password), deployed on Vercel.
 
-**CRITICAL**: You are working on a strict TypeScript project.
+## Commands
 
-1.  **Build First**: Before committing ANY code, you **MUST** run `npm run build`.
-2.  **No Broken Builds**: Never commit if the build fails. Fix all type errors and linting issues first.
-3.  **Context Maintenance**: Update this file (specifically "Current Status") when you complete features or change architecture.
+- `npm run test:run` (offline unit tests), `npm run lint`, `npx tsc --noEmit`. Run these and the build before committing.
+- `npm run build` needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; locally, dummy values work (as in CI): `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
+- `npm run test:integration` hits the live Open Library API; it's excluded from the default run.
 
-## 2. Project Overview
+## Security model
 
-**Readers' Choice** is a mobile-first book club management application.
+- All database access is server-side with the service-role key, which bypasses RLS. NextAuth never sets `auth.uid()`; the `anon`/`authenticated` roles have no grants and there are no RLS policies.
+- So authorization lives in server actions: every exported `"use server"` function is a public endpoint and must check the session and the caller's club membership/admin role itself (`authenticatedAction` in `lib/safe-action.ts`).
+- Multi-row writes (votes, rankings, admin changes) go through Postgres functions called with `supabase.rpc` so they're atomic.
+- Book descriptions are rendered as HTML only through `sanitizeDescription` (`lib/sanitize-description.ts`).
 
-- **Goal**: Help communities organize reading groups, vote on books/themes, and track history.
-- **Aesthetic**: Warm, literary, vintage book feel (Rust/Gold/Cream palette).
-- **Stack**: Next.js 16, React 19, TypeScript, Tailwind v4, shadcn/ui, Supabase (PostgreSQL, service-role access from server only), NextAuth.js v5.
+## Database migrations
 
-## 3. Current Status
+- There is one environment: production. Deploying code does not run migrations.
+- Apply with the Supabase MCP `apply_migration` tool, then name the file `supabase/migrations/<version>_<name>.sql` using the version it recorded (`list_migrations`).
+- A migration goes live before the code that uses it deploys, so it must work with the currently deployed code.
+- For schema questions, read the migrations or query the live database (`list_tables`, read-only `execute_sql`).
 
-### Phase 1: Foundation & Setup ✅ COMPLETED
+## UI
 
-- ✅ Next.js 16 with App Router & TypeScript
-- ✅ Tailwind CSS v4 + shadcn/ui
-- ✅ Database Schema (Users, Book Clubs, Members, Meetings, Books, Themes, Rankings)
-- ✅ Auth (NextAuth v5 + Google OAuth + email/password; authorization enforced in server actions)
+- Server Components by default; `"use client"` only when needed. No `any`.
+- Read `DESIGN_GUIDE.md` before UI work: palette tokens (rust/gold/cream/dark), `font-voga` headings, `font-inria` body. Show errors with `components/ui/alert.tsx`.
 
-### Phase 2: Core Features ✅ COMPLETED
+## Deploys
 
-- ✅ Book Club Creation & Member Management (Admin roles)
-- ✅ Meeting Management (Schedule, Themes, Voting)
-- ✅ Book Integration (Google Books API, Open Library)
-- ✅ Voting System (Books — approval + ranked-choice IRV — & Themes)
-- ✅ Ranking System (Personal drag-and-drop & Global Borda Count)
-- ✅ Invite Links & Public Join Flow
-
-### Phase 3: Refinement & Polish (Current Focus)
-
-- 🔄 Unit & Integration Tests (Need expansion)
-- 🔄 Performance Optimization (Server Components, Image optimization)
-- 🔄 Mobile UX refinement
-- ✅ Security hardening (locked down `users` table, safe description sanitizer, auth checks on actions)
-- ✅ Per-nomination book metadata overrides (admin-editable descriptions and page counts on meeting voting pages)
-
-## 4. Architecture & Key Files
-
-### Directory Structure
-
-- `app/`: Next.js App Router (Pages & Layouts).
-- `app/actions/`: Server Actions (Mutations). **Use these for DB writes.**
-- `components/`: UI Components.
-  - `ui/`: shadcn/ui primitives.
-  - `book-clubs/`, `meetings/`: Feature-specific components.
-- `lib/`: Utilities.
-  - `safe-action.ts`: `authenticatedAction` / `publicAction` wrappers (session check + service-role Supabase client).
-- `scripts/`: Maintenance scripts (`scripts/archive/` holds finished one-offs; don't re-run blindly).
-- `database-schema.md`: Schema overview (keep in sync when migrations change tables).
-- `supabase/migrations/`: SQL Source of Truth.
-  - Filenames are `<14-digit version>_<name>.sql`, where the version matches the row in the live project's `supabase_migrations.schema_migrations`. Apply new migrations with Supabase MCP `apply_migration` (or `supabase db push`), then name the file with the version it recorded. Deploying app code does **not** run migrations.
-  - Server code uses the service-role key, which bypasses RLS, and NextAuth never sets `auth.uid()`. **Authorization is enforced in server actions**, not by RLS; every exported `"use server"` function is a public endpoint and must check the session and club membership itself.
-
-### Key Routes
-
-- `/dashboard`: User's club list.
-- `/book-clubs/[id]`: Club hub (Members, Meetings).
-- `/book-clubs/[id]/rankings`: Personal Year Rankings.
-- `/book-clubs/[id]/global-rankings`: Community Favorites.
-
-## 5. Design & Style Guidelines
-
-_Refer to `STYLE.md` and `DESIGN_GUIDE.md` for full details._
-
-- **Visuals**: Use `font-voga` (headings) and `font-inria` (body).
-  - Primary: `bg-rust-600` (Buttons).
-  - Accent: `bg-gold-600` (Nav/Active).
-  - Background: `bg-cream-100`.
-- **Coding**:
-  - **Server Components** by default.
-  - **Server Actions** for all data mutations.
-  - **Strict Types**: No `any`. Define interfaces in `types/` or co-located if small.
-
-## 6. Development Workflow
-
-1.  **Analyze**: Read `README.md`, `project.md`, and this file.
-2.  **Plan**: Check `STYLE.md` for conventions.
-3.  **Implement**: Use `npm run dev` to test locally.
-4.  **Verify**: Run `npm run build` and `npm run lint`.
-5.  **Update**: If you implemented a new feature, mark it ✅ in "Current Status" above.
+Merging to `main` deploys to production (https://readers-choice.vercel.app). Vercel preview URLs are behind SSO.

@@ -13,6 +13,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Primary Colors
 
 #### Rust (Terracotta)
+
 - **Hex**: `#994636`
 - **Tailwind**: `rust`
 - **Usage**: Primary buttons, important headings, emphasis text, active states
@@ -24,6 +25,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
   - `rust-800`: Darkest for pressed states
 
 #### Gold
+
 - **Hex**: `#917730`
 - **Tailwind**: `gold`
 - **Usage**: Accent elements, navigation bars, status badges, highlights
@@ -35,6 +37,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
   - `gold-800`: Darkest for active states
 
 #### Cream
+
 - **Hex**: `#efecde`
 - **Tailwind**: `cream`
 - **Usage**: Page backgrounds, card backgrounds, light surfaces
@@ -44,6 +47,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
   - `cream-200`: Slightly darker for borders/contrast
 
 #### Dark
+
 - **Hex**: `#1d1a05`
 - **Tailwind**: `dark`
 - **Usage**: Primary text, navigation text, bold headings
@@ -55,16 +59,19 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Functional Colors
 
 #### Success/Complete
+
 - Use **Rust** (#994636) for completed states, finalized meetings, selected items
 - Replaces previous green usage
 
 #### Active/Voting
+
 - Use **Gold** (#917730) for active states, voting open, upcoming events
 - Replaces previous blue usage
 
 #### Error/Destructive
-- **Red**: `#dc2626` (Tailwind red-600)
-- Only for errors, destructive actions, and critical warnings
+
+- Use the `destructive` variant of `components/ui/alert.tsx` for error messages
+- Reserve red for errors, destructive actions, and critical warnings
 
 ---
 
@@ -73,6 +80,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Font Families
 
 #### Voga (Headlines)
+
 - **Usage**: Main page titles (h1, h2), hero headings, logo text
 - **Style**: Always CAPITALIZED
 - **Weight**: Regular (400)
@@ -80,12 +88,14 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 - **Example**: "BOOK CLUB", "GLOBAL RANKINGS"
 
 #### Inria Serif (Subheadings)
+
 - **Usage**: Section headings (h3, h4), card titles, dialog titles
 - **Weight**: Bold (700)
 - **Tailwind**: `font-inria`
 - **Example**: "Statistics", "Submissions", "Schedule"
 
 #### Inria Serif (Body)
+
 - **Usage**: Body text, descriptions, labels, buttons
 - **Weight**: Regular (400)
 - **Tailwind**: `font-inria`
@@ -94,17 +104,20 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Typography Scale
 
 #### Headings
+
 - **H1 (Hero)**: `text-5xl font-voga uppercase` - Main page titles
 - **H2 (Page Title)**: `text-3xl font-voga uppercase` - Section titles
 - **H3 (Card Title)**: `text-xl font-inria font-bold` - Card/section headings
 - **H4 (Subsection)**: `text-lg font-inria font-bold` - Smaller headings
 
 #### Body Text
+
 - **Large**: `text-base font-inria` - Important descriptions
 - **Regular**: `text-sm font-inria` - Standard body text
 - **Small**: `text-xs font-inria` - Meta information, timestamps
 
 #### Special Cases
+
 - **Button Text**: `text-sm font-inria font-medium`
 - **Badge Text**: `text-xs font-inria font-medium uppercase`
 - **Navigation**: `text-base font-inria font-bold`
@@ -116,6 +129,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Buttons
 
 #### Primary Button (Call-to-Action)
+
 - **Background**: `bg-rust-600`
 - **Text**: `text-cream-100`
 - **Hover**: `hover:bg-rust-700`
@@ -124,6 +138,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 - **Example**: "Nominate a Book", "Vote for a Book", "Join Book Club"
 
 #### Secondary Button (Accent)
+
 - **Background**: `bg-gold-600`
 - **Text**: `text-dark-900`
 - **Hover**: `hover:bg-gold-700`
@@ -131,12 +146,14 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 - **Typography**: `font-inria font-medium`
 
 #### Outline Button
+
 - **Background**: `bg-transparent`
 - **Border**: `border-2 border-rust-600`
 - **Text**: `text-rust-600`
 - **Hover**: `bg-rust-50`
 
 #### Ghost Button (Minimal)
+
 - **Background**: `bg-transparent`
 - **Text**: `text-dark-600`
 - **Hover**: `bg-cream-200`
@@ -144,6 +161,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Cards
 
 #### Default Card
+
 - **Background**: `bg-white`
 - **Border**: `border border-gold-600/20`
 - **Rounded**: `rounded-lg`
@@ -151,18 +169,21 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 - **Padding**: `p-6`
 
 #### Highlighted Card (Active/Selected)
+
 - **Background**: `bg-cream-100`
 - **Border**: `border-2 border-gold-600`
 
 ### Navigation
 
 #### Top Navigation Bar
+
 - **Background**: `bg-gold-600`
 - **Text**: `text-dark-900 font-inria font-bold`
 - **Border**: None or subtle `border-b border-gold-700`
 - **Height**: `h-16`
 
 #### Navigation Links
+
 - **Color**: `text-dark-900`
 - **Hover**: `text-dark-600`
 - **Active**: `text-rust-600 font-bold`
@@ -170,18 +191,21 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Badges
 
 #### Status Badge (Active/Voting Open)
+
 - **Background**: `bg-gold-600`
 - **Text**: `text-dark-900 text-xs font-medium uppercase`
 - **Padding**: `px-2 py-1`
 - **Rounded**: `rounded-full`
 
 #### Status Badge (Complete/Finalized)
+
 - **Background**: `bg-rust-600`
 - **Text**: `text-cream-100 text-xs font-medium uppercase`
 - **Padding**: `px-2 py-1`
 - **Rounded**: `rounded-full`
 
 #### Admin Badge
+
 - **Background**: `bg-gold-100`
 - **Text**: `text-gold-700 text-xs font-medium uppercase`
 - **Padding**: `px-2 py-1`
@@ -190,6 +214,7 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ### Form Elements
 
 #### Input Fields
+
 - **Background**: `bg-white`
 - **Border**: `border border-dark-900/20`
 - **Focus**: `focus:border-rust-600 focus:ring-rust-600`
@@ -197,24 +222,29 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 - **Placeholder**: `placeholder:text-dark-500`
 
 #### Labels
+
 - **Text**: `text-dark-900 font-inria font-medium text-sm`
 - **Margin**: `mb-2`
 
 ### Dialogs & Modals
 
 #### Overlay
+
 - **Background**: `bg-dark-900/50`
 
 #### Dialog Container
+
 - **Background**: `bg-cream-100`
 - **Border**: `border-2 border-gold-600`
 - **Rounded**: `rounded-lg`
 - **Shadow**: `shadow-xl`
 
 #### Dialog Title
+
 - **Typography**: `text-2xl font-inria font-bold text-dark-900`
 
 #### Dialog Description
+
 - **Typography**: `text-sm font-inria text-dark-600`
 
 ---
@@ -222,21 +252,25 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ## Layout Guidelines
 
 ### Page Background
+
 - **Main Background**: `bg-cream-100`
 - **Alternative**: `bg-cream-50` for subtle variation
 
 ### Spacing Scale
+
 - **Section Spacing**: `space-y-8` between major sections
 - **Card Spacing**: `space-y-4` between cards
 - **Element Spacing**: `gap-4` for flex/grid layouts
 - **Content Padding**: `p-6` for cards, `p-4` for smaller containers
 
 ### Borders
+
 - **Default**: `border border-gold-600/20`
 - **Emphasized**: `border-2 border-gold-600`
 - **Subtle**: `border border-dark-900/10`
 
 ### Shadows
+
 - **Subtle**: `shadow-sm`
 - **Card Hover**: `shadow-md`
 - **Dialog**: `shadow-xl`
@@ -246,11 +280,13 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ## Iconography
 
 ### Icon Colors
+
 - **Default**: `text-dark-600`
 - **Active/Emphasis**: `text-rust-600`
 - **Accent**: `text-gold-600`
 
 ### Icon Sizes
+
 - **Small**: `h-4 w-4`
 - **Medium**: `h-5 w-5`
 - **Large**: `h-6 w-6`
@@ -260,40 +296,41 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ## Usage Examples
 
 ### Page Title
+
 ```tsx
-<h1 className="text-5xl font-voga uppercase text-dark-900">
-  BOOK CLUB
-</h1>
+<h1 className="font-voga text-dark-900 text-5xl uppercase">BOOK CLUB</h1>
 ```
 
 ### Section Heading
+
 ```tsx
-<h3 className="text-xl font-inria font-bold text-dark-900">
-  Statistics
-</h3>
+<h3 className="font-inria text-dark-900 text-xl font-bold">Statistics</h3>
 ```
 
 ### Primary Button
+
 ```tsx
-<button className="bg-rust-600 text-cream-100 px-6 py-3 rounded-lg border-2 border-dark-900 font-inria font-medium hover:bg-rust-700">
+<button className="bg-rust-600 text-cream-100 border-dark-900 font-inria hover:bg-rust-700 rounded-lg border-2 px-6 py-3 font-medium">
   Nominate a Book
 </button>
 ```
 
 ### Status Badge
+
 ```tsx
-<span className="bg-gold-600 text-dark-900 px-2 py-1 rounded-full text-xs font-medium uppercase">
+<span className="bg-gold-600 text-dark-900 rounded-full px-2 py-1 text-xs font-medium uppercase">
   Voting Open
 </span>
 ```
 
 ### Card
+
 ```tsx
-<div className="bg-white border border-gold-600/20 rounded-lg shadow-sm p-6">
-  <h3 className="text-xl font-inria font-bold text-dark-900 mb-2">
+<div className="border-gold-600/20 rounded-lg border bg-white p-6 shadow-sm">
+  <h3 className="font-inria text-dark-900 mb-2 text-xl font-bold">
     Book Title
   </h3>
-  <p className="text-sm font-inria text-dark-600">
+  <p className="font-inria text-dark-600 text-sm">
     Description text goes here...
   </p>
 </div>
@@ -304,32 +341,18 @@ The design evokes a warm, literary aesthetic with earthy tones reminiscent of vi
 ## Accessibility
 
 ### Color Contrast
+
 - Ensure text on cream backgrounds meets WCAG AA standards
 - Primary text (#1d1a05) on cream (#efecde) provides excellent contrast
 - Button text (cream) on rust/gold backgrounds must be tested
 
 ### Focus States
+
 - All interactive elements must have visible focus indicators
 - Use `focus:ring-2 focus:ring-rust-600` for consistent focus styling
 
 ### Typography
+
 - Minimum font size: 12px (text-xs)
 - Body text: 14px (text-sm) for optimal readability
 - Line height: 1.5 for body text, 1.2 for headings
-
----
-
-## Migration Notes
-
-### From Old Design
-- Replace `slate-50` backgrounds → `cream-100`
-- Replace `slate-900` text → `dark-900`
-- Replace `blue-600` accents → `gold-600`
-- Replace `green-600` success → `rust-600`
-- Replace sans-serif font → `font-inria`
-- Add `font-voga uppercase` to main headings
-
-### Component Priority
-1. **High Priority**: Button, Card, Navigation, Dialog
-2. **Medium Priority**: Book cards, Meeting timeline, Badges
-3. **Low Priority**: Form elements, Icons, Utilities
