@@ -158,7 +158,6 @@ export default async function BookClubPage({
       />
 
       <BookDisplay
-        state={state}
         book={bookToDisplay}
         meeting={bookMeeting}
         label={bookLabel}

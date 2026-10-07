@@ -8,6 +8,7 @@ import { nominateBook } from "@/app/actions/nominations";
 import { useRouter } from "next/navigation";
 import type { BookSearchResult } from "@/lib/open-library";
 import { CheckCircle2 } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 interface ExistingNomination {
   id: string;
@@ -22,13 +23,11 @@ interface ExistingNomination {
 
 interface NominationFormProps {
   meetingId: string;
-  bookClubId: string;
   existingNominations: ExistingNomination[];
 }
 
 export function NominationForm({
   meetingId,
-  bookClubId,
   existingNominations,
 }: NominationFormProps) {
   const router = useRouter();
@@ -79,9 +78,9 @@ export function NominationForm({
 
   if (success) {
     return (
-      <div className="text-center py-8">
-        <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
-        <h3 className="text-xl font-bold text-dark-900 mb-2">
+      <div className="py-8 text-center">
+        <CheckCircle2 className="text-rust-600 mx-auto mb-4 h-16 w-16" />
+        <h3 className="text-dark-900 mb-2 text-xl font-bold">
           Book Nominated!
         </h3>
         <p className="text-dark-600">
@@ -95,7 +94,7 @@ export function NominationForm({
     <div className="space-y-6">
       {/* Book Search */}
       <div>
-        <h3 className="text-lg font-semibold text-dark-900 mb-3">
+        <h3 className="text-dark-900 mb-3 text-lg font-semibold">
           {existingNominations.length > 0
             ? "Nominate Another Book"
             : "Search and Nominate"}
@@ -109,7 +108,7 @@ export function NominationForm({
       {/* Already Nominated Books */}
       {existingNominations.length > 0 && (
         <div>
-          <h3 className="text-lg font-semibold text-dark-900 mb-3">
+          <h3 className="text-dark-900 mb-3 text-lg font-semibold">
             Already Nominated
           </h3>
           <div className="space-y-2">
@@ -128,8 +127,8 @@ export function NominationForm({
 
       {/* Selected Book Preview */}
       {selectedBook && (
-        <div className="border-t border-gold-200 pt-6">
-          <h3 className="text-lg font-semibold text-dark-900 mb-3">
+        <div className="border-gold-200 border-t pt-6">
+          <h3 className="text-dark-900 mb-3 text-lg font-semibold">
             Selected Book
           </h3>
           <BookCard
@@ -142,16 +141,16 @@ export function NominationForm({
           />
 
           {error && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
+            <Alert variant="destructive" className="mt-4">
+              {error}
+            </Alert>
           )}
 
           <div className="mt-4 flex gap-3">
             <Button
               onClick={handleNominate}
               disabled={isSubmitting}
-              className="flex-1 bg-rust-600 hover:bg-rust-700 text-cream-100"
+              className="bg-rust-600 hover:bg-rust-700 text-cream-100 flex-1"
             >
               {isSubmitting ? "Nominating..." : "Nominate This Book"}
             </Button>

@@ -13,8 +13,10 @@ export default defineConfig({
       ? ["**/*.integration.test.ts"]
       : ["**/*.test.ts", "**/*.test.tsx"],
     exclude: [
-      "node_modules",
+      "**/node_modules/**",
       ".next",
+      // Agent worktrees are full repo copies
+      ".claude/**",
       ...(integration ? [] : ["**/*.integration.test.ts"]),
     ],
     coverage: {

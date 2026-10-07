@@ -73,7 +73,7 @@ export function VotingMethodToggle({
         />
         <Label
           htmlFor="voting-method"
-          className={`cursor-pointer text-sm ${disabled ? "text-dark-400" : "text-dark-700"}`}
+          className={`cursor-pointer text-sm ${disabled ? "text-dark-500" : "text-dark-700"}`}
         >
           {isSwitching ? "Switching..." : "Ranked Choice"}
         </Label>
@@ -91,7 +91,7 @@ export function VotingMethodToggle({
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleCancel}
-                className="text-dark-600 hover:text-dark-800 px-3 py-1.5 text-sm"
+                className="text-dark-600 hover:text-dark-900 px-3 py-1.5 text-sm"
               >
                 Cancel
               </button>
@@ -107,7 +107,7 @@ export function VotingMethodToggle({
       )}
 
       {disabled && (
-        <p className="text-dark-400 mt-1 text-xs">Voting has closed</p>
+        <p className="text-dark-500 mt-1 text-xs">Voting has closed</p>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert } from "@/components/ui/alert";
 
 interface SuggestThemeDialogProps {
   bookClubId: string;
@@ -63,7 +64,7 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
       <DialogTrigger asChild>
         <Button>Suggest Theme</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px] max-h-[calc(100dvh-2rem)] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Suggest a Theme</DialogTitle>
           <DialogDescription>
@@ -85,13 +86,9 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
             />
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+          {error && <Alert variant="destructive">{error}</Alert>}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"

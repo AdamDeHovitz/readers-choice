@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/open-library";
+import { Alert } from "@/components/ui/alert";
 
 interface AddBookOptionDialogProps {
   meetingId: string;
@@ -63,7 +64,7 @@ export function AddBookOptionDialog({ meetingId }: AddBookOptionDialogProps) {
       <DialogTrigger asChild>
         <Button>Add Book Option</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Add Book Option</DialogTitle>
           <DialogDescription>
@@ -78,21 +79,17 @@ export function AddBookOptionDialog({ meetingId }: AddBookOptionDialogProps) {
           />
 
           {selectedBook && (
-            <div className="p-4 bg-gold-50 border border-gold-600 rounded-lg">
-              <p className="text-sm font-medium font-inria text-dark-900 mb-1">
+            <div className="bg-gold-50 border-gold-600 rounded-lg border p-4">
+              <p className="font-inria text-dark-900 mb-1 text-sm font-medium">
                 Selected: {selectedBook.title}
               </p>
-              <p className="text-sm text-gold-700">by {selectedBook.author}</p>
+              <p className="text-gold-700 text-sm">by {selectedBook.author}</p>
             </div>
           )}
 
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+          {error && <Alert variant="destructive">{error}</Alert>}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"

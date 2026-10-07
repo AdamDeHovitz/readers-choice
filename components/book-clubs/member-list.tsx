@@ -129,7 +129,7 @@ export function MemberList({
                   >
                     {member.isAdmin ? "Remove admin" : "Make admin"}
                   </button>
-                  <span className="text-xs text-slate-300">•</span>
+                  <span className="text-gold-300 text-xs">•</span>
                   <button
                     onClick={() => handleRemoveMember(member)}
                     disabled={isActioning}

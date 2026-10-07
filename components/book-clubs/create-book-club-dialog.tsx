@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createBookClub } from "@/app/actions/book-clubs";
+import { Alert } from "@/components/ui/alert";
 
 export function CreateBookClubDialog() {
   const [open, setOpen] = useState(false);
@@ -77,11 +78,7 @@ export function CreateBookClubDialog() {
               />
             </div>
 
-            {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-                {error}
-              </div>
-            )}
+            {error && <Alert variant="destructive">{error}</Alert>}
           </div>
 
           <DialogFooter>
