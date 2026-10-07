@@ -3,6 +3,10 @@
 import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { isVotingClosed, validateRankedBallot } from "@/lib/ballot-validation";
+import { dbErrorMessage } from "@/lib/db-errors";
+import { buildMeetingBallots, seedFromString } from "@/lib/meeting-ballots";
+import { runHybridIRV } from "@/lib/voting-algorithm";
 
 function getAdminClient() {
   return createSupabaseClient(
@@ -16,6 +20,8 @@ function getAdminClient() {
     }
   );
 }
+
+type AdminClient = ReturnType<typeof getAdminClient>;
 
 export interface EliminationRound {
   round: number;
@@ -109,8 +115,42 @@ export async function getUserRankedVotes(meetingId: string) {
 }
 
 /**
+ * Load a meeting and confirm the user may vote in it right now.
+ * Returns an error message, or null when voting is allowed.
+ * The database functions re-check this atomically; this pre-check returns
+ * precise errors before any write is attempted.
+ */
+async function checkCanVote(
+  supabase: AdminClient,
+  meetingId: string,
+  userId: string
+): Promise<string | null> {
+  const { data: meeting, error: meetingError } = await supabase
+    .from("meetings")
+    .select("book_club_id, is_finalized, voting_deadline")
+    .eq("id", meetingId)
+    .maybeSingle();
+
+  if (meetingError) throw meetingError;
+  if (!meeting) return "Meeting not found";
+  if (isVotingClosed(meeting)) return "Voting has closed";
+
+  const { data: member, error: memberError } = await supabase
+    .from("members")
+    .select("user_id")
+    .eq("book_club_id", meeting.book_club_id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (memberError) throw memberError;
+  if (!member) return "Only members can vote";
+
+  return null;
+}
+
+/**
  * Set user's voting method preference for a meeting
- * Clears existing votes when switching methods
+ * Clears votes cast with the other method when switching
  */
 export async function setVotingMethod(
   meetingId: string,
@@ -122,87 +162,27 @@ export async function setVotingMethod(
     return { error: "Unauthorized" };
   }
 
+  if (method !== "approval" && method !== "ranked") {
+    return { error: "Invalid voting method" };
+  }
+
   try {
     const supabase = getAdminClient();
 
-    // Verify user is a member and meeting is not finalized
-    const { data: meeting } = await supabase
-      .from("meetings")
-      .select("book_club_id, is_finalized")
-      .eq("id", meetingId)
-      .single();
+    const denied = await checkCanVote(supabase, meetingId, session.user.id);
+    if (denied) return { error: denied };
 
-    if (!meeting) {
-      return { error: "Meeting not found" };
+    const { error } = await supabase.rpc("set_meeting_voting_method", {
+      p_meeting_id: meetingId,
+      p_user_id: session.user.id,
+      p_method: method,
+    });
+
+    if (error) {
+      const message = dbErrorMessage(error);
+      if (message) return { error: message };
+      throw error;
     }
-
-    if (meeting.is_finalized) {
-      return { error: "Voting has closed" };
-    }
-
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return { error: "Only members can vote" };
-    }
-
-    // Get current preference to see if we're switching
-    const { data: currentPref } = await supabase
-      .from("meeting_voting_preferences")
-      .select("voting_method")
-      .eq("meeting_id", meetingId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    const currentMethod = currentPref?.voting_method;
-
-    // Clear existing votes when switching methods
-    if (currentMethod && currentMethod !== method) {
-      if (currentMethod === "approval") {
-        // Get book options for this meeting and delete user's approval votes
-        const { data: bookOptions } = await supabase
-          .from("book_options")
-          .select("id")
-          .eq("meeting_id", meetingId);
-
-        if (bookOptions && bookOptions.length > 0) {
-          await supabase
-            .from("votes")
-            .delete()
-            .eq("user_id", session.user.id)
-            .in(
-              "book_option_id",
-              bookOptions.map((bo) => bo.id)
-            );
-        }
-      } else {
-        // Delete user's ranked votes
-        await supabase
-          .from("meeting_ranked_votes")
-          .delete()
-          .eq("meeting_id", meetingId)
-          .eq("user_id", session.user.id);
-      }
-    }
-
-    // Upsert voting preference
-    const { error } = await supabase.from("meeting_voting_preferences").upsert(
-      {
-        meeting_id: meetingId,
-        user_id: session.user.id,
-        voting_method: method,
-      },
-      {
-        onConflict: "meeting_id,user_id",
-      }
-    );
-
-    if (error) throw error;
 
     revalidatePath(`/meetings/${meetingId}`);
     return { success: true };
@@ -213,7 +193,7 @@ export async function setVotingMethod(
 }
 
 /**
- * Save ranked choice votes for a meeting
+ * Save ranked choice votes for a meeting, replacing the user's ballot
  */
 export async function saveRankedVotes(
   meetingId: string,
@@ -225,67 +205,43 @@ export async function saveRankedVotes(
     return { error: "Unauthorized" };
   }
 
+  if (!Array.isArray(rankings)) {
+    return { error: "Invalid ballot" };
+  }
+
   try {
     const supabase = getAdminClient();
 
-    // Verify user is a member and meeting is not finalized
-    const { data: meeting } = await supabase
-      .from("meetings")
-      .select("book_club_id, is_finalized")
-      .eq("id", meetingId)
-      .single();
+    const denied = await checkCanVote(supabase, meetingId, session.user.id);
+    if (denied) return { error: denied };
 
-    if (!meeting) {
-      return { error: "Meeting not found" };
-    }
+    const { data: options, error: optionsError } = await supabase
+      .from("book_options")
+      .select("id")
+      .eq("meeting_id", meetingId);
 
-    if (meeting.is_finalized) {
-      return { error: "Voting has closed" };
-    }
+    if (optionsError) throw optionsError;
 
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return { error: "Only members can vote" };
-    }
-
-    // Delete existing ranked votes for this user/meeting
-    await supabase
-      .from("meeting_ranked_votes")
-      .delete()
-      .eq("meeting_id", meetingId)
-      .eq("user_id", session.user.id);
-
-    // Insert new ranked votes
-    if (rankings.length > 0) {
-      const { error } = await supabase.from("meeting_ranked_votes").insert(
-        rankings.map((r) => ({
-          meeting_id: meetingId,
-          user_id: session.user.id,
-          book_option_id: r.bookOptionId,
-          rank: r.rank,
-        }))
-      );
-
-      if (error) throw error;
-    }
-
-    // Ensure voting preference is set to ranked
-    await supabase.from("meeting_voting_preferences").upsert(
-      {
-        meeting_id: meetingId,
-        user_id: session.user.id,
-        voting_method: "ranked",
-      },
-      {
-        onConflict: "meeting_id,user_id",
-      }
+    const validation = validateRankedBallot(
+      rankings,
+      new Set((options ?? []).map((o) => o.id as string))
     );
+    if (!validation.ok) return { error: validation.error };
+
+    const { error } = await supabase.rpc("save_meeting_ranked_votes", {
+      p_meeting_id: meetingId,
+      p_user_id: session.user.id,
+      p_rankings: rankings.map((r) => ({
+        book_option_id: r.bookOptionId,
+        rank: r.rank,
+      })),
+    });
+
+    if (error) {
+      const message = dbErrorMessage(error);
+      if (message) return { error: message };
+      throw error;
+    }
 
     revalidatePath(`/meetings/${meetingId}`);
     return { success: true };
@@ -295,8 +251,24 @@ export async function saveRankedVotes(
   }
 }
 
+interface BookSummary {
+  id: string;
+  title: string;
+  author: string;
+  cover_url: string | null;
+}
+
+interface BookOptionWithBook {
+  id: string;
+  books: BookSummary | BookSummary[] | null;
+}
+
 /**
- * Calculate meeting voting results using Hybrid IRV algorithm
+ * Calculate meeting voting results using the Hybrid IRV algorithm.
+ *
+ * Only current members' ballots count, each in the pool matching the voter's
+ * voting preference. Random tie-breaks are seeded from the meeting ID so the
+ * outcome is stable across requests. With no ballots there is no winner.
  */
 export async function calculateMeetingResults(
   meetingId: string
@@ -310,26 +282,26 @@ export async function calculateMeetingResults(
   try {
     const supabase = getAdminClient();
 
-    // Verify user is a member
-    const { data: meeting } = await supabase
+    const { data: meeting, error: meetingError } = await supabase
       .from("meetings")
       .select("book_club_id")
       .eq("id", meetingId)
-      .single();
+      .maybeSingle();
 
+    if (meetingError) throw meetingError;
     if (!meeting) return null;
 
-    const { data: member } = await supabase
+    const { data: members, error: membersError } = await supabase
       .from("members")
       .select("user_id")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
+      .eq("book_club_id", meeting.book_club_id);
 
-    if (!member) return null;
+    if (membersError) throw membersError;
 
-    // Get all book options with details
-    const { data: bookOptions } = await supabase
+    const memberIds = new Set((members ?? []).map((m) => m.user_id as string));
+    if (!memberIds.has(session.user.id)) return null;
+
+    const { data: bookOptionRows, error: optionsError } = await supabase
       .from("book_options")
       .select(
         `
@@ -342,322 +314,117 @@ export async function calculateMeetingResults(
         )
       `
       )
-      .eq("meeting_id", meetingId);
+      .eq("meeting_id", meetingId)
+      .order("id", { ascending: true });
 
-    if (!bookOptions || bookOptions.length === 0) {
+    if (optionsError) throw optionsError;
+
+    const bookDetails = (
+      (bookOptionRows ?? []) as unknown as BookOptionWithBook[]
+    ).flatMap((bo) => {
+      const book = Array.isArray(bo.books) ? bo.books[0] : bo.books;
+      if (!book) return [];
+      return [
+        {
+          bookOptionId: bo.id,
+          bookId: book.id,
+          title: book.title,
+          author: book.author,
+          coverUrl: book.cover_url,
+        },
+      ];
+    });
+
+    if (bookDetails.length === 0) {
       return null;
     }
 
-    const bookDetails = bookOptions.map((bo: any) => ({
-      bookOptionId: bo.id,
-      bookId: bo.books.id,
-      title: bo.books.title,
-      author: bo.books.author,
-      coverUrl: bo.books.cover_url,
-    }));
+    const optionIds = bookDetails.map((b) => b.bookOptionId);
 
-    // Get approval votes (grouped by user)
-    const { data: approvalVotes } = await supabase
-      .from("votes")
-      .select("user_id, book_option_id")
-      .in(
-        "book_option_id",
-        bookOptions.map((bo: any) => bo.id)
-      );
+    const [approvalRes, rankedRes, prefsRes] = await Promise.all([
+      supabase
+        .from("votes")
+        .select("user_id, book_option_id")
+        .in("book_option_id", optionIds),
+      supabase
+        .from("meeting_ranked_votes")
+        .select("user_id, book_option_id, rank")
+        .eq("meeting_id", meetingId),
+      supabase
+        .from("meeting_voting_preferences")
+        .select("user_id, voting_method")
+        .eq("meeting_id", meetingId),
+    ]);
 
-    // Get ranked votes (grouped by user)
-    const { data: rankedVotes } = await supabase
-      .from("meeting_ranked_votes")
-      .select("user_id, book_option_id, rank")
-      .eq("meeting_id", meetingId)
-      .order("rank", { ascending: true });
+    if (approvalRes.error) throw approvalRes.error;
+    if (rankedRes.error) throw rankedRes.error;
+    if (prefsRes.error) throw prefsRes.error;
 
-    // Get voting preferences
-    const { data: votingPrefs } = await supabase
-      .from("meeting_voting_preferences")
-      .select("user_id, voting_method")
-      .eq("meeting_id", meetingId);
-
-    // Build voter data structures
-    const approvalByUser: Record<string, string[]> = {};
-    const rankedByUser: Record<
-      string,
-      { bookOptionId: string; rank: number }[]
-    > = {};
-    const userMethod: Record<string, "approval" | "ranked"> = {};
-
-    // Process voting preferences
-    votingPrefs?.forEach((pref) => {
-      userMethod[pref.user_id] = pref.voting_method as "approval" | "ranked";
+    const { approvalBallots, rankedBallots } = buildMeetingBallots({
+      approvalVotes: approvalRes.data ?? [],
+      rankedVotes: rankedRes.data ?? [],
+      preferences: prefsRes.data ?? [],
+      memberIds,
     });
 
-    // Process approval votes
-    approvalVotes?.forEach((vote) => {
-      // Only count if user is using approval method (or has no preference set)
-      if (userMethod[vote.user_id] !== "ranked") {
-        if (!approvalByUser[vote.user_id]) {
-          approvalByUser[vote.user_id] = [];
-        }
-        approvalByUser[vote.user_id].push(vote.book_option_id);
-        if (!userMethod[vote.user_id]) {
-          userMethod[vote.user_id] = "approval";
-        }
-      }
-    });
+    if (approvalBallots.length === 0 && rankedBallots.length === 0) {
+      return {
+        winner: null,
+        rounds: [],
+        voterBreakdown: { approvalVoters: 0, rankedVoters: 0, totalVoters: 0 },
+        bookDetails,
+      };
+    }
 
-    // Process ranked votes
-    rankedVotes?.forEach((vote) => {
-      if (!rankedByUser[vote.user_id]) {
-        rankedByUser[vote.user_id] = [];
-      }
-      rankedByUser[vote.user_id].push({
-        bookOptionId: vote.book_option_id,
-        rank: vote.rank,
-      });
-      userMethod[vote.user_id] = "ranked";
-    });
+    const result = runHybridIRV(
+      optionIds,
+      approvalBallots,
+      rankedBallots,
+      seedFromString(meetingId)
+    );
 
-    const approvalVoterCount = Object.keys(approvalByUser).length;
-    const rankedVoterCount = Object.keys(rankedByUser).length;
-    const totalVoters = new Set([
-      ...Object.keys(approvalByUser),
-      ...Object.keys(rankedByUser),
-    ]).size;
-
-    // Run IRV algorithm
-    const rounds: EliminationRound[] = [];
-    const eliminatedBooks = new Set<string>();
-    const exhaustedUsers = new Set<string>();
-    let roundNumber = 0;
-    let winner: string | null = null;
-
-    const activeBookIds = new Set(bookOptions.map((bo: any) => bo.id));
-
-    while (activeBookIds.size > 1 && !winner) {
-      roundNumber++;
-
-      // Calculate support for each active book
-      const bookSupport: Record<
-        string,
-        { support: number; firstChoiceVotes: number }
-      > = {};
-      activeBookIds.forEach((id) => {
-        bookSupport[id] = { support: 0, firstChoiceVotes: 0 };
-      });
-
-      // Count approval votes (each approved book that's still active gets support)
-      Object.entries(approvalByUser).forEach(([userId, approvedBooks]) => {
-        if (exhaustedUsers.has(userId)) return;
-
-        const activeApproved = approvedBooks.filter((bid) =>
-          activeBookIds.has(bid)
-        );
-        if (activeApproved.length === 0) {
-          exhaustedUsers.add(userId);
-          return;
-        }
-
-        // Each active approved book gets +1 support
-        activeApproved.forEach((bid) => {
-          bookSupport[bid].support++;
-          // For approval votes, all are "first choice" equally
-          bookSupport[bid].firstChoiceVotes++;
-        });
-      });
-
-      // Count ranked votes (only top remaining choice gets support)
-      Object.entries(rankedByUser).forEach(([userId, rankings]) => {
-        if (exhaustedUsers.has(userId)) return;
-
-        // Find top remaining choice
-        const sortedRankings = rankings
-          .filter((r) => activeBookIds.has(r.bookOptionId))
-          .sort((a, b) => a.rank - b.rank);
-
-        if (sortedRankings.length === 0) {
-          exhaustedUsers.add(userId);
-          return;
-        }
-
-        const topChoice = sortedRankings[0].bookOptionId;
-        bookSupport[topChoice].support++;
-        bookSupport[topChoice].firstChoiceVotes++;
-      });
-
-      // Calculate majority threshold (>50% of non-exhausted voters)
-      const activeVoters = totalVoters - exhaustedUsers.size;
-      const majorityThreshold = Math.floor(activeVoters / 2) + 1;
-
-      // Check for winner
-      const supportArray = Object.entries(bookSupport).map(([id, s]) => ({
-        bookOptionId: id,
+    const rounds: EliminationRound[] = result.rounds.map((r) => ({
+      round: r.round,
+      bookSupport: r.bookSupport.map((s) => ({
+        bookOptionId: s.bookId,
         support: s.support,
         firstChoiceVotes: s.firstChoiceVotes,
-      }));
+      })),
+      eliminated: r.eliminated
+        ? { bookOptionId: r.eliminated.bookId, reason: r.eliminated.reason }
+        : null,
+      transfers: r.transfers.map((t) => ({
+        fromBookOptionId: t.fromBookId,
+        toBookOptionId: t.toBookId,
+        count: t.count,
+      })),
+      exhaustedVoters: r.exhaustedVoters,
+      activeVoters: r.activeVoters,
+      majorityThreshold: r.majorityThreshold,
+      winner: r.winner,
+    }));
 
-      supportArray.sort((a, b) => b.support - a.support);
-
-      const round: EliminationRound = {
-        round: roundNumber,
-        bookSupport: supportArray,
-        eliminated: null,
-        transfers: [],
-        exhaustedVoters: exhaustedUsers.size,
-        activeVoters,
-        majorityThreshold,
-        winner: null,
-      };
-
-      // Check if leader has majority
-      if (supportArray[0].support >= majorityThreshold) {
-        winner = supportArray[0].bookOptionId;
-        round.winner = winner;
-        rounds.push(round);
-        break;
-      }
-
-      // No majority - eliminate lowest support book
-      const lowestSupport = supportArray[supportArray.length - 1].support;
-      const tiedForLowest = supportArray.filter(
-        (s) => s.support === lowestSupport
-      );
-
-      let toEliminate: string;
-      let eliminationReason:
-        | "lowest_support"
-        | "tiebreaker_first_choice"
-        | "tiebreaker_approval"
-        | "tiebreaker_random" = "lowest_support";
-
-      if (tiedForLowest.length === 1) {
-        toEliminate = tiedForLowest[0].bookOptionId;
-      } else {
-        // Tiebreaker 1: Fewest first-choice votes
-        const minFirstChoice = Math.min(
-          ...tiedForLowest.map((t) => t.firstChoiceVotes)
-        );
-        const tiedByFirstChoice = tiedForLowest.filter(
-          (t) => t.firstChoiceVotes === minFirstChoice
-        );
-
-        if (tiedByFirstChoice.length === 1) {
-          toEliminate = tiedByFirstChoice[0].bookOptionId;
-          eliminationReason = "tiebreaker_first_choice";
-        } else {
-          // Tiebreaker 2: Fewest total approval votes (across all rounds)
-          const approvalCounts: Record<string, number> = {};
-          tiedByFirstChoice.forEach((t) => {
-            approvalCounts[t.bookOptionId] = 0;
-          });
-
-          Object.values(approvalByUser).forEach((approvedBooks) => {
-            approvedBooks.forEach((bid) => {
-              if (approvalCounts[bid] !== undefined) {
-                approvalCounts[bid]++;
-              }
-            });
-          });
-
-          const minApproval = Math.min(...Object.values(approvalCounts));
-          const tiedByApproval = tiedByFirstChoice.filter(
-            (t) => approvalCounts[t.bookOptionId] === minApproval
-          );
-
-          if (tiedByApproval.length === 1) {
-            toEliminate = tiedByApproval[0].bookOptionId;
-            eliminationReason = "tiebreaker_approval";
-          } else {
-            // Tiebreaker 3: Random
-            toEliminate =
-              tiedByApproval[Math.floor(Math.random() * tiedByApproval.length)]
-                .bookOptionId;
-            eliminationReason = "tiebreaker_random";
-          }
-        }
-      }
-
-      // Record transfers from ranked voters
-      const transfers: EliminationRound["transfers"] = [];
-      Object.entries(rankedByUser).forEach(([userId, rankings]) => {
-        if (exhaustedUsers.has(userId)) return;
-
-        const sortedRankings = rankings
-          .filter((r) => activeBookIds.has(r.bookOptionId))
-          .sort((a, b) => a.rank - b.rank);
-
-        if (
-          sortedRankings.length > 0 &&
-          sortedRankings[0].bookOptionId === toEliminate
-        ) {
-          // This voter's top choice is being eliminated
-          const nextChoice = sortedRankings.find(
-            (r) =>
-              r.bookOptionId !== toEliminate &&
-              activeBookIds.has(r.bookOptionId)
-          );
-
-          if (nextChoice) {
-            const existingTransfer = transfers.find(
-              (t) =>
-                t.fromBookOptionId === toEliminate &&
-                t.toBookOptionId === nextChoice.bookOptionId
-            );
-            if (existingTransfer) {
-              existingTransfer.count++;
-            } else {
-              transfers.push({
-                fromBookOptionId: toEliminate,
-                toBookOptionId: nextChoice.bookOptionId,
-                count: 1,
-              });
-            }
-          }
-        }
-      });
-
-      round.eliminated = {
-        bookOptionId: toEliminate,
-        reason: eliminationReason,
-      };
-      round.transfers = transfers;
-      rounds.push(round);
-
-      // Remove eliminated book
-      activeBookIds.delete(toEliminate);
-      eliminatedBooks.add(toEliminate);
-    }
-
-    // If only one book left, it wins by default
-    if (!winner && activeBookIds.size === 1) {
-      winner = Array.from(activeBookIds)[0];
-      // Add final round showing the winner
-      if (rounds.length > 0 && !rounds[rounds.length - 1].winner) {
-        rounds[rounds.length - 1].winner = winner;
-      }
-    }
-
-    const winnerBook = winner
-      ? bookDetails.find((b) => b.bookOptionId === winner)
-      : null;
-    const winningRound = rounds.find((r) => r.winner === winner);
+    const winnerId = result.winner;
+    const winnerBook = winnerId
+      ? bookDetails.find((b) => b.bookOptionId === winnerId)
+      : undefined;
+    const winningRound = rounds.find((r) => r.winner === winnerId);
 
     return {
-      winner: winnerBook
-        ? {
-            bookOptionId: winner!,
-            bookTitle: winnerBook.title,
-            finalSupport:
-              winningRound?.bookSupport.find((s) => s.bookOptionId === winner)
-                ?.support || 0,
-            wonInRound: winningRound?.round || rounds.length,
-          }
-        : null,
+      winner:
+        winnerId && winnerBook
+          ? {
+              bookOptionId: winnerId,
+              bookTitle: winnerBook.title,
+              finalSupport:
+                winningRound?.bookSupport.find(
+                  (s) => s.bookOptionId === winnerId
+                )?.support ?? 0,
+              wonInRound: winningRound?.round ?? rounds.length,
+            }
+          : null,
       rounds,
-      voterBreakdown: {
-        approvalVoters: approvalVoterCount,
-        rankedVoters: rankedVoterCount,
-        totalVoters,
-      },
+      voterBreakdown: result.voterBreakdown,
       bookDetails,
     };
   } catch (error) {

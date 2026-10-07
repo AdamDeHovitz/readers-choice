@@ -2,6 +2,7 @@
 
 import { authenticatedAction, publicAction } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
+import { dbErrorMessage } from "@/lib/db-errors";
 
 // Type definitions
 interface BookClub {
@@ -182,27 +183,14 @@ export async function toggleMemberAdmin(
       throw new Error("Only admins can manage member roles");
     }
 
-    // Can't demote yourself if you're the only admin
-    if (userId === session.user.id && !isAdmin) {
-      const { data: adminCount } = await supabase
-        .from("members")
-        .select("user_id", { count: "exact" })
-        .eq("book_club_id", bookClubId)
-        .eq("is_admin", true);
+    // Update atomically; the DB refuses to demote the club's last admin
+    const { error } = await supabase.rpc("set_member_admin", {
+      p_book_club_id: bookClubId,
+      p_user_id: userId,
+      p_is_admin: isAdmin,
+    });
 
-      if ((adminCount?.length || 0) <= 1) {
-        throw new Error("Cannot remove the last admin");
-      }
-    }
-
-    // Update member admin status
-    const { error } = await supabase
-      .from("members")
-      .update({ is_admin: isAdmin })
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", userId);
-
-    if (error) throw error;
+    if (error) throw new Error(dbErrorMessage(error) ?? error.message);
     return { success: true };
   });
 
@@ -231,27 +219,13 @@ export async function removeMember(bookClubId: string, userId: string) {
       throw new Error("Only admins can remove other members");
     }
 
-    // If removing yourself as admin, check you're not the last admin
-    if (isSelfRemoval && isAdmin) {
-      const { data: adminCount } = await supabase
-        .from("members")
-        .select("user_id", { count: "exact" })
-        .eq("book_club_id", bookClubId)
-        .eq("is_admin", true);
+    // Remove atomically; the DB refuses to remove the club's last admin
+    const { error } = await supabase.rpc("remove_club_member", {
+      p_book_club_id: bookClubId,
+      p_user_id: userId,
+    });
 
-      if ((adminCount?.length || 0) <= 1) {
-        throw new Error("Cannot remove the last admin");
-      }
-    }
-
-    // Remove member
-    const { error } = await supabase
-      .from("members")
-      .delete()
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", userId);
-
-    if (error) throw error;
+    if (error) throw new Error(dbErrorMessage(error) ?? error.message);
     return { success: true };
   });
 

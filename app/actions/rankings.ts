@@ -3,6 +3,9 @@
 import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { validateYearRankings } from "@/lib/ballot-validation";
+import { dbErrorMessage } from "@/lib/db-errors";
+import { getUtcYear, getUtcYearRange } from "@/lib/utc-year";
 
 /**
  * Get all years that have finalized meetings for a book club
@@ -52,8 +55,7 @@ export async function getBookClubYears(bookClubId: string) {
     // Extract unique years
     const years = new Set<number>();
     meetings?.forEach((meeting) => {
-      const year = new Date(meeting.meeting_date).getFullYear();
-      years.add(year);
+      years.add(getUtcYear(meeting.meeting_date));
     });
 
     return Array.from(years).sort((a, b) => b - a); // Most recent first
@@ -97,9 +99,8 @@ export async function getYearBooks(bookClubId: string, year: number) {
       return [];
     }
 
-    // Get finalized meetings for the year with books
-    const startDate = new Date(year, 0, 1).toISOString();
-    const endDate = new Date(year, 11, 31, 23, 59, 59).toISOString();
+    // Get finalized meetings for the year (UTC) with books
+    const { start, end } = getUtcYearRange(year);
 
     const { data: meetings, error: meetingsError } = await supabase
       .from("meetings")
@@ -120,8 +121,8 @@ export async function getYearBooks(bookClubId: string, year: number) {
       .eq("book_club_id", bookClubId)
       .eq("is_finalized", true)
       .not("selected_book_id", "is", null)
-      .gte("meeting_date", startDate)
-      .lte("meeting_date", endDate)
+      .gte("meeting_date", start)
+      .lt("meeting_date", end)
       .order("meeting_date", { ascending: true });
 
     if (meetingsError) throw meetingsError;
@@ -177,7 +178,10 @@ export async function getYearBooks(bookClubId: string, year: number) {
 }
 
 /**
- * Save user's rankings for a year
+ * Save user's rankings for a year, replacing any previous rankings.
+ *
+ * Ranks must be exactly 1..N, a book can't be both ranked and unread, and
+ * every book must be a finalized pick of this club in that (UTC) year.
  */
 export async function saveYearRankings(
   bookClubId: string,
@@ -189,6 +193,14 @@ export async function saveYearRankings(
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
+  }
+
+  if (
+    !Number.isInteger(year) ||
+    !Array.isArray(rankedBooks) ||
+    !Array.isArray(unreadBooks)
+  ) {
+    return { error: "Invalid rankings" };
   }
 
   try {
@@ -204,51 +216,57 @@ export async function saveYearRankings(
     );
 
     // Check if user is a member
-    const { data: member } = await supabase
+    const { data: member, error: memberError } = await supabase
       .from("members")
       .select("user_id")
       .eq("book_club_id", bookClubId)
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
+
+    if (memberError) throw memberError;
 
     if (!member) {
       return { error: "You must be a member to save rankings" };
     }
 
-    // Delete all existing rankings for this user, book club, and year
-    await supabase
-      .from("personal_rankings")
-      .delete()
-      .eq("user_id", session.user.id)
+    // Books eligible for this year: the club's finalized picks
+    const { start, end } = getUtcYearRange(year);
+    const { data: meetings, error: meetingsError } = await supabase
+      .from("meetings")
+      .select("selected_book_id")
       .eq("book_club_id", bookClubId)
-      .eq("year", year);
+      .eq("is_finalized", true)
+      .not("selected_book_id", "is", null)
+      .gte("meeting_date", start)
+      .lt("meeting_date", end);
 
-    // Insert new rankings
-    const rankingsToInsert = [
-      // Ranked books
-      ...rankedBooks.map((rb) => ({
-        user_id: session.user.id,
-        book_club_id: bookClubId,
+    if (meetingsError) throw meetingsError;
+
+    const validation = validateYearRankings(
+      rankedBooks,
+      unreadBooks,
+      new Set((meetings ?? []).map((m) => m.selected_book_id as string))
+    );
+    if (!validation.ok) {
+      return { error: validation.error };
+    }
+
+    // Replace the user's rankings for the year in one transaction
+    const { error: saveError } = await supabase.rpc("save_year_rankings", {
+      p_user_id: session.user.id,
+      p_book_club_id: bookClubId,
+      p_year: year,
+      p_ranked: rankedBooks.map((rb) => ({
         book_id: rb.bookId,
-        year,
         rank: rb.rank,
       })),
-      // Unread books (rank = null)
-      ...unreadBooks.map((bookId) => ({
-        user_id: session.user.id,
-        book_club_id: bookClubId,
-        book_id: bookId,
-        year,
-        rank: null,
-      })),
-    ];
+      p_unread: unreadBooks,
+    });
 
-    if (rankingsToInsert.length > 0) {
-      const { error: insertError } = await supabase
-        .from("personal_rankings")
-        .insert(rankingsToInsert);
-
-      if (insertError) throw insertError;
+    if (saveError) {
+      const message = dbErrorMessage(saveError);
+      if (message) return { error: message };
+      throw saveError;
     }
 
     revalidatePath(`/book-clubs/${bookClubId}/rankings`);
