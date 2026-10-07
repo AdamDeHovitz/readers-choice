@@ -6,7 +6,6 @@
  */
 
 const ALLOWED_TAGS = ["p", "br", "i", "b", "em", "strong"];
-const ALLOWED_ATTRIBUTES: string[] = [];
 
 /**
  * Decodes HTML entities like &quot; &apos; &#x2019; etc.
@@ -14,6 +13,7 @@ const ALLOWED_ATTRIBUTES: string[] = [];
  *
  * Note: Uses consistent logic on both server and client to avoid hydration errors
  * Note: Character encoding (mojibake) is now fixed at the source in normalize-text.ts
+ * Note: &amp; is decoded last so "&amp;lt;" becomes the text "&lt;", not "<"
  */
 function decodeHtmlEntities(text: string): string {
   return text
@@ -26,7 +26,6 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&#x201D;/g, '"')
     .replace(/&#8220;/g, '"')
     .replace(/&#8221;/g, '"')
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&nbsp;/g, " ")
@@ -36,60 +35,54 @@ function decodeHtmlEntities(text: string): string {
     .replace(/&lsquo;/g, "'")
     .replace(/&rdquo;/g, '"')
     .replace(/&ldquo;/g, '"')
-    .replace(/&hellip;/g, "…");
+    .replace(/&hellip;/g, "…")
+    .replace(/&amp;/g, "&");
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// Matches an escaped allowed tag, e.g. "&lt;p class=&quot;x&quot;&gt;" or "&lt;br/&gt;".
+// Attributes are matched only so they can be dropped.
+const ESCAPED_ALLOWED_TAG = new RegExp(
+  `&lt;(/?)(${ALLOWED_TAGS.join("|")})(?:\\s(?:(?!&gt;)[\\s\\S])*?)?/?&gt;`,
+  "gi"
+);
+
 /**
- * Sanitizes HTML by removing all tags except allowed ones
- * This prevents XSS while preserving basic formatting
+ * Sanitizes HTML by escaping everything, then restoring only bare allowed tags.
+ * Safe by construction: the only "<" in the output come from the replacement
+ * below, which emits attribute-free allowlisted tags. Disallowed markup is
+ * rendered as visible text rather than parsed.
  */
 function sanitizeHtml(html: string): string {
-  // Remove all tags except allowed ones
-  let sanitized = html;
+  // Drop script/style blocks so their contents don't show up as text
+  const withoutBlocks = decodeHtmlEntities(html)
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, "")
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, "");
 
-  // First, decode HTML entities
-  sanitized = decodeHtmlEntities(sanitized);
-
-  // Remove script and style tags entirely (including content)
-  sanitized = sanitized.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
-  sanitized = sanitized.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
-
-  // Remove event handlers and javascript: links
-  sanitized = sanitized.replace(/on\w+\s*=\s*["'][^"']*["']/gi, "");
-  sanitized = sanitized.replace(/href\s*=\s*["']javascript:[^"']*["']/gi, "");
-
-  // Remove all tags except allowed ones
-  sanitized = sanitized.replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (match, tag) => {
-    const tagName = tag.toLowerCase();
-
-    // If it's an allowed tag
-    if (ALLOWED_TAGS.includes(tagName)) {
-      // For self-closing tags like <br>
-      if (tagName === "br") {
-        return "<br>";
-      }
-
-      // For other tags, check if it's closing or opening
-      if (match.startsWith("</")) {
-        return `</${tagName}>`;
-      }
-
-      // Opening tag - remove all attributes for now (can be enhanced later)
-      return `<${tagName}>`;
-    }
-
-    // Remove disallowed tags
-    return "";
-  });
-
-  return sanitized.trim();
+  return escapeHtml(withoutBlocks)
+    .replace(ESCAPED_ALLOWED_TAG, (_match, slash: string, tag: string) => {
+      const tagName = tag.toLowerCase();
+      if (tagName === "br") return "<br>";
+      return `<${slash}${tagName}>`;
+    })
+    .trim();
 }
 
 /**
  * Main export: sanitizes and decodes a book description for safe rendering
  * Can be used with dangerouslySetInnerHTML
  */
-export function sanitizeDescription(description: string | null | undefined): string {
+export function sanitizeDescription(
+  description: string | null | undefined
+): string {
   if (!description) return "";
   return sanitizeHtml(description);
 }

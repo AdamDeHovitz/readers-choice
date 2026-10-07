@@ -56,10 +56,7 @@ export default async function JoinPage({
   }
 
   // Check if user is already a member
-  const isMember = await checkMembership(
-    inviteDetails.bookClubId,
-    session.user.id!
-  );
+  const isMember = await checkMembership(inviteDetails.bookClubId);
   if (isMember) {
     // User is already a member, redirect to the book club
     redirect(`/book-clubs/${inviteDetails.bookClubId}`);

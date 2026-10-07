@@ -145,7 +145,8 @@ export async function getBookClubDetails(bookClubId: string) {
           return {
             id: user.id,
             name: user.name,
-            email: user.email,
+            // Clubs are publicly browsable; contact details are for members only
+            email: currentUserMember ? user.email : null,
             avatarUrl: user.avatar_url,
             isAdmin: m.is_admin,
             joinedAt: m.joined_at,

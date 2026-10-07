@@ -102,9 +102,13 @@ export async function createInviteLink(bookClubId: string) {
 }
 
 /**
- * Check if user is already a member of a book club
+ * Check if the current user is already a member of a book club
  */
-export async function checkMembership(bookClubId: string, userId: string) {
+export async function checkMembership(bookClubId: string) {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return false;
+
   try {
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -169,10 +173,7 @@ export async function getInviteLinkDetails(code: string) {
     }
 
     // Check if expired
-    if (
-      inviteLink.expires_at &&
-      new Date(inviteLink.expires_at) < new Date()
-    ) {
+    if (inviteLink.expires_at && new Date(inviteLink.expires_at) < new Date()) {
       return null;
     }
 
