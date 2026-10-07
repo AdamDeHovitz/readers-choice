@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 interface EditDescriptionDialogProps {
   bookClubId: string;
@@ -51,7 +52,7 @@ export function EditDescriptionDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          <PencilIcon className="h-4 w-4 mr-2" />
+          <PencilIcon className="mr-2 h-4 w-4" />
           Edit
         </Button>
       </DialogTrigger>
@@ -73,11 +74,7 @@ export function EditDescriptionDialog({
           />
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-3">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <Alert variant="destructive">{error}</Alert>}
 
         <DialogFooter>
           <Button

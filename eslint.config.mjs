@@ -40,6 +40,7 @@ export default [
       "public/**",
       "coverage/**",
       "scripts/**",
+      ".claude/**",
     ],
   },
 ];

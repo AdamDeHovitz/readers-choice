@@ -12,296 +12,29 @@ import {
   DragOverEvent,
   DragOverlay,
   DragStartEvent,
-  useDroppable,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { saveRankedVotes } from "@/app/actions/meeting-voting";
-import { Button } from "@/components/ui/button";
-import { GripVertical } from "lucide-react";
-import Image from "next/image";
-import { sanitizeDescription } from "@/lib/sanitize-description";
-import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
-
-interface BookOption {
-  id: string;
-  book: {
-    id: string;
-    title: string;
-    author: string;
-    coverUrl: string | null;
-    description: string | null;
-    pageCount: number | null;
-    publishedYear: number | null;
-  };
-}
+import { Alert } from "@/components/ui/alert";
+import {
+  BookDragOverlay,
+  DroppableRankedZone,
+  RANKED_ZONE_ID,
+  SortableRankedBookItem,
+  SortableUnrankedBookItem,
+} from "./ranked-voting-items";
+import type { MeetingBookOption } from "./types";
 
 interface MeetingRankedVotingProps {
   meetingId: string;
-  bookOptions: BookOption[];
+  bookOptions: MeetingBookOption[];
   initialRankings: { bookOptionId: string; rank: number }[];
   currentUserIsAdmin: boolean;
-}
-
-function SortableBookItem({
-  bookOption,
-  rank,
-  onRemove,
-  currentUserIsAdmin,
-}: {
-  bookOption: BookOption;
-  rank: number;
-  onRemove: (id: string) => void;
-  currentUserIsAdmin: boolean;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({
-      id: bookOption.id,
-    });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3"
-    >
-      {/* Drag handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab touch-none active:cursor-grabbing"
-      >
-        <GripVertical className="text-dark-500 h-5 w-5" />
-      </div>
-
-      {/* Rank badge */}
-      <div className="bg-gold-100 text-dark-900 font-inria flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold">
-        {rank}
-      </div>
-
-      {/* Book cover */}
-      {bookOption.book.coverUrl && (
-        <Image
-          src={bookOption.book.coverUrl}
-          alt={bookOption.book.title}
-          width={40}
-          height={60}
-          className="shrink-0 rounded shadow-sm"
-        />
-      )}
-
-      <div className="min-w-0 flex-1">
-        <h4 className="font-inria text-dark-900 truncate text-sm font-semibold">
-          {bookOption.book.title}
-        </h4>
-        <p className="text-dark-600 truncate text-xs">
-          {bookOption.book.author}
-        </p>
-        {(bookOption.book.pageCount || bookOption.book.publishedYear) && (
-          <p className="text-dark-500 text-xs">
-            {bookOption.book.pageCount
-              ? `${bookOption.book.pageCount} pages`
-              : null}
-            {bookOption.book.pageCount && bookOption.book.publishedYear
-              ? " · "
-              : null}
-            {bookOption.book.publishedYear
-              ? `Published ${bookOption.book.publishedYear}`
-              : null}
-          </p>
-        )}
-        {bookOption.book.description && (
-          <div
-            className="text-dark-600 mt-1 line-clamp-2 text-xs"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeDescription(bookOption.book.description),
-            }}
-          />
-        )}
-      </div>
-
-      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-        {currentUserIsAdmin && (
-          <EditBookOptionMetadataDialog
-            bookOptionId={bookOption.id}
-            bookTitle={bookOption.book.title}
-            currentDescription={bookOption.book.description}
-            currentPageCount={bookOption.book.pageCount}
-          />
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onRemove(bookOption.id)}
-          className="text-xs"
-        >
-          Remove
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function SortableUnrankedBookItem({
-  bookOption,
-  onAdd,
-  currentUserIsAdmin,
-}: {
-  bookOption: BookOption;
-  onAdd: (id: string) => void;
-  currentUserIsAdmin: boolean;
-}) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({
-    id: bookOption.id,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`bg-cream-100 border-gold-600/20 flex items-center gap-3 rounded-lg border p-3 ${isDragging ? "opacity-50" : "opacity-70"}`}
-    >
-      {/* Drag handle */}
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab touch-none active:cursor-grabbing"
-      >
-        <GripVertical className="text-dark-400 h-5 w-5" />
-      </div>
-
-      {/* Book cover */}
-      {bookOption.book.coverUrl && (
-        <Image
-          src={bookOption.book.coverUrl}
-          alt={bookOption.book.title}
-          width={40}
-          height={60}
-          className="shrink-0 rounded shadow-sm"
-        />
-      )}
-
-      <div className="min-w-0 flex-1">
-        <h4 className="font-inria text-dark-600 truncate text-sm font-semibold">
-          {bookOption.book.title}
-        </h4>
-        <p className="text-dark-500 truncate text-xs">
-          {bookOption.book.author}
-        </p>
-        {(bookOption.book.pageCount || bookOption.book.publishedYear) && (
-          <p className="text-dark-500 text-xs">
-            {bookOption.book.pageCount
-              ? `${bookOption.book.pageCount} pages`
-              : null}
-            {bookOption.book.pageCount && bookOption.book.publishedYear
-              ? " · "
-              : null}
-            {bookOption.book.publishedYear
-              ? `Published ${bookOption.book.publishedYear}`
-              : null}
-          </p>
-        )}
-        {bookOption.book.description && (
-          <div
-            className="text-dark-600 mt-1 line-clamp-2 text-xs"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeDescription(bookOption.book.description),
-            }}
-          />
-        )}
-      </div>
-
-      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-        {currentUserIsAdmin && (
-          <EditBookOptionMetadataDialog
-            bookOptionId={bookOption.id}
-            bookTitle={bookOption.book.title}
-            currentDescription={bookOption.book.description}
-            currentPageCount={bookOption.book.pageCount}
-          />
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onAdd(bookOption.id)}
-          className="text-xs"
-        >
-          Add to Ranking
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function BookDragOverlay({ bookOption }: { bookOption: BookOption }) {
-  return (
-    <div className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3 shadow-lg">
-      <GripVertical className="text-dark-500 h-5 w-5" />
-      {bookOption.book.coverUrl && (
-        <Image
-          src={bookOption.book.coverUrl}
-          alt={bookOption.book.title}
-          width={40}
-          height={60}
-          className="shrink-0 rounded shadow-sm"
-        />
-      )}
-      <div className="min-w-0 flex-1">
-        <h4 className="font-inria text-dark-900 truncate text-sm font-semibold">
-          {bookOption.book.title}
-        </h4>
-        <p className="text-dark-600 truncate text-xs">
-          {bookOption.book.author}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function DroppableRankedZone({
-  children,
-  isEmpty,
-}: {
-  children: React.ReactNode;
-  isEmpty: boolean;
-}) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: "ranked-zone",
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      className={`min-h-[60px] rounded-lg transition-colors ${
-        isOver ? "bg-gold-100/50 ring-gold-500/30 ring-2" : ""
-      } ${isEmpty ? "bg-cream-100 border-gold-600/20 border py-6 text-center" : ""}`}
-    >
-      {children}
-    </div>
-  );
 }
 
 export function MeetingRankedVoting({
@@ -322,7 +55,7 @@ export function MeetingRankedVoting({
 
   const rankedBooks = rankedIds
     .map((id) => bookOptions.find((bo) => bo.id === id))
-    .filter((bo): bo is BookOption => bo !== undefined);
+    .filter((bo): bo is MeetingBookOption => bo !== undefined);
 
   const unrankedBooks = bookOptions.filter((bo) => !rankedIds.includes(bo.id));
   const unrankedIds = unrankedBooks.map((bo) => bo.id);
@@ -370,7 +103,7 @@ export function MeetingRankedVoting({
     const overIdStr = over.id as string;
 
     const isActiveInRanked = rankedIds.includes(activeIdStr);
-    const isOverRankedZone = overIdStr === "ranked-zone";
+    const isOverRankedZone = overIdStr === RANKED_ZONE_ID;
     const isOverInRanked = rankedIds.includes(overIdStr);
 
     // Dragging from unranked to ranked zone or onto a ranked item
@@ -484,9 +217,9 @@ export function MeetingRankedVoting({
           </div>
 
           {error && (
-            <div className="mb-3 rounded-lg border border-red-200 bg-red-50 p-2">
-              <p className="text-xs text-red-800">{error}</p>
-            </div>
+            <Alert variant="destructive" className="mb-3 p-2 text-xs">
+              {error}
+            </Alert>
           )}
 
           <SortableContext
@@ -508,7 +241,7 @@ export function MeetingRankedVoting({
               ) : (
                 <div className="space-y-2">
                   {rankedBooks.map((bookOption, index) => (
-                    <SortableBookItem
+                    <SortableRankedBookItem
                       key={bookOption.id}
                       bookOption={bookOption}
                       rank={index + 1}

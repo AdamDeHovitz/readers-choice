@@ -80,9 +80,9 @@ export function GlobalRankingsList({
 
   // Medal colors for top 3
   const getMedalColor = (rank: number) => {
-    if (rank === 1) return "text-yellow-600";
+    if (rank === 1) return "text-gold-600";
     if (rank === 2) return "text-dark-500";
-    if (rank === 3) return "text-amber-700";
+    if (rank === 3) return "text-rust-500";
     return "text-dark-600";
   };
 
@@ -97,12 +97,12 @@ export function GlobalRankingsList({
     <div className="space-y-6">
       {/* Year Selector */}
       {availableYears.length > 1 && (
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex flex-wrap gap-2">
           {availableYears.map((year) => (
             <button
               key={year}
               onClick={() => handleYearChange(year)}
-              className={`px-4 py-2 rounded-lg font-medium font-inria transition-colors ${
+              className={`font-inria rounded-lg px-4 py-2 font-medium transition-colors ${
                 year === currentYear
                   ? "bg-gold-600 text-white"
                   : "bg-cream-200 text-dark-600 hover:bg-cream-200"
@@ -116,8 +116,8 @@ export function GlobalRankingsList({
 
       {/* Rankings List */}
       {rankings.length === 0 ? (
-        <div className="text-center py-12">
-          <TrophyIcon className="h-12 w-12 text-slate-300 mx-auto mb-4" />
+        <div className="py-12 text-center">
+          <TrophyIcon className="text-gold-300 mx-auto mb-4 h-12 w-12" />
           <p className="text-dark-500">
             No rankings yet for {currentYear}. Members need to rank their
             favorite books first!
@@ -131,11 +131,11 @@ export function GlobalRankingsList({
               <button
                 key={book.id}
                 onClick={() => handleBookClick(book)}
-                className="w-full flex gap-4 p-4 rounded-lg border border-gold-600/20 bg-cream-100 transition-all hover:bg-cream-200 hover:border-gold-600/40 cursor-pointer text-left"
+                className="border-gold-600/20 bg-cream-100 hover:bg-cream-200 hover:border-gold-600/40 flex w-full cursor-pointer gap-4 rounded-lg border p-4 text-left transition-all"
               >
                 {/* Rank */}
                 <div
-                  className={`flex items-center justify-center w-12 h-12 rounded-full font-bold font-inria text-xl ${getMedalColor(rank)}`}
+                  className={`font-inria flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold ${getMedalColor(rank)}`}
                 >
                   {getRankDisplay(rank)}
                 </div>
@@ -148,40 +148,42 @@ export function GlobalRankingsList({
                       alt={book.title}
                       width={80}
                       height={120}
-                      className="rounded shadow-sm object-cover"
+                      className="rounded object-cover shadow-sm"
                     />
                   ) : (
-                    <div className="w-20 h-30 bg-cream-200 rounded flex items-center justify-center">
+                    <div className="bg-cream-200 flex h-30 w-20 items-center justify-center rounded">
                       <span className="text-dark-500 text-xs">No cover</span>
                     </div>
                   )}
                 </div>
 
                 {/* Book Info */}
-                <div className="flex-1 min-w-0 overflow-hidden">
-                  <h3 className="font-semibold font-inria text-dark-900 text-lg truncate">
+                <div className="min-w-0 flex-1 overflow-hidden">
+                  <h3 className="font-inria text-dark-900 truncate text-lg font-semibold">
                     {book.title}
                   </h3>
-                  <p className="text-sm text-dark-600 truncate">{book.author}</p>
+                  <p className="text-dark-600 truncate text-sm">
+                    {book.author}
+                  </p>
 
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3">
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
                     <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                      <TrophyIcon className="h-4 w-4 text-gold-700 flex-shrink-0" />
-                      <span className="font-semibold font-inria text-dark-900">
+                      <TrophyIcon className="text-gold-700 h-4 w-4 flex-shrink-0" />
+                      <span className="font-inria text-dark-900 font-semibold">
                         {book.totalPoints}
                       </span>
                       <span className="text-dark-500">points</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                      <UsersIcon className="h-4 w-4 text-dark-500 flex-shrink-0" />
+                      <UsersIcon className="text-dark-500 h-4 w-4 flex-shrink-0" />
                       <span className="text-dark-600">
                         {book.numberOfRankings} member
                         {book.numberOfRankings !== 1 ? "s" : ""}
                       </span>
                     </div>
 
-                    <div className="text-sm text-dark-500 whitespace-nowrap">
+                    <div className="text-dark-500 text-sm whitespace-nowrap">
                       Avg rank: {book.averageRank.toFixed(1)}
                     </div>
                   </div>
@@ -193,14 +195,16 @@ export function GlobalRankingsList({
       )}
 
       {/* Explanation */}
-      <div className="p-4 bg-gold-50 border border-gold-600 rounded-lg">
-        <h4 className="font-medium font-inria text-dark-900 mb-2">How it works</h4>
-        <p className="text-sm text-dark-900">
+      <div className="bg-gold-50 border-gold-600 rounded-lg border p-4">
+        <h4 className="font-inria text-dark-900 mb-2 font-medium">
+          How it works
+        </h4>
+        <p className="text-dark-900 text-sm">
           Rankings are calculated using Borda Count scoring. When a member ranks
-          their books, their #1 choice gets the most points, #2 gets fewer points,
-          and so on. All members&apos; points are combined to create this global
-          ranking. Books that more members have ranked higher will appear at the
-          top.
+          their books, their #1 choice gets the most points, #2 gets fewer
+          points, and so on. All members&apos; points are combined to create
+          this global ranking. Books that more members have ranked higher will
+          appear at the top.
         </p>
       </div>
 
@@ -212,23 +216,21 @@ export function GlobalRankingsList({
               Individual Rankings
             </DialogTitle>
             {selectedBook && (
-              <div className="flex gap-3 mt-3 pb-3 border-b border-gold-600/20">
+              <div className="border-gold-600/20 mt-3 flex gap-3 border-b pb-3">
                 {selectedBook.coverUrl && (
                   <Image
                     src={selectedBook.coverUrl}
                     alt={selectedBook.title}
                     width={60}
                     height={90}
-                    className="rounded shadow-sm object-cover"
+                    className="rounded object-cover shadow-sm"
                   />
                 )}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-dark-900 text-base">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-dark-900 text-base font-semibold">
                     {selectedBook.title}
                   </h3>
-                  <p className="text-sm text-dark-600">
-                    {selectedBook.author}
-                  </p>
+                  <p className="text-dark-600 text-sm">{selectedBook.author}</p>
                 </div>
               </div>
             )}
@@ -236,19 +238,19 @@ export function GlobalRankingsList({
 
           <div className="mt-4">
             {isLoading ? (
-              <div className="text-center py-8 text-dark-500">
+              <div className="text-dark-500 py-8 text-center">
                 Loading rankings...
               </div>
             ) : individualRankings.length === 0 ? (
-              <div className="text-center py-8 text-dark-500">
+              <div className="text-dark-500 py-8 text-center">
                 No members have ranked this book yet.
               </div>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
+              <div className="max-h-96 space-y-3 overflow-y-auto">
                 {individualRankings.map((ranking) => (
                   <div
                     key={ranking.userId}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-cream-100 border border-gold-600/20"
+                    className="bg-cream-100 border-gold-600/20 flex items-center gap-3 rounded-lg border p-3"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={ranking.userImage || undefined} />
@@ -257,15 +259,15 @@ export function GlobalRankingsList({
                       </AvatarFallback>
                     </Avatar>
 
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-dark-900 truncate">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-dark-900 truncate font-medium">
                         {ranking.userName}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span className="text-sm text-dark-500">Ranked:</span>
-                      <span className="font-bold font-inria text-lg text-dark-900">
+                      <span className="text-dark-500 text-sm">Ranked:</span>
+                      <span className="font-inria text-dark-900 text-lg font-bold">
                         #{ranking.rank}
                       </span>
                     </div>

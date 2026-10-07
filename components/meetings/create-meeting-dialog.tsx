@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
+import { Alert } from "@/components/ui/alert";
 
 interface CreateMeetingDialogProps {
   bookClubId: string;
@@ -85,7 +86,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               disabled={isSubmitting}
               id="themeName"
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               Popular unused themes shown first
             </p>
           </div>
@@ -99,20 +100,22 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               disabled={isSubmitting}
               rows={3}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               Add any additional details or instructions for this meeting
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="nominationDeadline">Nomination Deadline (Optional)</Label>
+            <Label htmlFor="nominationDeadline">
+              Nomination Deadline (Optional)
+            </Label>
             <Input
               id="nominationDeadline"
               name="nominationDeadline"
               type="datetime-local"
               disabled={isSubmitting}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               When should nominations close? After this, members can only vote.
             </p>
           </div>
@@ -125,18 +128,14 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
               type="datetime-local"
               disabled={isSubmitting}
             />
-            <p className="text-xs text-dark-500">
+            <p className="text-dark-500 text-xs">
               When should voting close? Usually set to meeting time.
             </p>
           </div>
 
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+          {error && <Alert variant="destructive">{error}</Alert>}
 
-          <div className="flex gap-2 justify-end">
+          <div className="flex justify-end gap-2">
             <Button
               type="button"
               variant="outline"

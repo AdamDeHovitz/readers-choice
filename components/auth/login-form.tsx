@@ -15,7 +15,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("google");
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="from-cream-50 to-cream-100 flex min-h-screen items-center justify-center bg-gradient-to-br p-4">
       <div className="w-full max-w-md">
         <div className="space-y-6 rounded-2xl bg-white p-8 shadow-xl">
           <div className="space-y-2 text-center">

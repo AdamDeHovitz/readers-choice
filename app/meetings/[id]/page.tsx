@@ -183,7 +183,6 @@ export default async function MeetingPage({
               <CardContent>
                 <NominationForm
                   meetingId={meeting.id}
-                  bookClubId={meeting.bookClub.id}
                   existingNominations={meeting.bookOptions}
                 />
               </CardContent>

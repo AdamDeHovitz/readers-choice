@@ -1,10 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type {
-  VotingResults,
-  EliminationRound,
-} from "@/app/actions/meeting-voting";
+import type { VotingResults } from "@/app/actions/meeting-voting";
 
 interface VotingResultsDisplayProps {
   results: VotingResults;
@@ -62,7 +59,7 @@ export function VotingResultsDisplay({ results }: VotingResultsDisplayProps) {
               Winner
             </h3>
           </div>
-          <p className="text-dark-800 font-semibold">{winner.bookTitle}</p>
+          <p className="text-dark-900 font-semibold">{winner.bookTitle}</p>
           <p className="text-dark-600 mt-1 text-sm">
             Won in round {winner.wonInRound} with {winner.finalSupport} votes
           </p>
@@ -165,7 +162,7 @@ export function VotingResultsDisplay({ results }: VotingResultsDisplayProps) {
                           key={bs.bookOptionId}
                           className={`flex items-center justify-between rounded px-2 py-1 text-sm ${
                             isWinner
-                              ? "bg-rust-50 text-rust-900"
+                              ? "bg-rust-50 text-rust-800"
                               : isEliminated
                                 ? "bg-red-50 text-red-700 line-through"
                                 : index === 0

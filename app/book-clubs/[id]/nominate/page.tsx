@@ -31,23 +31,23 @@ export default async function NominatePage({
   // If no upcoming meeting, show message instead of redirecting
   if (!upcomingMeeting) {
     return (
-      <div className="min-h-screen bg-cream-100">
+      <div className="bg-cream-100 min-h-screen">
         <BookClubNav
           bookClubId={id}
           bookClubName={bookClub.name}
           userName={session.user.name || "User"}
         />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold font-inria text-dark-900">
+              <CardTitle className="font-inria text-dark-900 text-2xl font-bold">
                 No Upcoming Meeting
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-dark-600">
-                There is no upcoming meeting scheduled. Nominations will be available
-                once a meeting is scheduled.
+                There is no upcoming meeting scheduled. Nominations will be
+                available once a meeting is scheduled.
               </p>
             </CardContent>
           </Card>
@@ -66,34 +66,36 @@ export default async function NominatePage({
   const nominationsClosed = nominationDeadline && nominationDeadline < now;
 
   // Transform bookOptions from Supabase array format to expected format
-  const existingNominations = (upcomingMeeting.bookOptions || []).map((option: any) => ({
-    id: option.id,
-    book: {
-      id: option.book[0]?.id || "",
-      title: option.book[0]?.title || "",
-      author: option.book[0]?.author || "",
-      cover_url: option.book[0]?.cover_url || null,
-    },
-    added_by: option.added_by,
-  }));
+  const existingNominations = (upcomingMeeting.bookOptions || []).map(
+    (option: any) => ({
+      id: option.id,
+      book: {
+        id: option.book[0]?.id || "",
+        title: option.book[0]?.title || "",
+        author: option.book[0]?.author || "",
+        cover_url: option.book[0]?.cover_url || null,
+      },
+      added_by: option.added_by,
+    })
+  );
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={id}
         bookClubName={bookClub.name}
         userName={session.user.name || "User"}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-6">
           {/* Nominations Closed Warning */}
           {nominationsClosed && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-yellow-800 font-semibold">
+            <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+              <p className="font-semibold text-yellow-800">
                 Nomination period has ended
               </p>
-              <p className="text-yellow-700 text-sm mt-1">
+              <p className="mt-1 text-sm text-yellow-700">
                 The deadline for nominations has passed. You can view the
                 nominated books below, but cannot add new nominations.
               </p>
@@ -103,18 +105,20 @@ export default async function NominatePage({
           {/* Meeting Info Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold font-inria text-dark-900">
+              <CardTitle className="font-inria text-dark-900 text-2xl font-bold">
                 {nominationsClosed ? "Nominated Books" : "Nominate a Book"}
               </CardTitle>
-              <div className="space-y-2 text-dark-600 mt-2">
-                {upcomingMeeting.theme && Array.isArray(upcomingMeeting.theme) && upcomingMeeting.theme[0]?.name && (
-                  <div className="flex items-center gap-2">
-                    <SparklesIcon className="h-4 w-4" />
-                    <span className="font-semibold">
-                      Theme: {upcomingMeeting.theme[0].name}
-                    </span>
-                  </div>
-                )}
+              <div className="text-dark-600 mt-2 space-y-2">
+                {upcomingMeeting.theme &&
+                  Array.isArray(upcomingMeeting.theme) &&
+                  upcomingMeeting.theme[0]?.name && (
+                    <div className="flex items-center gap-2">
+                      <SparklesIcon className="h-4 w-4" />
+                      <span className="font-semibold">
+                        Theme: {upcomingMeeting.theme[0].name}
+                      </span>
+                    </div>
+                  )}
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
                   <span>
@@ -127,7 +131,7 @@ export default async function NominatePage({
                   </span>
                 </div>
                 {nominationDeadline && !nominationsClosed && (
-                  <p className="text-sm text-dark-500">
+                  <p className="text-dark-500 text-sm">
                     Nominations close{" "}
                     {nominationDeadline.toLocaleDateString("en-US", {
                       month: "long",
@@ -136,7 +140,7 @@ export default async function NominatePage({
                   </p>
                 )}
                 {nominationDeadline && nominationsClosed && (
-                  <p className="text-sm text-dark-500">
+                  <p className="text-dark-500 text-sm">
                     Nominations closed{" "}
                     {nominationDeadline.toLocaleDateString("en-US", {
                       month: "long",
@@ -152,10 +156,10 @@ export default async function NominatePage({
           {!nominationsClosed && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-inria text-dark-900">
+                <CardTitle className="font-inria text-dark-900 text-xl">
                   Search for Books
                 </CardTitle>
-                <p className="text-sm text-dark-600 mt-2">
+                <p className="text-dark-600 mt-2 text-sm">
                   Search for a book using Google Books and nominate it for this
                   meeting.
                 </p>
@@ -163,7 +167,6 @@ export default async function NominatePage({
               <CardContent>
                 <NominationForm
                   meetingId={upcomingMeeting.id}
-                  bookClubId={id}
                   existingNominations={existingNominations}
                 />
               </CardContent>
@@ -171,41 +174,43 @@ export default async function NominatePage({
           )}
 
           {/* Show only nominated books when nominations are closed */}
-          {nominationsClosed && upcomingMeeting.bookOptions && upcomingMeeting.bookOptions.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl font-inria text-dark-900">
-                  Nominated Books
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {upcomingMeeting.bookOptions.map((nomination: any) => (
-                    <div
-                      key={nomination.id}
-                      className="flex items-center gap-4 p-3 border border-gold-200 rounded-lg"
-                    >
-                      {nomination.book.cover_url && (
-                        <img
-                          src={nomination.book.cover_url}
-                          alt={nomination.book.title}
-                          className="w-16 h-24 object-cover rounded"
-                        />
-                      )}
-                      <div>
-                        <h3 className="font-semibold text-dark-900">
-                          {nomination.book.title}
-                        </h3>
-                        <p className="text-sm text-dark-600">
-                          {nomination.book.author}
-                        </p>
+          {nominationsClosed &&
+            upcomingMeeting.bookOptions &&
+            upcomingMeeting.bookOptions.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-inria text-dark-900 text-xl">
+                    Nominated Books
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {upcomingMeeting.bookOptions.map((nomination: any) => (
+                      <div
+                        key={nomination.id}
+                        className="border-gold-200 flex items-center gap-4 rounded-lg border p-3"
+                      >
+                        {nomination.book.cover_url && (
+                          <img
+                            src={nomination.book.cover_url}
+                            alt={nomination.book.title}
+                            className="h-24 w-16 rounded object-cover"
+                          />
+                        )}
+                        <div>
+                          <h3 className="text-dark-900 font-semibold">
+                            {nomination.book.title}
+                          </h3>
+                          <p className="text-dark-600 text-sm">
+                            {nomination.book.author}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
         </div>
       </main>
     </div>

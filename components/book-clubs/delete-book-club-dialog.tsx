@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Trash2Icon } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 interface DeleteBookClubDialogProps {
   bookClubId: string;
@@ -50,9 +51,9 @@ export function DeleteBookClubDialog({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          className="border-red-300 text-red-700 hover:bg-red-50 hover:text-red-800 hover:border-red-400"
+          className="border-red-300 text-red-700 hover:border-red-400 hover:bg-red-50 hover:text-red-800"
         >
-          <Trash2Icon className="h-4 w-4 mr-2" />
+          <Trash2Icon className="mr-2 h-4 w-4" />
           Delete Book Club
         </Button>
       </DialogTrigger>
@@ -60,13 +61,14 @@ export function DeleteBookClubDialog({
         <DialogHeader>
           <DialogTitle className="text-red-700">Delete Book Club</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete <strong className="text-dark-900">{bookClubName}</strong>?
-            This action cannot be undone and will permanently delete:
+            Are you sure you want to delete{" "}
+            <strong className="text-dark-900">{bookClubName}</strong>? This
+            action cannot be undone and will permanently delete:
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2 py-4">
-          <ul className="list-disc list-inside text-sm text-dark-600 space-y-1 ml-2">
+          <ul className="text-dark-600 ml-2 list-inside list-disc space-y-1 text-sm">
             <li>All meetings and their voting data</li>
             <li>All themes and their votes</li>
             <li>All personal rankings</li>
@@ -74,11 +76,7 @@ export function DeleteBookClubDialog({
           </ul>
         </div>
 
-        {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <Alert variant="destructive">{error}</Alert>}
 
         <DialogFooter className="gap-2">
           <Button

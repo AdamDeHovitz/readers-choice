@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PencilIcon } from "lucide-react";
+import { Alert } from "@/components/ui/alert";
 
 interface EditBookOptionMetadataDialogProps {
   bookOptionId: string;
@@ -115,11 +116,7 @@ export function EditBookOptionMetadataDialog({
           </div>
         </div>
 
-        {error && (
-          <div className="rounded-md bg-red-50 p-3">
-            <p className="text-sm text-red-800">{error}</p>
-          </div>
-        )}
+        {error && <Alert variant="destructive">{error}</Alert>}
 
         <DialogFooter>
           <Button
