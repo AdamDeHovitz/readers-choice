@@ -12,6 +12,7 @@ import { MeetingRankedVoting } from "./meeting-ranked-voting";
 import { VotingResultsDisplay } from "./voting-results";
 import { AdminFinalizeSection } from "./admin-finalize-section";
 import { BookOptionCard } from "./book-option-card";
+import { FinalizedVotingResults } from "./finalized-voting-results";
 import type { MeetingBookOptionWithVotes } from "./types";
 
 interface BookOptionsListProps {
@@ -117,10 +118,17 @@ export function BookOptionsList({
     });
   }
 
-  // Sort by vote count (highest first) - only when showing counts
-  const sortedOptions = showVoteCounts
-    ? [...bookOptions].sort((a, b) => b.voteCount - a.voteCount)
-    : bookOptions;
+  // Finalized: selected book first (full results live in the dropdown).
+  // Voting closed: highest approval count first.
+  const sortedOptions = isFinalized
+    ? [...bookOptions].sort(
+        (a, b) =>
+          Number(b.book.id === selectedBookId) -
+          Number(a.book.id === selectedBookId)
+      )
+    : showVoteCounts
+      ? [...bookOptions].sort((a, b) => b.voteCount - a.voteCount)
+      : bookOptions;
 
   // Render ranked choice voting interface
   if (canVote && currentMethod === "ranked") {
@@ -214,7 +222,9 @@ export function BookOptionsList({
           index={index}
           isFinalized={isFinalized}
           isWinner={isFinalized && option.book.id === selectedBookId}
-          showVoteCounts={showVoteCounts}
+          // Per-card counts are approval-only; finalized meetings show the
+          // full hybrid results in FinalizedVotingResults instead.
+          showVoteCounts={showVoteCounts && !isFinalized}
           canVote={canVote}
           isApprovalVoting={currentMethod === "approval"}
           currentUserIsAdmin={currentUserIsAdmin}
@@ -226,6 +236,8 @@ export function BookOptionsList({
           onFinalize={handleFinalize}
         />
       ))}
+
+      {isFinalized && <FinalizedVotingResults meetingId={meetingId} />}
     </div>
   );
 }

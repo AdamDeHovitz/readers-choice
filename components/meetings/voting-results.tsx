@@ -5,6 +5,8 @@ import type { VotingResults } from "@/app/actions/meeting-voting";
 
 interface VotingResultsDisplayProps {
   results: VotingResults;
+  /** Heading for the winner box; finalized meetings may have picked a different book. */
+  winnerLabel?: string;
 }
 
 function getEliminationReasonText(
@@ -28,7 +30,10 @@ function getEliminationReasonText(
   }
 }
 
-export function VotingResultsDisplay({ results }: VotingResultsDisplayProps) {
+export function VotingResultsDisplay({
+  results,
+  winnerLabel = "Winner",
+}: VotingResultsDisplayProps) {
   const [showDetails, setShowDetails] = useState(false);
 
   const { winner, rounds, voterBreakdown, bookDetails } = results;
@@ -43,7 +48,7 @@ export function VotingResultsDisplay({ results }: VotingResultsDisplayProps) {
   if (!winner && rounds.length === 0) {
     return (
       <div className="text-dark-500 py-6 text-center">
-        <p>No votes have been cast yet.</p>
+        <p>No votes were cast.</p>
       </div>
     );
   }
@@ -56,7 +61,7 @@ export function VotingResultsDisplay({ results }: VotingResultsDisplayProps) {
           <div className="mb-1 flex items-center gap-2">
             <span className="text-2xl">🏆</span>
             <h3 className="font-inria text-dark-900 text-lg font-bold">
-              Winner
+              {winnerLabel}
             </h3>
           </div>
           <p className="text-dark-900 font-semibold">{winner.bookTitle}</p>
