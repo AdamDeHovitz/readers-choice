@@ -1,0 +1,321 @@
+{
+  "num_found": 2121,
+  "start": 0,
+  "docs": [
+    {
+      "author_name": ["Chad Harbach"],
+      "cover_i": 8330636,
+      "edition_count": 3,
+      "first_publish_year": 2011,
+      "isbn": ["9780316126670"],
+      "key": "/works/OL15936402W",
+      "number_of_pages_median": 512,
+      "title": "The Art of Fielding",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The Art of Fielding",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Clare Walker Leslie"],
+      "cover_i": 3914118,
+      "edition_count": 3,
+      "first_publish_year": 1984,
+      "isbn": ["9780787205799"],
+      "key": "/works/OL1859506W",
+      "number_of_pages_median": 190,
+      "title": "The art of field sketching",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The art of field sketching",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Chad Harbach"],
+      "cover_i": 11332414,
+      "edition_count": 10,
+      "first_publish_year": 2011,
+      "isbn": ["9780316204729"],
+      "key": "/works/OL19949436W",
+      "number_of_pages_median": 520,
+      "title": "The art of fielding",
+      "editions": {
+        "numFound": 10,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The art of fielding",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Michael Lewis"],
+      "cover_i": 467718,
+      "edition_count": 16,
+      "first_publish_year": 2003,
+      "isbn": ["0739308157"],
+      "key": "/works/OL7944813W",
+      "number_of_pages_median": 317,
+      "title": "Moneyball",
+      "editions": {
+        "numFound": 10,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Moneyball",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Dave Canterbury"],
+      "cover_i": 9109270,
+      "edition_count": 3,
+      "first_publish_year": 2014,
+      "isbn": ["1440579776"],
+      "key": "/works/OL19984301W",
+      "number_of_pages_median": 256,
+      "title": "Bushcraft 101",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Bushcraft 101",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Ray Bradbury"],
+      "cover_i": 9346412,
+      "edition_count": 20,
+      "first_publish_year": 1990,
+      "isbn": ["1668095831"],
+      "key": "/works/OL103150W",
+      "number_of_pages_median": 176,
+      "title": "Zen in the art of writing",
+      "editions": {
+        "numFound": 20,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Zen in the art of writing",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Dylan Tuccillo"],
+      "cover_i": 10962420,
+      "edition_count": 3,
+      "first_publish_year": 2013,
+      "isbn": ["0761178627"],
+      "key": "/works/OL19968524W",
+      "number_of_pages_median": 288,
+      "title": "A field guide to lucid dreaming",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "A field guide to lucid dreaming",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Cathy Lane"],
+      "cover_i": 12836633,
+      "edition_count": 1,
+      "first_publish_year": 2013,
+      "isbn": ["9780956855961"],
+      "key": "/works/OL28591833W",
+      "number_of_pages_median": 236,
+      "title": "In the field",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "In the field",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Amanda Rees"],
+      "cover_i": 9728609,
+      "edition_count": 4,
+      "first_publish_year": 2009,
+      "isbn": ["1282426842"],
+      "key": "/works/OL9393928W",
+      "number_of_pages_median": 288,
+      "title": "The infanticide controversy",
+      "editions": {
+        "numFound": 4,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The infanticide controversy",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Henry James"],
+      "cover_i": 181493,
+      "edition_count": 563,
+      "first_publish_year": 1898,
+      "isbn": ["9580449155"],
+      "key": "/works/OL276386W",
+      "number_of_pages_median": 160,
+      "title": "The Turn of the Screw",
+      "editions": {
+        "numFound": 534,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The turn of the screw",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": [
+        "United States. Office of Strategic Services.",
+        "Sgt Wolf",
+        "Stratigic Services",
+        "The Director of Strategic Services",
+        "The United States Services",
+        "United States Services",
+        "Strategic Services",
+        "Reproduction Branch",
+        "United States Office of Strategic Services Staff"
+      ],
+      "cover_i": 10553067,
+      "edition_count": 35,
+      "first_publish_year": 1944,
+      "isbn": ["1537492101"],
+      "key": "/works/OL15186897W",
+      "number_of_pages_median": 40,
+      "title": "Simple Sabotage Field Manual",
+      "editions": {
+        "numFound": 35,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Simple Sabotage Field Manual",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["L. Frank Baum"],
+      "cover_i": 552443,
+      "edition_count": 2049,
+      "first_publish_year": 1899,
+      "isbn": ["0062283359"],
+      "key": "/works/OL18417W",
+      "number_of_pages_median": 159,
+      "title": "The Wonderful Wizard of Oz",
+      "editions": {
+        "numFound": 1849,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The Wonderful Wizard of Oz",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Chad Harbach"],
+      "edition_count": 0,
+      "key": "/works/OL17698075W",
+      "title": "The Art of Fielding",
+      "editions": {
+        "numFound": 0,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": []
+      }
+    },
+    {
+      "author_name": ["Chad Harbach"],
+      "cover_i": 13017988,
+      "edition_count": 1,
+      "first_publish_year": 2012,
+      "isbn": ["8952764684"],
+      "key": "/works/OL31211027W",
+      "title": "Subi ŭi kisul",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Subi ŭi kisul",
+            "language": ["kor"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Federico Zeri"],
+      "cover_i": 773443,
+      "edition_count": 91,
+      "first_publish_year": 1937,
+      "isbn": ["1553210026"],
+      "key": "/works/OL518261W",
+      "number_of_pages_median": 66,
+      "title": "Van Gogh",
+      "editions": {
+        "numFound": 10,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Van Gogh",
+            "language": ["eng"]
+          }
+        ]
+      }
+    }
+  ]
+}

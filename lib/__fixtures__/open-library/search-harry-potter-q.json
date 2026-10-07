@@ -1,0 +1,314 @@
+{
+  "num_found": 3929,
+  "start": 0,
+  "docs": [
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 15155833,
+      "edition_count": 400,
+      "first_publish_year": 1997,
+      "isbn": ["9784863895669"],
+      "key": "/works/OL82563W",
+      "number_of_pages_median": 302,
+      "title": "Harry Potter and the Philosopher's Stone",
+      "editions": {
+        "numFound": 386,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Sorcerer's Stone",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 15158664,
+      "edition_count": 306,
+      "first_publish_year": 1998,
+      "isbn": ["853251166X"],
+      "key": "/works/OL82537W",
+      "number_of_pages_median": 339,
+      "title": "Harry Potter and the Chamber of Secrets",
+      "editions": {
+        "numFound": 295,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter & the Chamber of Secrets",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 10580435,
+      "edition_count": 279,
+      "first_publish_year": 1999,
+      "isbn": ["8498383439"],
+      "key": "/works/OL82536W",
+      "number_of_pages_median": 416,
+      "title": "Harry Potter and the Prisoner of Azkaban",
+      "editions": {
+        "numFound": 265,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Prisoner of Azkaban (Harry Potter, Book 3)",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 15158660,
+      "edition_count": 144,
+      "first_publish_year": 2007,
+      "isbn": ["3551577773"],
+      "key": "/works/OL82586W",
+      "number_of_pages_median": 701,
+      "title": "Harry Potter and the Deathly Hallows",
+      "editions": {
+        "numFound": 140,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Deathly Hallows (Harry Potter #7)",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 12059372,
+      "edition_count": 244,
+      "first_publish_year": 2000,
+      "isbn": ["9780606415170"],
+      "key": "/works/OL82560W",
+      "number_of_pages_median": 672,
+      "title": "Harry Potter and the Goblet of Fire",
+      "editions": {
+        "numFound": 240,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter & chiếc cốc lửa",
+            "language": ["vie"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 15158666,
+      "edition_count": 247,
+      "first_publish_year": 2003,
+      "isbn": ["9781526618177"],
+      "key": "/works/OL82548W",
+      "number_of_pages_median": 870,
+      "title": "Harry Potter and the Order of the Phoenix",
+      "editions": {
+        "numFound": 237,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Order of the Phoenix (Harry Potter, Book 5)",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 10716273,
+      "edition_count": 177,
+      "first_publish_year": 2005,
+      "isbn": ["155192918X"],
+      "key": "/works/OL82565W",
+      "number_of_pages_median": 640,
+      "title": "Harry Potter and the Half-Blood Prince",
+      "editions": {
+        "numFound": 169,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter & the Half-Blood Prince",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 8457523,
+      "edition_count": 16,
+      "first_publish_year": 1999,
+      "isbn": ["9781408882290"],
+      "key": "/works/OL14981609W",
+      "number_of_pages_median": 3442,
+      "title": "Harry Potter (series) 1-7",
+      "editions": {
+        "numFound": 16,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter Boxset Books 1-7",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Jack Thorne", "John Tiffany", "J. K. Rowling"],
+      "cover_i": 8763851,
+      "edition_count": 36,
+      "first_publish_year": 2001,
+      "isbn": ["8674706908"],
+      "key": "/works/OL17360811W",
+      "number_of_pages_median": 343,
+      "title": "Harry Potter and the Cursed Child",
+      "editions": {
+        "numFound": 33,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Cursed Child",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Warner Bros. Entertainment Inc"],
+      "cover_i": 10195373,
+      "edition_count": 1,
+      "first_publish_year": 2007,
+      "isbn": ["1405233109"],
+      "key": "/works/OL20874116W",
+      "title": "Harry Potter poster annual 2008",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "edition_count": 2,
+      "first_publish_year": 2001,
+      "isbn": ["9780747575443"],
+      "key": "/works/OL21385222W",
+      "title": "Harry Potter",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter Box Set: Books 1-5",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 8761929,
+      "edition_count": 11,
+      "first_publish_year": 1999,
+      "isbn": ["9780439434867"],
+      "key": "/works/OL8460139W",
+      "number_of_pages_median": 1326,
+      "title": "Harry Potter (series) 1-4",
+      "editions": {
+        "numFound": 11,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The Harry Potter Quartet Collection (Harry Potter)"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Drew Struzan"],
+      "cover_i": 6509920,
+      "edition_count": 1,
+      "first_publish_year": 2001,
+      "isbn": ["9780439286237"],
+      "key": "/works/OL15141632W",
+      "title": "Harry Potter and the sorcerer's stone poster book",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the sorcerer's stone",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Joan Moloney"],
+      "cover_i": 8244695,
+      "edition_count": 1,
+      "first_publish_year": 2003,
+      "isbn": ["9780439587600"],
+      "key": "/works/OL17920096W",
+      "title": "Harry Potter Deluxe Coloring Book",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter",
+            "language": ["eng"]
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Eliezer Yudkowsky"],
+      "cover_i": 8044459,
+      "edition_count": 1,
+      "first_publish_year": 2015,
+      "key": "/works/OL17351743W",
+      "number_of_pages_median": 203,
+      "title": "Harry Potter and the Methods of Rationality",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter and the Methods of Rationality",
+            "language": ["eng"]
+          }
+        ]
+      }
+    }
+  ]
+}
