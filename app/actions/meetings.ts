@@ -3,6 +3,14 @@
 import { auth } from "@/auth";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
+import { isVotingClosed } from "@/lib/ballot-validation";
+import { dbErrorMessage } from "@/lib/db-errors";
+
+interface VotingWindow {
+  book_club_id: string;
+  is_finalized: boolean | null;
+  voting_deadline: string | null;
+}
 
 interface Book {
   id: string;
@@ -686,58 +694,57 @@ export async function voteForBook(bookOptionId: string) {
     const supabase = getAdminClient();
 
     // Get book option's meeting
-    const { data: bookOption } = await supabase
+    const { data: bookOption, error: optionError } = await supabase
       .from("book_options")
       .select(
         `
         meeting_id,
         meetings!inner (
           book_club_id,
-          is_finalized
+          is_finalized,
+          voting_deadline
         )
       `
       )
       .eq("id", bookOptionId)
-      .single();
+      .maybeSingle();
+
+    if (optionError) throw optionError;
 
     if (!bookOption) {
       return { error: "Book option not found" };
     }
 
-    const meeting = (bookOption as any).meetings;
-    if (meeting.is_finalized) {
+    const meeting = (bookOption as unknown as { meetings: VotingWindow })
+      .meetings;
+    if (isVotingClosed(meeting)) {
       return { error: "Voting has closed" };
     }
 
     // Check if user is a member
-    const { data: member } = await supabase
+    const { data: member, error: memberError } = await supabase
       .from("members")
       .select("user_id")
       .eq("book_club_id", meeting.book_club_id)
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
+
+    if (memberError) throw memberError;
 
     if (!member) {
       return { error: "Only members can vote" };
     }
 
-    // Check if user already voted
-    const { data: existingVote } = await supabase
-      .from("votes")
-      .select("id")
-      .eq("book_option_id", bookOptionId)
-      .eq("user_id", session.user.id)
-      .single();
+    // Toggle the vote atomically (re-checks the voting window in the DB)
+    const { error: toggleError } = await supabase.rpc("toggle_book_vote", {
+      p_book_option_id: bookOptionId,
+      p_user_id: session.user.id,
+    });
 
-    if (existingVote) {
-      // Remove vote
-      await supabase.from("votes").delete().eq("id", existingVote.id);
-    } else {
-      // Add vote
-      await supabase.from("votes").insert({
-        book_option_id: bookOptionId,
-        user_id: session.user.id,
-      });
+    if (toggleError) {
+      const message = dbErrorMessage(toggleError);
+      if (message) return { error: message };
+      throw toggleError;
     }
 
     revalidatePath(`/meetings/${bookOption.meeting_id}`);
@@ -765,11 +772,13 @@ export async function finalizeMeeting(
     const supabase = getAdminClient();
 
     // Get meeting
-    const { data: meeting } = await supabase
+    const { data: meeting, error: meetingError } = await supabase
       .from("meetings")
       .select("book_club_id, is_finalized")
       .eq("id", meetingId)
-      .single();
+      .maybeSingle();
+
+    if (meetingError) throw meetingError;
 
     if (!meeting) {
       return { error: "Meeting not found" };
@@ -780,19 +789,36 @@ export async function finalizeMeeting(
     }
 
     // Check if user is an admin
-    const { data: member } = await supabase
+    const { data: member, error: memberError } = await supabase
       .from("members")
       .select("is_admin")
       .eq("book_club_id", meeting.book_club_id)
       .eq("user_id", session.user.id)
-      .single();
+      .maybeSingle();
+
+    if (memberError) throw memberError;
 
     if (!member?.is_admin) {
       return { error: "Only admins can finalize meetings" };
     }
 
-    // Finalize meeting
-    const { error } = await supabase
+    // The selected book must be one of this meeting's options
+    const { data: option, error: optionError } = await supabase
+      .from("book_options")
+      .select("id")
+      .eq("meeting_id", meetingId)
+      .eq("book_id", selectedBookId)
+      .maybeSingle();
+
+    if (optionError) throw optionError;
+
+    if (!option) {
+      return { error: "Selected book is not an option for this meeting" };
+    }
+
+    // Finalize meeting; the is_finalized guard makes concurrent finalizes
+    // resolve to exactly one winner
+    const { data: finalized, error } = await supabase
       .from("meetings")
       .update({
         is_finalized: true,
@@ -800,9 +826,15 @@ export async function finalizeMeeting(
         finalized_at: new Date().toISOString(),
         finalized_by: session.user.id,
       })
-      .eq("id", meetingId);
+      .eq("id", meetingId)
+      .eq("is_finalized", false)
+      .select("id");
 
     if (error) throw error;
+
+    if (!finalized || finalized.length === 0) {
+      return { error: "Meeting already finalized" };
+    }
 
     revalidatePath(`/meetings/${meetingId}`);
     revalidatePath(`/book-clubs/${meeting.book_club_id}`);
@@ -861,37 +893,46 @@ export async function updateMeeting(
     let themeId = meeting.theme_id;
 
     if (themeName !== null) {
-      if (themeName.trim().length > 0) {
-        // First check if this theme name already exists
-        const { data: existingTheme } = await supabase
+      const trimmedTheme = themeName.trim();
+      if (trimmedTheme.length > 0) {
+        // Themes are shared club-wide rows (other meetings and theme votes
+        // reference them), so never rename one: find or create by name.
+        const { data: existingTheme, error: findError } = await supabase
           .from("themes")
           .select("id")
           .eq("book_club_id", meeting.book_club_id)
-          .eq("name", themeName.trim())
-          .single();
+          .eq("name", trimmedTheme)
+          .maybeSingle();
+
+        if (findError) throw findError;
 
         if (existingTheme) {
-          // Use existing theme
           themeId = existingTheme.id;
-        } else if (meeting.theme_id) {
-          // Update current theme name (if no other meetings use it)
-          await supabase
-            .from("themes")
-            .update({ name: themeName.trim() })
-            .eq("id", meeting.theme_id);
         } else {
-          // Create new theme
-          const { data: newTheme } = await supabase
+          const { data: newTheme, error: insertError } = await supabase
             .from("themes")
             .insert({
               book_club_id: meeting.book_club_id,
-              name: themeName.trim(),
+              name: trimmedTheme,
               submitted_by: session.user.id,
             })
             .select("id")
             .single();
 
-          if (newTheme) {
+          if (insertError?.code === "23505") {
+            // Created concurrently; use that row
+            const { data: racedTheme, error: refetchError } = await supabase
+              .from("themes")
+              .select("id")
+              .eq("book_club_id", meeting.book_club_id)
+              .eq("name", trimmedTheme)
+              .single();
+
+            if (refetchError) throw refetchError;
+            themeId = racedTheme.id;
+          } else if (insertError) {
+            throw insertError;
+          } else {
             themeId = newTheme.id;
           }
         }
@@ -902,7 +943,14 @@ export async function updateMeeting(
     }
 
     // Update meeting
-    const updateData: any = {
+    const updateData: {
+      meeting_date: string;
+      nomination_deadline: string | null;
+      voting_deadline: string | null;
+      theme_id: string | null;
+      details: string | null;
+      selected_book_id?: string;
+    } = {
       meeting_date: meetingDate,
       nomination_deadline: nominationDeadline,
       voting_deadline: votingDeadline,

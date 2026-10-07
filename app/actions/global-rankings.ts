@@ -2,6 +2,7 @@
 
 import { auth } from "@/auth";
 import { createClient } from "@supabase/supabase-js";
+import { computeBordaRankings } from "@/lib/borda";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -29,6 +30,20 @@ async function isCurrentUserMember(bookClubId: string): Promise<boolean> {
     .maybeSingle();
 
   return !!member;
+}
+
+interface RankedBookSummary {
+  id: string;
+  title: string | null;
+  author: string | null;
+  cover_url: string | null;
+}
+
+interface RankingRowWithBook {
+  user_id: string;
+  book_id: string;
+  rank: number | null;
+  books: RankedBookSummary | RankedBookSummary[] | null;
 }
 
 interface GlobalRankingBook {
@@ -85,87 +100,35 @@ export async function getGlobalRankings(
       return [];
     }
 
-    // Group rankings by user to calculate Borda points
-    const userRankings = new Map<
-      string,
-      Array<{ bookId: string; rank: number }>
-    >();
+    const rows = rankings as unknown as RankingRowWithBook[];
 
-    rankings.forEach((ranking) => {
-      const userId = ranking.user_id;
-      if (!userId || !ranking.book_id || ranking.rank === null) return;
-
-      if (!userRankings.has(userId)) {
-        userRankings.set(userId, []);
+    const booksById = new Map<string, RankedBookSummary>();
+    for (const row of rows) {
+      const book = Array.isArray(row.books) ? row.books[0] : row.books;
+      if (book && !booksById.has(row.book_id)) {
+        booksById.set(row.book_id, book);
       }
+    }
 
-      userRankings.get(userId)!.push({
-        bookId: ranking.book_id,
-        rank: ranking.rank,
-      });
+    // Only score rows whose book still exists
+    const borda = computeBordaRankings(
+      rows
+        .filter((r) => r.user_id && booksById.has(r.book_id))
+        .map((r) => ({ userId: r.user_id, bookId: r.book_id, rank: r.rank }))
+    );
+
+    return borda.map((result) => {
+      const book = booksById.get(result.bookId);
+      return {
+        id: result.bookId,
+        title: book?.title || "Unknown",
+        author: book?.author || "Unknown",
+        coverUrl: book?.cover_url || null,
+        totalPoints: result.totalPoints,
+        numberOfRankings: result.numberOfRankings,
+        averageRank: result.averageRank,
+      };
     });
-
-    // Calculate Borda Count points for each book
-    const bookPoints = new Map<
-      string,
-      {
-        book: any;
-        totalPoints: number;
-        numberOfRankings: number;
-        totalRank: number; // Sum of ranks for average calculation
-      }
-    >();
-
-    userRankings.forEach((userBooks) => {
-      const maxPoints = userBooks.length;
-
-      userBooks.forEach(({ bookId, rank }) => {
-        // Borda Count: top rank gets most points
-        const points = maxPoints - rank + 1;
-
-        const ranking = rankings.find((r) => r.book_id === bookId);
-        if (!ranking?.books) return;
-
-        if (!bookPoints.has(bookId)) {
-          bookPoints.set(bookId, {
-            book: ranking.books,
-            totalPoints: 0,
-            numberOfRankings: 0,
-            totalRank: 0,
-          });
-        }
-
-        const bookData = bookPoints.get(bookId)!;
-        bookData.totalPoints += points;
-        bookData.numberOfRankings += 1;
-        bookData.totalRank += rank;
-      });
-    });
-
-    // Convert to array and sort by total points (descending)
-    const globalRankings: GlobalRankingBook[] = Array.from(bookPoints.entries())
-      .map(([bookId, data]) => {
-        const book = data.book as any;
-        return {
-          id: bookId,
-          title: book.title || "Unknown",
-          author: book.author || "Unknown",
-          coverUrl: book.cover_url || null,
-          totalPoints: data.totalPoints,
-          numberOfRankings: data.numberOfRankings,
-          averageRank: data.totalRank / data.numberOfRankings,
-        };
-      })
-      .sort((a, b) => {
-        // Primary sort: total points (descending)
-        if (b.totalPoints !== a.totalPoints) {
-          return b.totalPoints - a.totalPoints;
-        }
-        // Tiebreaker: average rank (ascending - lower is better)
-        return a.averageRank - b.averageRank;
-      });
-
-    return globalRankings;
   } catch (error) {
     console.error("Error calculating global rankings:", error);
     return [];
