@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { voteForBook, finalizeMeeting } from "@/app/actions/meetings";
 import {
@@ -24,6 +24,8 @@ interface BookOptionsListProps {
   isVotingOpen: boolean;
   userVotingMethod: "approval" | "ranked" | null;
   userRankedVotes: { bookOptionId: string; rank: number }[];
+  /** Server-rendered library availability, keyed by book option id. */
+  availability?: Record<string, ReactNode>;
 }
 
 export function BookOptionsList({
@@ -35,6 +37,7 @@ export function BookOptionsList({
   isVotingOpen,
   userVotingMethod,
   userRankedVotes,
+  availability,
 }: BookOptionsListProps) {
   const router = useRouter();
   const [votingForId, setVotingForId] = useState<string | null>(null);
@@ -152,6 +155,33 @@ export function BookOptionsList({
           currentUserIsAdmin={currentUserIsAdmin}
         />
 
+        {availability && (
+          <section
+            aria-labelledby="ranked-availability-heading"
+            className="border-gold-600/20 rounded-lg border bg-white p-4"
+          >
+            <h3
+              id="ranked-availability-heading"
+              className="font-inria text-dark-900 mb-3 text-sm font-bold"
+            >
+              Library availability
+            </h3>
+            <ul className="divide-gold-600/15 divide-y">
+              {bookOptions.map((option) => (
+                <li
+                  key={option.id}
+                  className="flex flex-wrap items-center justify-between gap-2 py-2 first:pt-0 last:pb-0"
+                >
+                  <span className="font-inria text-dark-900 min-w-0 text-sm">
+                    {option.book.title}
+                  </span>
+                  {availability[option.id]}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Admin finalize section */}
         {currentUserIsAdmin && (
           <AdminFinalizeSection
@@ -234,6 +264,7 @@ export function BookOptionsList({
           onToggleDescription={toggleDescription}
           onVote={handleVote}
           onFinalize={handleFinalize}
+          availability={availability?.[option.id]}
         />
       ))}
 

@@ -26,6 +26,7 @@ A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql`
 - So authorization lives in server actions: every exported `"use server"` function is a public endpoint and must check the session and the caller's club membership/admin role itself (`authenticatedAction` in `lib/safe-action.ts`).
 - Multi-row writes (votes, rankings, admin changes) go through Postgres functions called with `supabase.rpc` so they're atomic.
 - Book descriptions are rendered as HTML only through `sanitizeDescription` (`lib/sanitize-description.ts`).
+- Library availability (`lib/libraries/overdrive.ts`) calls OverDrive/Libby's undocumented public endpoints from the server. They can change without notice, so lookups must fail soft (fall back to a catalog link) and never send patron data.
 
 ## Database migrations
 

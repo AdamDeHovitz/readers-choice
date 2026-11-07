@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookCover } from "@/components/books/book-cover";
@@ -25,6 +26,8 @@ interface BookOptionCardProps {
   onToggleDescription: (bookOptionId: string) => void;
   onVote: (bookOptionId: string) => void;
   onFinalize: (bookId: string) => void;
+  /** Library availability for this book, rendered on the server. */
+  availability?: ReactNode;
 }
 
 /** A single book option on the approval-voting / finalized meeting view. */
@@ -43,6 +46,7 @@ export function BookOptionCard({
   onToggleDescription,
   onVote,
   onFinalize,
+  availability,
 }: BookOptionCardProps) {
   const hasLongDescription =
     option.book.description &&
@@ -133,6 +137,8 @@ export function BookOptionCard({
                 )}
               </div>
             )}
+
+            {availability && <div className="mb-3">{availability}</div>}
 
             <div className="flex items-center gap-4">
               {/* Vote Count - only show when votes are visible */}

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { SettingsLink } from "@/components/navigation/app-nav";
 import {
   HomeIcon,
   BarChart3Icon,
@@ -146,6 +147,7 @@ export function BookClubNav({
               <span className="text-sm text-dark-900 font-inria">
                 {userName}
               </span>
+              <SettingsLink />
               <SignOutButton />
             </div>
 
@@ -226,7 +228,10 @@ export function BookClubNav({
                   <span className="text-sm text-dark-900 font-inria">
                     {userName}
                   </span>
-                  <SignOutButton />
+                  <div className="flex items-center gap-1">
+                    <SettingsLink onClick={() => setMobileMenuOpen(false)} />
+                    <SignOutButton />
+                  </div>
                 </div>
               </div>
             </div>

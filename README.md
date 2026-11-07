@@ -19,6 +19,11 @@ A beautiful, mobile-first book club management application that helps communitie
 - **Democratic Voting**: Members vote on book options for each meeting
 - **Meeting History**: Track past meetings and selected books
 
+### Library Availability
+- Add the libraries you belong to in Settings: search by name, city, or ZIP. Any library on Libby (OverDrive) works.
+- While voting, each book shows the quickest way to borrow it across your libraries ("Available now · Ebook at NYPL"); tap it for every library and format, with links to the title in each catalog.
+- No library card or login is involved. Data comes from OverDrive's public, undocumented catalog endpoints (the ones the Libby app uses), cached for 15 minutes. Waits are library-wide estimates. If OverDrive can't be reached or no edition matches, a catalog search link is shown instead.
+
 ### Theme System
 
 - **Suggest Themes**: Members can propose themes for future meetings
