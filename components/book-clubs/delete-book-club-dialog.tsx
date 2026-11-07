@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/dialog";
 import { Trash2Icon } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useId } from "react";
 
 interface DeleteBookClubDialogProps {
   bookClubId: string;
@@ -29,28 +32,41 @@ export function DeleteBookClubDialog({
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmationName, setConfirmationName] = useState("");
+  const confirmationId = useId();
 
   async function handleDelete() {
+    if (isDeleting || confirmationName !== bookClubName) return;
     setIsDeleting(true);
     setError(null);
 
-    const result = await deleteBookClub(bookClubId);
+    const result = await deleteBookClub(bookClubId, confirmationName);
 
     if (result.error) {
       setError(result.error);
       setIsDeleting(false);
     } else {
       setOpen(false);
-      router.push("/dashboard");
+      setIsDeleting(false);
+      router.push("/browse");
       router.refresh();
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (isDeleting) return;
+        setOpen(nextOpen);
+        setConfirmationName("");
+        setError(null);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           variant="outline"
+          aria-label={`Delete ${bookClubName}`}
           className="border-red-300 text-red-700 hover:border-red-400 hover:bg-red-50 hover:text-red-800"
         >
           <Trash2Icon className="mr-2 h-4 w-4" />
@@ -73,7 +89,22 @@ export function DeleteBookClubDialog({
             <li>All themes and their votes</li>
             <li>All personal rankings</li>
             <li>All member associations</li>
+            <li>All invite links</li>
           </ul>
+          <p className="text-dark-600 text-sm">
+            User accounts and shared books will be kept.
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={confirmationId}>Type {bookClubName} to confirm</Label>
+          <Input
+            id={confirmationId}
+            value={confirmationName}
+            onChange={(event) => setConfirmationName(event.target.value)}
+            disabled={isDeleting}
+            autoComplete="off"
+          />
         </div>
 
         {error && <Alert variant="destructive">{error}</Alert>}
@@ -88,7 +119,7 @@ export function DeleteBookClubDialog({
           </Button>
           <Button
             onClick={handleDelete}
-            disabled={isDeleting}
+            disabled={isDeleting || confirmationName !== bookClubName}
             className="bg-red-600 text-white hover:bg-red-700"
           >
             {isDeleting ? "Deleting..." : "Delete Book Club"}

@@ -4,7 +4,7 @@ import type { Page } from "@playwright/test";
 export const SEED_PASSWORD = "password123";
 
 export const users = {
-  alice: "alice@example.test", // Seed Club admin
+  alice: "alice@example.test", // Global super admin and Seed Club admin
   bob: "bob@example.test", // Seed Club member
   carol: "carol@example.test", // Seed Club member
   dave: "dave@example.test", // Other Club admin, not in Seed Club

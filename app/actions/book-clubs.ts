@@ -3,6 +3,7 @@
 import { authenticatedAction, publicAction } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
 import { dbErrorMessage } from "@/lib/db-errors";
+import { isSuperAdmin } from "@/lib/super-admin";
 
 // Type definitions
 interface BookClub {
@@ -272,27 +273,29 @@ export async function updateBookClubDescription(
   return { success: true };
 }
 
-export async function deleteBookClub(bookClubId: string) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Check if current user is an admin
-    const { data: currentMember } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
+export async function getCurrentUserIsSuperAdmin() {
+  const result = await authenticatedAction(async ({ session, supabase }) =>
+    isSuperAdmin(supabase, session.user.id)
+  );
+  return result.success && result.data;
+}
 
-    if (!currentMember?.is_admin) {
-      throw new Error("Only admins can delete book clubs");
+export async function deleteBookClub(
+  bookClubId: string,
+  confirmationName: string
+) {
+  const result = await authenticatedAction(async ({ session, supabase }) => {
+    if (!(await isSuperAdmin(supabase, session.user.id))) {
+      throw new Error("Only super admins can delete book clubs");
     }
 
-    // Delete the book club
-    const { error } = await supabase
-      .from("book_clubs")
-      .delete()
-      .eq("id", bookClubId);
+    const { error } = await supabase.rpc("delete_book_club", {
+      p_book_club_id: bookClubId,
+      p_actor_id: session.user.id,
+      p_confirmation_name: confirmationName,
+    });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return { success: true };
   });
 
@@ -301,6 +304,9 @@ export async function deleteBookClub(bookClubId: string) {
   }
 
   revalidatePath("/dashboard");
+  revalidatePath("/browse");
+  revalidatePath(`/book-clubs/${bookClubId}`, "layout");
+  revalidatePath("/meetings", "layout");
   return { success: true };
 }
 
