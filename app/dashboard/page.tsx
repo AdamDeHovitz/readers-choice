@@ -1,5 +1,5 @@
 import { auth } from "@/auth";
-import { SignOutButton } from "@/components/auth/sign-out-button";
+import { AppNav } from "@/components/navigation/app-nav";
 import { CreateBookClubDialog } from "@/components/book-clubs/create-book-club-dialog";
 import { BookClubCard } from "@/components/book-clubs/book-club-card";
 import { getMyBookClubs } from "@/app/actions/book-clubs";
@@ -16,21 +16,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <nav className="bg-gold-600 border-b border-gold-700 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <h1 className="text-xl font-bold font-inria text-dark-900">
-              Readers&apos; Choice
-            </h1>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-dark-900 font-inria">
-                {session.user.name}
-              </span>
-              <SignOutButton />
-            </div>
-          </div>
-        </div>
-      </nav>
+      <AppNav userName={session.user.name ?? "You"} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex items-center justify-between mb-8">

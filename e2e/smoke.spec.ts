@@ -27,3 +27,41 @@ test("non-members can't open another club's meeting", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/dashboard$/);
 });
+
+test("voters see availability at their libraries", async ({ page }) => {
+  await logIn(page, users.bob);
+  await page.goto(`/meetings/${meetings.votingOpen}`);
+
+  // Lookups hit OverDrive live; whether it answers or the catalog fallback
+  // shows, the panel lists each of bob's libraries.
+  await page
+    .getByRole("button", { name: "Library availability for The Overstory" })
+    .click({ timeout: 15_000 });
+  const panel = page.getByRole("dialog", { name: "The Overstory" });
+  await expect(panel).toContainText("New York Public Library");
+  await expect(panel).toContainText("Brooklyn Public Library");
+  await expect(
+    panel.getByRole("link", { name: "Manage libraries" })
+  ).toHaveAttribute(
+    "href",
+    `/settings?returnTo=%2Fmeetings%2F${meetings.votingOpen}`
+  );
+});
+
+test("voters without libraries are invited to choose some", async ({
+  page,
+}) => {
+  await logIn(page, users.alice);
+  await page.goto(`/meetings/${meetings.votingOpen}`);
+
+  await page
+    .getByRole("button", { name: "Library availability for The Overstory" })
+    .click();
+  await page.getByRole("link", { name: "Choose libraries" }).click();
+  await expect(page).toHaveURL(/\/settings\?returnTo=/);
+  await expect(page.getByRole("heading", { name: "Libraries" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back" })).toHaveAttribute(
+    "href",
+    `/meetings/${meetings.votingOpen}`
+  );
+});

@@ -10,6 +10,12 @@ import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button
 import { BookOptionsList } from "@/components/meetings/book-options-list";
 import { NominationForm } from "@/components/nominations/nomination-form";
 import { redirect } from "next/navigation";
+import { Suspense, type ReactNode } from "react";
+import { getMyLibraries } from "@/app/actions/libraries";
+import {
+  BookAvailability,
+  BookAvailabilityFallback,
+} from "@/components/libraries/book-availability";
 import { isNominationClosed } from "@/lib/nomination-note";
 import { isVotingClosed } from "@/lib/ballot-validation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -57,11 +63,29 @@ export default async function MeetingPage({
       voting_deadline: meeting.votingDeadline,
     });
 
-  // Fetch user's voting preference and ranked votes in parallel
-  const [userVotingMethod, userRankedVotes] = await Promise.all([
+  // Fetch user's voting preference, ranked votes, and libraries in parallel
+  const [userVotingMethod, userRankedVotes, libraries] = await Promise.all([
     getUserVotingPreference(id),
     getUserRankedVotes(id),
+    votingOpen ? getMyLibraries() : Promise.resolve([]),
   ]);
+
+  // Library availability streams in per book, so slow lookups never hold up
+  // the ballot. With no libraries chosen, each book offers to set them up.
+  const availability: Record<string, ReactNode> | undefined = votingOpen
+    ? Object.fromEntries(
+        meeting.bookOptions.map((option) => [
+          option.id,
+          <Suspense key={option.id} fallback={<BookAvailabilityFallback />}>
+            <BookAvailability
+              title={option.book.title}
+              author={option.book.author}
+              libraries={libraries}
+            />
+          </Suspense>,
+        ])
+      )
+    : undefined;
 
   return (
     <div className="bg-cream-100 min-h-screen">
@@ -233,6 +257,7 @@ export default async function MeetingPage({
                     isVotingOpen={votingOpen || false}
                     userVotingMethod={userVotingMethod}
                     userRankedVotes={userRankedVotes}
+                    availability={availability}
                   />
                 </CardContent>
               </Card>

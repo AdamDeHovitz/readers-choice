@@ -34,6 +34,7 @@ export default [
   {
     ignores: [
       ".next/**",
+      ".worktrees/**",
       "node_modules/**",
       "out/**",
       ".vercel/**",

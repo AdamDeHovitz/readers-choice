@@ -3,7 +3,7 @@
 --
 -- Every user's password is "password123".
 --   alice@example.test  admin of Seed Club
---   bob@example.test    member of Seed Club
+--   bob@example.test    member of Seed Club (has NYPL + Brooklyn libraries)
 --   carol@example.test  member of Seed Club (votes ranked-choice)
 --   dave@example.test   admin of Other Club, NOT in Seed Club (isolation checks)
 --
@@ -133,3 +133,9 @@ INSERT INTO meeting_ranked_votes (meeting_id, user_id, book_option_id, rank) VAL
 -- Personal rankings for last year's pick
 INSERT INTO personal_rankings (user_id, book_club_id, book_id, year, rank) VALUES
   ('11111111-0000-4000-8000-000000000001', '22222222-0000-4000-8000-000000000001', '33333333-0000-4000-8000-000000000002', extract(year FROM now())::int, 1);
+
+-- Libraries (OverDrive/Libby keys) for availability while voting.
+-- bob has two; alice has none, so she sees the "Add your library" prompt.
+INSERT INTO user_libraries (user_id, library_key, name, position) VALUES
+  ('11111111-0000-4000-8000-000000000002', 'nypl',     'New York Public Library', 0),
+  ('11111111-0000-4000-8000-000000000002', 'brooklyn', 'Brooklyn Public Library', 1);
