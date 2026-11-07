@@ -2,7 +2,7 @@
 -- migrations. LOCAL ONLY: never run against production.
 --
 -- Every user's password is "password123".
---   alice@example.test  admin of Seed Club
+--   alice@example.test  global super admin and admin of Seed Club
 --   bob@example.test    member of Seed Club (has NYPL + Brooklyn libraries)
 --   carol@example.test  member of Seed Club (votes ranked-choice)
 --   dave@example.test   admin of Other Club, NOT in Seed Club (isolation checks)
@@ -22,6 +22,9 @@ INSERT INTO users (id, email, name, password_hash) VALUES
   ('11111111-0000-4000-8000-000000000002', 'bob@example.test',   'Bob Member',   '$2b$10$uRGf82u70OD0c888cxRSBeOrBNPwADDVOxalesRm9EkAlg6UPQK/K'),
   ('11111111-0000-4000-8000-000000000003', 'carol@example.test', 'Carol Member', '$2b$10$uRGf82u70OD0c888cxRSBeOrBNPwADDVOxalesRm9EkAlg6UPQK/K'),
   ('11111111-0000-4000-8000-000000000004', 'dave@example.test',  'Dave Outsider','$2b$10$uRGf82u70OD0c888cxRSBeOrBNPwADDVOxalesRm9EkAlg6UPQK/K');
+
+UPDATE users SET is_super_admin = true
+WHERE id = '11111111-0000-4000-8000-000000000001';
 
 -- Clubs and members ----------------------------------------------------------
 INSERT INTO book_clubs (id, name, description, created_by) VALUES

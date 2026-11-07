@@ -3,11 +3,18 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UsersIcon } from "lucide-react";
-import { getAllBookClubs } from "@/app/actions/book-clubs";
+import {
+  getAllBookClubs,
+  getCurrentUserIsSuperAdmin,
+} from "@/app/actions/book-clubs";
+import { DeleteBookClubDialog } from "@/components/book-clubs/delete-book-club-dialog";
 
 export default async function BrowsePage() {
   const session = await auth();
-  const bookClubs = await getAllBookClubs();
+  const [bookClubs, isSuperAdmin] = await Promise.all([
+    getAllBookClubs(),
+    getCurrentUserIsSuperAdmin(),
+  ]);
 
   return (
     <div className="bg-cream-100 min-h-screen">
@@ -80,6 +87,14 @@ export default async function BrowsePage() {
                     <p className="text-dark-500 font-inria text-center text-sm">
                       Invite required to join
                     </p>
+                  )}
+                  {isSuperAdmin && (
+                    <div className="mt-4">
+                      <DeleteBookClubDialog
+                        bookClubId={club.id}
+                        bookClubName={club.name}
+                      />
+                    </div>
                   )}
                 </CardContent>
               </Card>
