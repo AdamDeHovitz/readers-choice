@@ -142,3 +142,7 @@ INSERT INTO personal_rankings (user_id, book_club_id, book_id, year, rank) VALUE
 INSERT INTO user_libraries (user_id, library_key, name, position) VALUES
   ('11111111-0000-4000-8000-000000000002', 'nypl',     'New York Public Library', 0),
   ('11111111-0000-4000-8000-000000000002', 'brooklyn', 'Brooklyn Public Library', 1);
+
+-- Club taglines (shown on /browse) ------------------------------------------
+UPDATE book_clubs SET tagline = 'Reading our way through every phase.'
+WHERE id = '22222222-0000-4000-8000-000000000001';

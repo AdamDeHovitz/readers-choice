@@ -323,6 +323,7 @@ export async function getAllBookClubs() {
         id,
         name,
         description,
+        tagline,
         created_at,
         members(count)
       `
@@ -351,6 +352,7 @@ export async function getAllBookClubs() {
       id: club.id,
       name: club.name,
       description: club.description,
+      tagline: club.tagline,
       createdAt: club.created_at,
       memberCount: club.members?.[0]?.count || 0,
       isMember: memberBookClubIds.has(club.id),

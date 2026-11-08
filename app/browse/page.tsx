@@ -61,6 +61,11 @@ export default async function BrowsePage() {
                   <CardTitle className="font-inria text-dark-900 text-xl">
                     {club.name}
                   </CardTitle>
+                  {club.tagline && (
+                    <p className="text-rust-600 font-inria text-sm italic">
+                      {club.tagline}
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {club.description && (

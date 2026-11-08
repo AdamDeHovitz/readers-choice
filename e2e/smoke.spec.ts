@@ -65,3 +65,11 @@ test("voters without libraries are invited to choose some", async ({
     `/meetings/${meetings.votingOpen}`
   );
 });
+
+test("browse shows a club's tagline", async ({ page }) => {
+  await logIn(page, users.alice);
+  await page.goto("/browse");
+  await expect(
+    page.getByText("Reading our way through every phase.")
+  ).toBeVisible();
+});
