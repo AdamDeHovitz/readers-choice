@@ -2,8 +2,8 @@
 -- loaded from scratch (see .github/workflows/preview-db.yml).
 --
 -- STAGING ONLY. Never run against production: it drops every readers-choice
--- table. The staging project also hosts wedding-map and root-registry, which
--- `wedding_map` schema and is untouched by this script.
+-- table. The staging project also hosts wedding-map and root-registry in their
+-- own `wedding_map` and `root_registry` schemas, untouched by this script.
 
 \set ON_ERROR_STOP on
 
