@@ -41,3 +41,4 @@ next-env.d.ts
 # personal agent/tool settings
 .claude/settings.local.json
 .claude/worktrees/
+.worktrees/

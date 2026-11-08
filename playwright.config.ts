@@ -7,9 +7,13 @@ export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
+  // CI adds HTML and JSON reporters on the command line (see ci.yml).
   reporter: "list",
   use: {
     baseURL: "http://localhost:3000",
+    // A final screenshot of every test is cheap evidence; full traces only
+    // when something fails.
+    screenshot: "on",
     trace: "retain-on-failure",
   },
   projects: [{ name: "mobile", use: { ...devices["Pixel 7"] } }],

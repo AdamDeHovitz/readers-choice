@@ -41,6 +41,14 @@ A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql`
 - Server Components by default; `"use client"` only when needed. No `any`.
 - Read `DESIGN_GUIDE.md` before UI work: palette tokens (rust/gold/cream/dark), `font-voga` headings, `font-inria` body. Show errors with `components/ui/alert.tsx`.
 
+## PR verification (CI)
+
+A PR is the verification gate; CI never touches production (dummy env vars and a throwaway local Supabase stack).
+
+- Lint, Test, Build, and E2E (this PR's code on its migrations + seed) run on every PR.
+- Migration compat runs only when `supabase/migrations/` changes: it loads main's migrations and seed, applies the PR's migrations on top (production's order), then runs main's app and main's e2e specs. A failure means the migration would break the deployed code.
+- Each e2e job uploads a Playwright HTML report (a screenshot per test, traces on failure; 14 days) and writes pass/fail counts plus the report link to the job summary. View it with `gh run download <run-id> -n e2e-report -D report && npx playwright show-report report`.
+
 ## Deploys
 
 Merging to `main` deploys to production (https://readers-choice.vercel.app). Vercel preview URLs are behind SSO.

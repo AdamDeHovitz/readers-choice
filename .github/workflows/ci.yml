@@ -9,13 +9,21 @@ on:
 permissions:
   contents: read
 
+# A new push to a PR cancels its in-flight run; runs on main always finish.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Everything below runs against dummy env vars or a throwaway local Supabase
+# stack (migrations + supabase/seed.sql). No secrets, never production.
+
 jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: "npm"
@@ -26,8 +34,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: "npm"
@@ -38,8 +46,8 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: "npm"
@@ -60,19 +68,102 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      # Local stack only (migrations + supabase/seed.sql); no secrets, never production.
       - run: npx supabase start
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
-        if: failure()
+      - run: npx playwright test --reporter=list,html,json
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+          PLAYWRIGHT_JSON_OUTPUT_FILE: test-results/results.json
+      - uses: actions/upload-artifact@v7
+        id: report
+        if: ${{ !cancelled() }}
         with:
-          name: playwright-traces
-          path: test-results/
-          retention-days: 7
+          name: e2e-report
+          path: playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: >-
+          scripts/e2e-summary.sh "E2E: this PR's code on this PR's database"
+          test-results/results.json "${{ steps.report.outputs.artifact-url }}"
+          >> "$GITHUB_STEP_SUMMARY"
+
+  # Production gets a PR's migrations before its code deploys, so the code on
+  # main must keep working on the migrated database.
+  migrations-changed:
+    name: Migrations changed?
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.diff.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 2 # the PR merge commit and main, its first parent
+      - id: diff
+        run: |
+          if git diff --quiet HEAD^1 HEAD -- supabase/migrations; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes under supabase/migrations/: migration compat check skipped." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  migration-compat:
+    name: Migration compat
+    needs: migrations-changed
+    if: needs.migrations-changed.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.base_ref }}
+          path: main
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: main/package-lock.json
+      - run: npm ci
+        working-directory: main
+      # main's migrations and seed first, then the PR's migrations on top of
+      # that data: the order production sees them in.
+      - run: npx supabase start
+        working-directory: main
+      - name: Apply this PR's migrations
+        working-directory: main
+        run: |
+          rm -rf supabase/migrations
+          cp -R ../supabase/migrations supabase/
+          npx supabase migration up --local --include-all
+      - run: npx playwright install --with-deps chromium
+        working-directory: main
+      - name: Run main's e2e specs against main's app
+        working-directory: main
+        run: npx playwright test --reporter=list,html,json
+        env:
+          PLAYWRIGHT_HTML_OPEN: never
+          PLAYWRIGHT_JSON_OUTPUT_FILE: test-results/results.json
+      - uses: actions/upload-artifact@v7
+        id: report
+        if: ${{ !cancelled() }}
+        with:
+          name: migration-compat-report
+          path: main/playwright-report/
+          retention-days: 14
+          if-no-files-found: ignore
+      - name: Job summary
+        if: ${{ !cancelled() }}
+        run: >-
+          scripts/e2e-summary.sh "Migration compat: main's code on this PR's migrations"
+          main/test-results/results.json "${{ steps.report.outputs.artifact-url }}"
+          >> "$GITHUB_STEP_SUMMARY"
