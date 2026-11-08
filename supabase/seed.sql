@@ -1,5 +1,5 @@
 -- Local test data. Loaded by `npm run db:reset` (supabase db reset) after the
--- migrations. LOCAL ONLY: never run against production.
+-- migrations, and into staging by the preview-db workflow. Never run against production.
 --
 -- Every user's password is "password123".
 --   alice@example.test  global super admin and admin of Seed Club

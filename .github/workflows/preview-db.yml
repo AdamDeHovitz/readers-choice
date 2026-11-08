@@ -1,0 +1,56 @@
+name: Preview DB
+
+# Vercel preview deployments all point at one shared STAGING Supabase project.
+# Adding the `preview` label to a PR loads that PR's migrations + seed into
+# staging (and again on every push while the label stays). Only one PR can own
+# staging at a time, so the label is removed from any other PR.
+
+on:
+  pull_request:
+    types: [labeled, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write # move the label off other PRs
+
+# Queue resets so two never interleave.
+concurrency:
+  group: preview-db
+  cancel-in-progress: false
+
+jobs:
+  load:
+    name: Load staging DB
+    if: >-
+      contains(github.event.pull_request.labels.*.name, 'preview') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'preview')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+
+      - name: Reset staging schema
+        run: psql "$STAGING_DB_URL" -f supabase/staging-reset.sql
+
+      - name: Apply migrations + seed
+        run: npx supabase db push --db-url "$STAGING_DB_URL" --include-seed --yes
+
+      - name: Remove the label from other PRs
+        run: |
+          gh pr list --label preview --json number --jq '.[].number' |
+            { grep -vx "$PR" || true; } |
+            xargs -r -I{} gh pr edit {} --remove-label preview
+
+      - name: Summary
+        run: |
+          echo "Staging DB now holds PR #$PR ($(git rev-parse --short HEAD)): migrations + seed." >> "$GITHUB_STEP_SUMMARY"
+          echo "Log in on the Vercel preview as alice@example.test / password123." >> "$GITHUB_STEP_SUMMARY"
