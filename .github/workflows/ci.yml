@@ -117,7 +117,7 @@ jobs:
           fi
 
   migration-compat:
-    name: Migration compat (main's code + e2e)
+    name: Migration compat
     needs: migrations-changed
     if: needs.migrations-changed.outputs.changed == 'true'
     runs-on: ubuntu-latest
