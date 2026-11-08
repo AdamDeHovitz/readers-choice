@@ -52,3 +52,11 @@ A PR is the verification gate; CI never touches production (dummy env vars and a
 ## Deploys
 
 Merging to `main` deploys to production (https://readers-choice.vercel.app). Vercel preview URLs are behind SSO.
+
+## Preview database (staging)
+
+Vercel previews use a shared **staging** Supabase project, never production. It also hosts wedding-map and root-registry (in their own `wedding_map` and `root_registry` schemas); readers-choice owns `public` there, and the reset only touches `public`.
+
+- Add the `preview` label to a PR to load its migrations + seed into staging (`.github/workflows/preview-db.yml`, using `supabase/staging-reset.sql`). It reloads on every push while labeled and moves the label off any other PR, so one PR owns staging at a time. Unlabeled previews see whatever schema was last loaded.
+- Log in on a preview with the seed users (`alice@example.test` / `password123`); Google sign-in doesn't work on preview URLs.
+- The daily keep-alive cron (`/api/keep-alive`) pings production and staging so neither free-tier project pauses.
