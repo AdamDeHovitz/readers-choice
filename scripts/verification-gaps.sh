@@ -21,7 +21,7 @@ if [[ -z $files ]]; then
 fi
 
 while read -r f; do
-  perl -0pe 's/<!--.*?-->//gs' "verifications/$f" |
+  { perl scripts/verification-strip-comments.pl "verifications/$f" || true; } |
     awk -f scripts/verification-sections.awk |
     awk -F'\t' -v pr="#${f%.md}" '
       $1 == "C" && ($2 == "not verified" || $2 == "harness gaps") {

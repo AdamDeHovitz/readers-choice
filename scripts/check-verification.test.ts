@@ -9,6 +9,7 @@ const scripts = [
   "check-verification.sh",
   "verification-gaps.sh",
   "verification-sections.awk",
+  "verification-strip-comments.pl",
 ];
 
 let root: string;
@@ -95,6 +96,20 @@ describe("check-verification.sh", () => {
     const r = check(file({ behavior: "<!-- oops\nreal evidence" }));
     expect(r.status).toBe(1);
     expect(r.out).toContain("unclosed <!--");
+  });
+
+  it("treats <!-- in inline code or a code fence as text", () => {
+    const r = check(
+      file({
+        behavior: "An unclosed `<!--` used to pass.\n```html\n<!-- literal\n```",
+      })
+    );
+    expect(r).toMatchObject({ status: 0 });
+  });
+
+  it("keeps a comment's surroundings when it contains backticks", () => {
+    const r = check(file({ behavior: "<!-- use `npm run x` -->\nSaw it." }));
+    expect(r).toMatchObject({ status: 0 });
   });
 
   it("accepts CRLF line endings", () => {

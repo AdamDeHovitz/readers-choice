@@ -23,8 +23,7 @@ fi
 
 # Template guidance lives in HTML comments; an unclosed one would also hide
 # the rest of the file when GitHub renders it.
-stripped="$(perl -0pe 's/<!--.*?-->//gs' "$file")"
-if [[ $stripped == *"<!--"* ]]; then
+if ! stripped="$(perl scripts/verification-strip-comments.pl "$file")"; then
   echo "$file: unclosed <!-- comment; everything after it is hidden on GitHub" >&2
   exit 1
 fi

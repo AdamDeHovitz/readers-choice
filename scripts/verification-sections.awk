@@ -1,13 +1,11 @@
 # Splits a verification file into its "## " sections, for check-verification.sh
-# and verification-gaps.sh. Input must already have HTML comments stripped.
+# and verification-gaps.sh. Input comes from verification-strip-comments.pl.
 #
 # Prints one tab-separated record per line:
 #   H <tab> <section name, lowercased>          at each "## " heading
 #   C <tab> <section name> <tab> <line>        each content line in a section
 # A content line has at least one letter or digit and isn't a "###" heading.
 # Lines in fenced code blocks are content, never headings.
-
-{ sub(/\r$/, "") }
 
 /^[ \t]*(```|~~~)/ { fence = !fence; if (cur != "") print "C\t" cur "\t" $0; next }
 fence { if (cur != "") print "C\t" cur "\t" $0; next }

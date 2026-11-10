@@ -47,7 +47,7 @@ jobs:
       - name: Review hints
         if: ${{ !cancelled() }}
         run: |
-          checker='^(scripts/(check-verification\.sh|verification-sections\.awk)|\.github/workflows/verification\.yml)$'
+          checker='^(scripts/(check-verification\.sh|verification-sections\.awk|verification-strip-comments\.pl)|\.github/workflows/verification\.yml)$'
           touched="$(git diff --name-only "$BASE"...HEAD | grep -E "$checker" || true)"
           if [ -n "$touched" ]; then
             echo "::warning::This PR changes the verification check itself: $(echo $touched). Review those changes before trusting this check."
