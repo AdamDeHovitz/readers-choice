@@ -1,5 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -8,9 +15,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 const scripts = [
   "check-verification.sh",
   "verification-gaps.sh",
-  "verification-sections.awk",
-  "verification-strip-comments.pl",
+  "verification-sections.pl",
 ];
+const template = readFileSync(
+  path.join(__dirname, "..", "verifications", "TEMPLATE.md"),
+  "utf8"
+);
 
 let root: string;
 
@@ -80,6 +90,35 @@ describe("check-verification.sh", () => {
     expect(run("check-verification.sh", "../verifications/7").status).toBe(2);
   });
 
+  it("fails an untouched copy of the template on every section", () => {
+    const r = check(template);
+    expect(r.status).toBe(1);
+    for (const s of ["change", "checks", "behavior", "not verified", "harness gaps"]) {
+      expect(r.out).toContain(`"## ${s}" is empty`);
+    }
+    expect(r.out).not.toContain("unclosed");
+  });
+
+  it("passes the template filled in with its guidance comments kept", () => {
+    const body = template
+      .replace(/(## Change\n)/, "$1Votes can be removed.\n")
+      .replace(/(## Checks\n)/, "$1- lint: clean\n")
+      .replace(/(## Behavior\n)/, "$1As carol, removed the vote; row gone.\n")
+      .replace(/(## Not verified\n)/, "$1None.\n")
+      .replace(/(## Harness gaps\n)/, "$1None.\n");
+    expect(check(body)).toMatchObject({ status: 0 });
+  });
+
+  it("strips a comment that spans lines", () => {
+    const r = check(file({ behavior: "<!--\nguidance\n-->" }));
+    expect(r.status).toBe(1);
+    expect(r.out).toContain('"## behavior" is empty');
+  });
+
+  it("treats <!--> as a complete comment", () => {
+    expect(check(file({ behavior: "<!--> Saw it." }))).toMatchObject({ status: 0 });
+  });
+
   it("treats the template's comments as empty", () => {
     const r = check(file({ behavior: "<!-- what you did -->" }));
     expect(r.status).toBe(1);
@@ -134,6 +173,26 @@ describe("check-verification.sh", () => {
     expect(shellComment.status).toBe(0);
   });
 
+  it("closes a fence only with the same kind of fence", () => {
+    // ``` inside ~~~ and a "```sh" line are both text, not a closing fence.
+    const tilde = check(file({ behavior: "~~~\n```\nlog\n~~~" }));
+    expect(tilde).toMatchObject({ status: 0 });
+    const info = check(file({ behavior: "```\nlog\n```sh\nmore\n```" }));
+    expect(info).toMatchObject({ status: 0 });
+  });
+
+  it("doesn't treat indented or inline triple backticks as a fence", () => {
+    const indented = check(file({ behavior: "Saw it.\n    ```" }));
+    expect(indented).toMatchObject({ status: 0 });
+    const inline = check(file({ checks: "```npm run lint``` clean" }));
+    expect(inline).toMatchObject({ status: 0 });
+  });
+
+  it("accepts a heading indented by up to three spaces", () => {
+    const body = file().replace("## Checks", "   ## Checks");
+    expect(check(body)).toMatchObject({ status: 0 });
+  });
+
   it("fails on a duplicated section", () => {
     const r = check(file() + "## Change\nagain\n");
     expect(r.status).toBe(1);
@@ -142,6 +201,10 @@ describe("check-verification.sh", () => {
 });
 
 describe("verification-gaps.sh", () => {
+  it("rejects a count that isn't a positive number", () => {
+    expect(run("verification-gaps.sh", "0").status).toBe(2);
+  });
+
   it("says so when there are no files", () => {
     expect(run("verification-gaps.sh")).toMatchObject({
       status: 0,

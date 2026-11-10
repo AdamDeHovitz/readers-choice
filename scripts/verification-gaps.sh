@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 count="${1:-10}"
-if [[ ! $count =~ ^[0-9]+$ ]]; then
+if [[ ! $count =~ ^[1-9][0-9]*$ ]]; then
   echo "usage: $0 [count] (got '$count')" >&2
   exit 2
 fi
@@ -21,8 +21,7 @@ if [[ -z $files ]]; then
 fi
 
 while read -r f; do
-  { perl scripts/verification-strip-comments.pl "verifications/$f" || true; } |
-    awk -f scripts/verification-sections.awk |
+  { perl scripts/verification-sections.pl "verifications/$f" || true; } |
     awk -F'\t' -v pr="#${f%.md}" '
       $1 == "C" && ($2 == "not verified" || $2 == "harness gaps") {
         if ($2 != last) { print "\n" pr " " $2; last = $2 }

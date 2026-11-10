@@ -23,6 +23,7 @@ jobs:
       PR: ${{ github.event.pull_request.number }}
       DRAFT: ${{ github.event.pull_request.draft }}
       BASE: ${{ github.event.pull_request.base.sha }}
+      BASE_REF: ${{ github.event.pull_request.base.ref }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -47,18 +48,19 @@ jobs:
       - name: Review hints
         if: ${{ !cancelled() }}
         run: |
-          checker='^(scripts/(check-verification\.sh|verification-sections\.awk|verification-strip-comments\.pl)|\.github/workflows/verification\.yml)$'
+          checker='^(scripts/(check-verification\.sh|verification-sections\.pl)|\.github/workflows/verification\.yml)$'
           touched="$(git diff --name-only "$BASE"...HEAD | grep -E "$checker" || true)"
           if [ -n "$touched" ]; then
-            echo "::warning::This PR changes the verification check itself: $(echo $touched). Review those changes before trusting this check."
+            echo "::warning::This PR changes the verification check itself: $(echo "$touched" | tr "\n" " "). Review those changes before trusting this check."
             { echo "### This PR changes the verification check itself"; echo "$touched" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-          last="$(git log -1 --format=%H "$BASE"..HEAD -- "verifications/$PR.md")"
+          last="$(git log -1 --format=%H "$BASE"..HEAD -- "verifications/$PR.md" || true)"
           if [ -n "$last" ]; then
-            later="$(git diff --name-only "$last" HEAD -- . ":(exclude)verifications/" || true)"
+            # The PR's own commits only, not what a merge from main brought in.
+            later="$(git log --no-merges --format= --name-only HEAD --not "$last" "origin/$BASE_REF" -- . ":(exclude)verifications/" | sort -u || true)"
             if [ -n "$later" ]; then
-              echo "::warning::Files changed after verifications/$PR.md was last updated: $(echo $later). Verify them and update the file."
+              echo "::warning::Files changed after verifications/$PR.md was last updated: $(echo "$later" | tr "\n" " "). Verify them and update the file."
               { echo "### Changed since verifications/$PR.md was last updated"; echo "$later" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
             fi
           fi

@@ -23,12 +23,10 @@ fi
 
 # Template guidance lives in HTML comments; an unclosed one would also hide
 # the rest of the file when GitHub renders it.
-if ! stripped="$(perl scripts/verification-strip-comments.pl "$file")"; then
+if ! records="$(perl scripts/verification-sections.pl "$file")"; then
   echo "$file: unclosed <!-- comment; everything after it is hidden on GitHub" >&2
   exit 1
 fi
-
-records="$(printf '%s\n' "$stripped" | awk -f scripts/verification-sections.awk)"
 
 failed=0
 for s in "${sections[@]}"; do
