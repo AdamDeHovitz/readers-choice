@@ -1,8 +1,11 @@
 import "server-only";
+import { validateYearRankings } from "@/lib/ballot-validation";
 import { computeBordaRankings } from "@/lib/borda";
+import { UserError } from "@/lib/user-error";
 import { getUtcYear, getUtcYearRange } from "@/lib/utc-year";
 import { isMember } from "./authz";
 import type { Db } from "./db";
+import { throwIfDbError } from "./errors";
 import type { Viewer } from "./viewer";
 
 /**
@@ -225,4 +228,42 @@ export async function getIndividualBookRankings(
         : []
     )
     .sort(byRankNullsLast);
+}
+
+/**
+ * Replace a user's rankings for a year in one transaction. Ranks must be
+ * exactly 1..N, a book can't be both ranked and unread, and every book must
+ * be one of the club's finalized picks that (UTC) year.
+ */
+export async function saveYearRankings(
+  db: Db,
+  userId: string,
+  bookClubId: string,
+  year: number,
+  rankedBooks: readonly { bookId: string; rank: number }[],
+  unreadBooks: readonly string[]
+): Promise<void> {
+  if (
+    !Number.isInteger(year) ||
+    !Array.isArray(rankedBooks) ||
+    !Array.isArray(unreadBooks)
+  ) {
+    throw new UserError("Invalid rankings");
+  }
+
+  const validation = validateYearRankings(
+    rankedBooks,
+    unreadBooks,
+    await getYearBookIds(db, bookClubId, year)
+  );
+  if (!validation.ok) throw new UserError(validation.error);
+
+  const { error } = await db.rpc("save_year_rankings", {
+    p_user_id: userId,
+    p_book_club_id: bookClubId,
+    p_year: year,
+    p_ranked: rankedBooks.map((rb) => ({ book_id: rb.bookId, rank: rb.rank })),
+    p_unread: [...unreadBooks],
+  });
+  throwIfDbError(error);
 }

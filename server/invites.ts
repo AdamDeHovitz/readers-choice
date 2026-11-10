@@ -71,3 +71,16 @@ export async function getOrCreateInviteCode(
   if (createError) throw createError;
   return created.code;
 }
+
+export async function deactivateInvite(
+  db: Db,
+  bookClubId: string,
+  code: string
+): Promise<void> {
+  const { error } = await db
+    .from("invite_links")
+    .update({ is_active: false })
+    .eq("code", code)
+    .eq("book_club_id", bookClubId);
+  if (error) throw error;
+}

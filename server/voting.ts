@@ -1,4 +1,5 @@
 import "server-only";
+import { validateRankedBallot } from "@/lib/ballot-validation";
 import {
   buildMeetingBallots,
   seedFromString,
@@ -9,6 +10,7 @@ import { UserError } from "@/lib/user-error";
 import { runHybridIRV } from "@/lib/voting-algorithm";
 import { requireMember } from "./authz";
 import type { Db } from "./db";
+import { throwIfDbError } from "./errors";
 import { getMeetingContext, type MeetingContext } from "./meetings";
 import type { Viewer } from "./viewer";
 
@@ -243,4 +245,68 @@ export async function calculateMeetingResults(
     voterBreakdown: result.voterBreakdown,
     bookDetails,
   };
+}
+
+/** Toggle a user's approval vote. Atomic; re-checks the voting window. */
+export async function toggleApprovalVote(
+  db: Db,
+  bookOptionId: string,
+  userId: string
+): Promise<void> {
+  const { error } = await db.rpc("toggle_book_vote", {
+    p_book_option_id: bookOptionId,
+    p_user_id: userId,
+  });
+  throwIfDbError(error);
+}
+
+/** Switch a user's voting method; clears votes cast the other way. */
+export async function setVotingMethod(
+  db: Db,
+  meetingId: string,
+  userId: string,
+  method: VotingMethod
+): Promise<void> {
+  if (!isVotingMethod(method)) throw new UserError("Invalid voting method");
+  const { error } = await db.rpc("set_meeting_voting_method", {
+    p_meeting_id: meetingId,
+    p_user_id: userId,
+    p_method: method,
+  });
+  throwIfDbError(error);
+}
+
+/**
+ * Replace a user's ranked ballot. Every option must belong to the meeting
+ * and ranks must be 1..N; the database re-checks the structure atomically.
+ */
+export async function saveRankedBallot(
+  db: Db,
+  meetingId: string,
+  userId: string,
+  rankings: readonly RankedVote[]
+): Promise<void> {
+  if (!Array.isArray(rankings)) throw new UserError("Invalid ballot");
+
+  const { data: options, error: optionsError } = await db
+    .from("book_options")
+    .select("id")
+    .eq("meeting_id", meetingId);
+  if (optionsError) throw optionsError;
+
+  const validation = validateRankedBallot(
+    rankings,
+    new Set(options.map((o) => o.id))
+  );
+  if (!validation.ok) throw new UserError(validation.error);
+
+  const { error } = await db.rpc("save_meeting_ranked_votes", {
+    p_meeting_id: meetingId,
+    p_user_id: userId,
+    p_rankings: rankings.map((r) => ({
+      book_option_id: r.bookOptionId,
+      rank: r.rank,
+    })),
+  });
+  throwIfDbError(error);
 }

@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { UserError } from "@/lib/user-error";
 import { runAction, type ActionResult } from "@/server/action";
 import { isMember, requireAdmin } from "@/server/authz";
-import { getInviteDetails, getOrCreateInviteCode } from "@/server/invites";
+import { addMember } from "@/server/clubs";
+import {
+  deactivateInvite,
+  getInviteDetails,
+  getOrCreateInviteCode,
+} from "@/server/invites";
 
 /** The club's invite code, creating one if needed (admins only). */
 export async function createInviteLink(
@@ -34,12 +39,7 @@ export async function joinBookClubViaInvite(
       throw new UserError("You are already a member of this book club");
     }
 
-    const { error } = await db.from("members").insert({
-      book_club_id: invite.bookClubId,
-      user_id: userId,
-      is_admin: false,
-    });
-    if (error) throw error;
+    await addMember(db, invite.bookClubId, userId);
 
     revalidatePath("/dashboard");
     revalidatePath(`/book-clubs/${invite.bookClubId}`);
@@ -62,12 +62,7 @@ export async function deactivateInviteLink(
         "Only admins can deactivate invite links"
       );
 
-      const { error } = await db
-        .from("invite_links")
-        .update({ is_active: false })
-        .eq("code", code)
-        .eq("book_club_id", bookClubId);
-      if (error) throw error;
+      await deactivateInvite(db, bookClubId, code);
 
       revalidatePath(`/book-clubs/${bookClubId}`);
     }

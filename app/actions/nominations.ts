@@ -1,25 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { isNominationClosed } from "@/lib/meeting-schedule";
 import { normalizeNominationNote } from "@/lib/nomination-note";
 import type { BookSearchResult } from "@/lib/open-library";
 import { UserError } from "@/lib/user-error";
 import { runAction, type ActionResult } from "@/server/action";
 import { requireMember } from "@/server/authz";
 import { saveBook } from "@/server/books";
-import {
-  getBookOptionContext,
-  getMeetingContext,
-  type MeetingContext,
-} from "@/server/meetings";
-
-function assertNominationsOpen(meeting: MeetingContext) {
-  if (meeting.isFinalized) throw new UserError("Meeting has been finalized");
-  if (isNominationClosed(meeting)) {
-    throw new UserError("Nomination period has ended");
-  }
-}
+import { getBookOptionContext, getMeetingContext } from "@/server/meetings";
+import * as nominations from "@/server/nominations";
 
 /** Nominate a book for a meeting, with an optional note from the nominator. */
 export async function nominateBook(
@@ -30,7 +19,7 @@ export async function nominateBook(
   return runAction("Failed to nominate book", async ({ db, userId }) => {
     const nominationNote = normalizeNominationNote(note);
     const meeting = await getMeetingContext(db, meetingId);
-    assertNominationsOpen(meeting);
+    nominations.assertNominationsOpen(meeting);
     await requireMember(
       db,
       meeting.bookClubId,
@@ -39,38 +28,7 @@ export async function nominateBook(
     );
 
     const bookId = await saveBook(db, book);
-
-    const { data: existing, error: existingError } = await db
-      .from("book_options")
-      .select("id")
-      .eq("meeting_id", meetingId)
-      .eq("book_id", bookId)
-      .maybeSingle();
-    if (existingError) throw existingError;
-    if (existing) {
-      throw new UserError(
-        "This book has already been nominated for this meeting"
-      );
-    }
-
-    // Snapshot the book's description and length so admins can edit them per
-    // nomination without touching the shared book row.
-    const { data: saved, error: savedError } = await db
-      .from("books")
-      .select("description, page_count")
-      .eq("id", bookId)
-      .single();
-    if (savedError) throw savedError;
-
-    const { error } = await db.from("book_options").insert({
-      meeting_id: meetingId,
-      book_id: bookId,
-      added_by: userId,
-      description_override: saved.description,
-      page_count_override: saved.page_count,
-      nomination_note: nominationNote,
-    });
-    if (error) throw error;
+    await nominations.nominateBook(db, meeting, bookId, userId, nominationNote);
 
     revalidatePath(`/book-clubs/${meeting.bookClubId}`);
     revalidatePath(`/meetings/${meetingId}`);
@@ -92,13 +50,9 @@ export async function updateNominationNote(
       }
       // Nominators who have since left the club can't keep editing.
       await requireMember(db, option.meeting.bookClubId, userId);
-      assertNominationsOpen(option.meeting);
+      nominations.assertNominationsOpen(option.meeting);
 
-      const { error } = await db
-        .from("book_options")
-        .update({ nomination_note: nominationNote })
-        .eq("id", bookOptionId);
-      if (error) throw error;
+      await nominations.updateNominationNote(db, bookOptionId, nominationNote);
 
       revalidatePath(`/meetings/${option.meeting.id}`);
     }

@@ -1,6 +1,8 @@
 import "server-only";
+import { UserError } from "@/lib/user-error";
+import { createAdminClient, type Db } from "./db";
+import { throwIfDbError } from "./errors";
 import type { Viewer } from "./viewer";
-import { createAdminClient } from "./db";
 
 export interface MyBookClub {
   id: string;
@@ -145,4 +147,96 @@ export async function getAllBookClubs(
     memberCount: club.members[0]?.count ?? 0,
     isMember: memberOf.has(club.id),
   }));
+}
+
+/** Create a club with its creator as the first admin; returns its id. */
+export async function createBookClub(
+  db: Db,
+  club: { name: string; description: string | null },
+  creatorId: string
+): Promise<string> {
+  const { data, error } = await db
+    .from("book_clubs")
+    .insert({ ...club, created_by: creatorId })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  await addMember(db, data.id, creatorId, { isAdmin: true });
+  return data.id;
+}
+
+export async function addMember(
+  db: Db,
+  bookClubId: string,
+  userId: string,
+  { isAdmin = false } = {}
+): Promise<void> {
+  const { error } = await db
+    .from("members")
+    .insert({ book_club_id: bookClubId, user_id: userId, is_admin: isAdmin });
+  if (error) throw error;
+}
+
+export async function updateBookClubDescription(
+  db: Db,
+  bookClubId: string,
+  description: string | null
+): Promise<void> {
+  const { error } = await db
+    .from("book_clubs")
+    .update({ description })
+    .eq("id", bookClubId);
+  if (error) throw error;
+}
+
+/** Atomic; the database refuses to demote the club's last admin. */
+export async function setMemberAdmin(
+  db: Db,
+  bookClubId: string,
+  userId: string,
+  isAdmin: boolean
+): Promise<void> {
+  const { error } = await db.rpc("set_member_admin", {
+    p_book_club_id: bookClubId,
+    p_user_id: userId,
+    p_is_admin: isAdmin,
+  });
+  throwIfDbError(error);
+}
+
+/** Atomic; the database refuses to remove the club's last admin. */
+export async function removeMember(
+  db: Db,
+  bookClubId: string,
+  userId: string
+): Promise<void> {
+  const { error } = await db.rpc("remove_club_member", {
+    p_book_club_id: bookClubId,
+    p_user_id: userId,
+  });
+  throwIfDbError(error);
+}
+
+/** SQLSTATE of a plain RAISE EXCEPTION in a database function. */
+const RAISED_EXCEPTION = "P0001";
+
+/**
+ * Delete a club and everything in it. The database function re-checks that
+ * the actor is a super admin and that `confirmationName` matches exactly.
+ */
+export async function deleteBookClub(
+  db: Db,
+  bookClubId: string,
+  actorId: string,
+  confirmationName: string
+): Promise<void> {
+  const { error } = await db.rpc("delete_book_club", {
+    p_book_club_id: bookClubId,
+    p_actor_id: actorId,
+    p_confirmation_name: confirmationName,
+  });
+  // Its RAISE EXCEPTIONs (wrong name, not found) are written for users.
+  if (error?.code === RAISED_EXCEPTION) throw new UserError(error.message);
+  if (error) throw error;
 }

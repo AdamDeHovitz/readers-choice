@@ -167,3 +167,65 @@ export async function getBookClubThemes(
     })),
   }));
 }
+
+export interface ThemeContext {
+  id: string;
+  bookClubId: string;
+  submittedBy: string | null;
+  timesUsed: number;
+}
+
+/** Load a theme's club, submitter and usage; throws if it doesn't exist. */
+export async function getThemeContext(
+  db: Db,
+  themeId: string
+): Promise<ThemeContext> {
+  const { data, error } = await db
+    .from("themes")
+    .select("id, book_club_id, submitted_by, meetings (id)")
+    .eq("id", themeId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data?.book_club_id) throw new UserError("Theme not found");
+  return {
+    id: data.id,
+    bookClubId: data.book_club_id,
+    submittedBy: data.submitted_by,
+    timesUsed: data.meetings.length,
+  };
+}
+
+/** Add or remove a user's upvote; returns whether it's now upvoted. */
+export async function toggleThemeUpvote(
+  db: Db,
+  themeId: string,
+  userId: string
+): Promise<boolean> {
+  const { data: existing, error } = await db
+    .from("theme_votes")
+    .select("id")
+    .eq("theme_id", themeId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const { error: writeError } = existing
+    ? await db.from("theme_votes").delete().eq("id", existing.id)
+    : await db
+        .from("theme_votes")
+        .insert({ theme_id: themeId, user_id: userId });
+  if (writeError) throw writeError;
+  return !existing;
+}
+
+/** Delete a theme no meeting uses; its votes cascade. */
+export async function deleteUnusedTheme(
+  db: Db,
+  theme: ThemeContext
+): Promise<void> {
+  if (theme.timesUsed > 0) {
+    throw new UserError("Cannot delete theme that has been used in meetings");
+  }
+  const { error } = await db.from("themes").delete().eq("id", theme.id);
+  if (error) throw error;
+}

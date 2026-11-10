@@ -1,11 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { validateYearRankings } from "@/lib/ballot-validation";
-import { UserError } from "@/lib/user-error";
 import { runAction, type ActionResult } from "@/server/action";
 import { requireMember } from "@/server/authz";
-import { throwIfDbError } from "@/server/errors";
 import * as rankings from "@/server/rankings";
 
 /** The club's picks for a year with the viewer's ranks. */
@@ -29,11 +26,7 @@ export async function getIndividualBookRankings(
   );
 }
 
-/**
- * Replace the viewer's rankings for a year. Ranks must be exactly 1..N, a
- * book can't be both ranked and unread, and every book must be one of the
- * club's finalized picks that (UTC) year.
- */
+/** Replace the viewer's rankings for a year. */
 export async function saveYearRankings(
   bookClubId: string,
   year: number,
@@ -41,39 +34,20 @@ export async function saveYearRankings(
   unreadBooks: string[]
 ): Promise<ActionResult> {
   return runAction("Failed to save rankings", async ({ db, userId }) => {
-    if (
-      !Number.isInteger(year) ||
-      !Array.isArray(rankedBooks) ||
-      !Array.isArray(unreadBooks)
-    ) {
-      throw new UserError("Invalid rankings");
-    }
     await requireMember(
       db,
       bookClubId,
       userId,
       "You must be a member to save rankings"
     );
-
-    const validation = validateYearRankings(
+    await rankings.saveYearRankings(
+      db,
+      userId,
+      bookClubId,
+      year,
       rankedBooks,
-      unreadBooks,
-      await rankings.getYearBookIds(db, bookClubId, year)
+      unreadBooks
     );
-    if (!validation.ok) throw new UserError(validation.error);
-
-    // One transaction.
-    const { error } = await db.rpc("save_year_rankings", {
-      p_user_id: userId,
-      p_book_club_id: bookClubId,
-      p_year: year,
-      p_ranked: rankedBooks.map((rb) => ({
-        book_id: rb.bookId,
-        rank: rb.rank,
-      })),
-      p_unread: unreadBooks,
-    });
-    throwIfDbError(error);
 
     revalidatePath(`/book-clubs/${bookClubId}/rankings`);
   });

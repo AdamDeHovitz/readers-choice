@@ -220,3 +220,158 @@ export async function getMeetingDetails(
     currentUserIsAdmin: membership.isAdmin,
   };
 }
+
+/** Stored meeting fields; timestamps are ISO strings. */
+export interface MeetingInput {
+  meetingDate: string;
+  nominationDeadline: string | null;
+  votingDeadline: string | null;
+  themeId: string | null;
+  details: string | null;
+}
+
+function toMeetingRow(input: MeetingInput) {
+  return {
+    meeting_date: input.meetingDate,
+    nomination_deadline: input.nominationDeadline,
+    voting_deadline: input.votingDeadline,
+    theme_id: input.themeId,
+    details: input.details,
+  };
+}
+
+/** Schedule a meeting; returns its id. */
+export async function insertMeeting(
+  db: Db,
+  bookClubId: string,
+  input: MeetingInput
+): Promise<string> {
+  const { data, error } = await db
+    .from("meetings")
+    .insert({ book_club_id: bookClubId, ...toMeetingRow(input) })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+/** Record a meeting that already happened, finalized with its book. */
+export async function insertPastMeeting(
+  db: Db,
+  bookClubId: string,
+  input: Pick<MeetingInput, "meetingDate" | "themeId" | "details">,
+  bookId: string,
+  finalizedBy: string
+): Promise<string> {
+  const { data, error } = await db
+    .from("meetings")
+    .insert({
+      book_club_id: bookClubId,
+      meeting_date: input.meetingDate,
+      theme_id: input.themeId,
+      details: input.details,
+      selected_book_id: bookId,
+      is_finalized: true,
+      finalized_at: new Date().toISOString(),
+      finalized_by: finalizedBy,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+/** Update a meeting; pass `selectedBookId` to change its book. */
+export async function updateMeeting(
+  db: Db,
+  meetingId: string,
+  input: MeetingInput,
+  selectedBookId?: string | null
+): Promise<void> {
+  const { error } = await db
+    .from("meetings")
+    .update({
+      ...toMeetingRow(input),
+      ...(selectedBookId && { selected_book_id: selectedBookId }),
+    })
+    .eq("id", meetingId);
+  if (error) throw error;
+}
+
+/** Delete a meeting; its options and votes cascade. */
+export async function deleteMeeting(db: Db, meetingId: string): Promise<void> {
+  const { error } = await db.from("meetings").delete().eq("id", meetingId);
+  if (error) throw error;
+}
+
+/** Add a book to an unfinalized meeting's options. */
+export async function addBookOption(
+  db: Db,
+  meeting: MeetingContext,
+  bookId: string,
+  addedBy: string
+): Promise<void> {
+  if (meeting.isFinalized) throw new UserError("Meeting has been finalized");
+  const { error } = await db
+    .from("book_options")
+    .insert({ meeting_id: meeting.id, book_id: bookId, added_by: addedBy });
+  if (error) throw error;
+}
+
+/** Override a nomination's description and page count. */
+export async function updateBookOptionMetadata(
+  db: Db,
+  bookOptionId: string,
+  description: string | null,
+  pageCount: number | null
+): Promise<void> {
+  if (pageCount !== null && (!Number.isInteger(pageCount) || pageCount <= 0)) {
+    throw new UserError("Page count must be a positive whole number");
+  }
+  const { error } = await db
+    .from("book_options")
+    .update({
+      description_override: description,
+      page_count_override: pageCount,
+    })
+    .eq("id", bookOptionId);
+  if (error) throw error;
+}
+
+/**
+ * Pick a meeting's book from its options. Concurrent finalizes resolve to
+ * exactly one winner: the update only applies while is_finalized is false.
+ */
+export async function finalizeMeeting(
+  db: Db,
+  meeting: MeetingContext,
+  selectedBookId: string,
+  finalizedBy: string
+): Promise<void> {
+  if (meeting.isFinalized) throw new UserError("Meeting already finalized");
+
+  const { data: option, error: optionError } = await db
+    .from("book_options")
+    .select("id")
+    .eq("meeting_id", meeting.id)
+    .eq("book_id", selectedBookId)
+    .maybeSingle();
+  if (optionError) throw optionError;
+  if (!option) {
+    throw new UserError("Selected book is not an option for this meeting");
+  }
+
+  const { data: finalized, error } = await db
+    .from("meetings")
+    .update({
+      is_finalized: true,
+      selected_book_id: selectedBookId,
+      finalized_at: new Date().toISOString(),
+      finalized_by: finalizedBy,
+    })
+    .eq("id", meeting.id)
+    .eq("is_finalized", false)
+    .select("id");
+  if (error) throw error;
+  if (finalized.length === 0) throw new UserError("Meeting already finalized");
+}

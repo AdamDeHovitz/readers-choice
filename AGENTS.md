@@ -8,6 +8,20 @@ Mobile-first book club app: clubs, meetings, book nominations and voting (approv
 - `npm run build` needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; locally, dummy values work (as in CI): `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
 - `npm run test:integration` hits the live Open Library API; it's excluded from the default run.
 
+## Architecture
+
+Three layers, each importing only from the ones below it (ESLint enforces the boundaries; type-only imports may cross them):
+
+- `app/` pages and `app/actions/` (`"use server"` endpoints). Pages load data from `server/` via `getViewer()`; they never call server actions for reads. Actions handle endpoint concerns only: wrap the body in `runAction`, validate input (`server/input.ts`), authorize (`server/authz.ts`), call a `server/` function, then `revalidatePath`. Actions never query the database directly.
+- `server/` (every file imports `server-only`): one module per domain (`clubs`, `meetings`, `nominations`, `voting`, `themes`, `rankings`, `invites`, `books`, `libraries`, `users`). It holds every query and write, the DTO types the UI consumes, and the business rules that need data (finalize guard, ballot validation). The database client is `createAdminClient()`/`Db` from `server/db.ts`, typed by the generated `server/database.types.ts`.
+- `lib/`: pure, isomorphic, unit-tested logic (meeting phases in `lib/meeting-schedule.ts`, voting algorithms, validation, API clients). No database or app imports.
+
+Conventions:
+
+- Every action returns `ActionResult<T>` (`{ success: true, data } | { success: false, error }`). Throw `UserError` (`lib/user-error.ts`) for messages the user should see. Anything else is logged and replaced with the action's generic fallback message, so database internals never reach the client. Use `throwIfDbError` for errors raised by our Postgres functions.
+- UI components import DTO types from `server/` (`import type`) instead of redeclaring them.
+- Query results are typed from the schema. Don't cast them; if a type looks wrong, the schema or the select string is wrong.
+
 ## Local testing (verify changes in a real browser)
 
 A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql` fills it with test data. Nothing here touches production.
@@ -23,7 +37,7 @@ A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql`
 ## Security model
 
 - All database access is server-side with the service-role key, which bypasses RLS. NextAuth never sets `auth.uid()`; the `anon`/`authenticated` roles have no grants and there are no RLS policies.
-- So authorization lives in server actions: every exported `"use server"` function is a public endpoint and must check the session and the caller's club membership/admin role itself (`authenticatedAction` in `lib/safe-action.ts`).
+- So authorization lives in server actions: every exported `"use server"` function is a public endpoint and must check the session (`runAction` in `server/action.ts`) and the caller's club membership/admin role (`requireMember`/`requireAdmin` in `server/authz.ts`). Pages and `server/` queries check membership themselves, since they aren't behind an action.
 - Multi-row writes (votes, rankings, admin changes) go through Postgres functions called with `supabase.rpc` so they're atomic.
 - Book descriptions are rendered as HTML only through `sanitizeDescription` (`lib/sanitize-description.ts`).
 - Library availability (`lib/libraries/overdrive.ts`) calls OverDrive/Libby's undocumented public endpoints from the server. They can change without notice, so lookups must fail soft (fall back to a catalog link) and never send patron data.
@@ -31,7 +45,7 @@ A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql`
 ## Database migrations
 
 - There is one deployed environment: production. Deploying code does not run migrations.
-- Test a migration locally first: add it under `supabase/migrations/`, run `npm run db:reset`, and update `supabase/seed.sql` if the new schema needs seed data.
+- Test a migration locally first: add it under `supabase/migrations/`, run `npm run db:reset`, then `npm run db:types` to regenerate `server/database.types.ts` (CI fails if it's stale). Update `supabase/seed.sql` if the new schema needs seed data.
 - Then apply it to production with the Supabase MCP `apply_migration` tool and rename the file `supabase/migrations/<version>_<name>.sql` using the version it recorded (`list_migrations`).
 - A migration goes live before the code that uses it deploys, so it must work with the currently deployed code.
 - For schema questions, read the migrations or query the live database (`list_tables`, read-only `execute_sql`).
@@ -45,7 +59,7 @@ A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql`
 
 A PR is the verification gate; CI never touches production (dummy env vars and a throwaway local Supabase stack).
 
-- Lint, Test, Build, and E2E (this PR's code on its migrations + seed) run on every PR.
+- Lint, Test, Build, and E2E (this PR's code on its migrations + seed; also checks `server/database.types.ts` matches the migrations) run on every PR.
 - Migration compat runs only when `supabase/migrations/` changes: it loads main's migrations and seed, applies the PR's migrations on top (production's order), then runs main's app and main's e2e specs. A failure means the migration would break the deployed code.
 - Each e2e job uploads a Playwright HTML report (a screenshot per test, traces on failure; 14 days) and writes pass/fail counts plus the report link to the job summary. View it with `gh run download <run-id> -n e2e-report -D report && npx playwright show-report report`.
 
