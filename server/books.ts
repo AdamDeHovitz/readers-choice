@@ -1,5 +1,5 @@
 import "server-only";
-import { enrichBookDescription } from "@/lib/enrichment";
+import { findGoogleBooksDescription } from "@/lib/google-books";
 import { getWorkDescription, type BookSearchResult } from "@/lib/open-library";
 import { UserError } from "@/lib/user-error";
 import type { Db, Tables } from "./db";
@@ -71,7 +71,7 @@ export async function saveBook(
 
   const description =
     (await getWorkDescription(book.externalId)) ??
-    (await enrichBookDescription(book)) ??
+    (await findGoogleBooksDescription(book)) ??
     null;
   const coverUrl =
     book.coverUrl && OPEN_LIBRARY_COVER_URL.test(book.coverUrl)

@@ -304,20 +304,6 @@ export async function deleteMeeting(db: Db, meetingId: string): Promise<void> {
   if (error) throw error;
 }
 
-/** Add a book to an unfinalized meeting's options. */
-export async function addBookOption(
-  db: Db,
-  meeting: MeetingContext,
-  bookId: string,
-  addedBy: string
-): Promise<void> {
-  if (meeting.isFinalized) throw new UserError("Meeting has been finalized");
-  const { error } = await db
-    .from("book_options")
-    .insert({ meeting_id: meeting.id, book_id: bookId, added_by: addedBy });
-  if (error) throw error;
-}
-
 /** Override a nomination's description and page count. */
 export async function updateBookOptionMetadata(
   db: Db,

@@ -144,27 +144,6 @@ export async function deleteMeeting(meetingId: string): Promise<ActionResult> {
   });
 }
 
-/** Add a book option to an unfinalized meeting (admins only). */
-export async function addBookOption(
-  meetingId: string,
-  book: BookSearchResult
-): Promise<ActionResult> {
-  return runAction("Failed to add book option", async ({ db, userId }) => {
-    const meeting = await meetings.getMeetingContext(db, meetingId);
-    await requireAdmin(
-      db,
-      meeting.bookClubId,
-      userId,
-      "Only admins can add book options"
-    );
-
-    const bookId = await saveBook(db, book);
-    await meetings.addBookOption(db, meeting, bookId, userId);
-
-    revalidatePath(`/meetings/${meetingId}`);
-  });
-}
-
 /** Override a nomination's description and page count (admins only). */
 export async function updateBookOptionMetadata(
   bookOptionId: string,

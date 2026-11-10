@@ -178,18 +178,6 @@ export async function addMember(
   if (error) throw error;
 }
 
-export async function updateBookClubDescription(
-  db: Db,
-  bookClubId: string,
-  description: string | null
-): Promise<void> {
-  const { error } = await db
-    .from("book_clubs")
-    .update({ description })
-    .eq("id", bookClubId);
-  if (error) throw error;
-}
-
 /** Atomic; the database refuses to demote the club's last admin. */
 export async function setMemberAdmin(
   db: Db,

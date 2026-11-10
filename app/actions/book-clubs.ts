@@ -64,27 +64,6 @@ export async function removeMember(
   });
 }
 
-export async function updateBookClubDescription(
-  bookClubId: string,
-  description: string
-): Promise<ActionResult> {
-  return runAction("Failed to update description", async ({ db, userId }) => {
-    await requireAdmin(
-      db,
-      bookClubId,
-      userId,
-      "Only admins can edit book club details"
-    );
-    await clubs.updateBookClubDescription(
-      db,
-      bookClubId,
-      optionalText(description)
-    );
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
-  });
-}
-
 /** Super admins only; the name must be typed exactly to confirm. */
 export async function deleteBookClub(
   bookClubId: string,

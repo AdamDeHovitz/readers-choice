@@ -95,18 +95,7 @@ export default async function BookClubPage({
       />
 
       <BookDisplay
-        book={featured?.meeting.selectedBook ?? null}
-        meeting={
-          featured
-            ? {
-                id: featured.meeting.id,
-                meetingDate: featured.meeting.meetingDate,
-                isFinalized: true,
-                themeName: featured.meeting.theme?.name,
-                details: featured.meeting.details,
-              }
-            : undefined
-        }
+        meeting={featured?.meeting ?? null}
         label={featured?.label ?? "Current Book"}
       />
     </div>
