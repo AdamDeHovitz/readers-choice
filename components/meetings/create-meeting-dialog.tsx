@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { createMeeting } from "@/app/actions/meetings";
 import { fromDateTimeInput } from "@/lib/datetime-input";
+import { useAction } from "@/hooks/use-action";
 import {
   Dialog,
   DialogContent,
@@ -24,37 +24,31 @@ interface CreateMeetingDialogProps {
 }
 
 export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [themeName, setThemeName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    run: create,
+    pending: isSubmitting,
+    error,
+  } = useAction(createMeeting, {
+    onSuccess: () => {
+      setOpen(false);
+      setThemeName("");
+    },
+  });
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
-
     const form = new FormData(e.currentTarget);
     const field = (name: string) => String(form.get(name) ?? "");
 
-    const result = await createMeeting(bookClubId, {
+    create(bookClubId, {
       meetingDate: fromDateTimeInput(field("meetingDate")) ?? "",
       nominationDeadline: fromDateTimeInput(field("nominationDeadline")),
       votingDeadline: fromDateTimeInput(field("votingDeadline")),
       themeName,
       details: field("details"),
     });
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
-      setOpen(false);
-      setThemeName("");
-      setIsSubmitting(false);
-      router.refresh();
-    }
   }
 
   return (

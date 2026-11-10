@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
 import { finalizeMeeting } from "@/app/actions/meetings";
-import { getMeetingResults, voteForBook } from "@/app/actions/meeting-voting";
+import { voteForBook } from "@/app/actions/meeting-voting";
+import { useAction } from "@/hooks/use-action";
 import type { VotingResults } from "@/server/voting";
 import { VotingMethodToggle } from "./voting-method-toggle";
 import { MeetingRankedVoting } from "./meeting-ranked-voting";
@@ -22,6 +22,8 @@ interface BookOptionsListProps {
   isVotingOpen: boolean;
   userVotingMethod: "approval" | "ranked" | null;
   userRankedVotes: { bookOptionId: string; rank: number }[];
+  /** Hybrid IRV results once voting has closed (before finalization). */
+  votingResults: VotingResults | null;
   /** Server-rendered library availability, keyed by book option id. */
   availability?: Record<string, ReactNode>;
 }
@@ -35,18 +37,19 @@ export function BookOptionsList({
   isVotingOpen,
   userVotingMethod,
   userRankedVotes,
+  votingResults,
   availability,
 }: BookOptionsListProps) {
-  const router = useRouter();
-  const [votingForId, setVotingForId] = useState<string | null>(null);
-  const [finalizingBookId, setFinalizingBookId] = useState<string | null>(null);
+  const vote = useAction(voteForBook);
+  const finalize = useAction(finalizeMeeting);
+  // Which option/book the in-flight request is for, to show its spinner.
+  const [voteTarget, setVoteTarget] = useState<string | null>(null);
+  const [finalizeTarget, setFinalizeTarget] = useState<string | null>(null);
+  const votingForId = vote.pending ? voteTarget : null;
+  const finalizingBookId = finalize.pending ? finalizeTarget : null;
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
-  const [votingResults, setVotingResults] = useState<VotingResults | null>(
-    null
-  );
-  const [loadingResults, setLoadingResults] = useState(false);
 
   // Determine if we should show vote counts
   // Only show when voting is closed (finalized or past voting deadline)
@@ -63,17 +66,6 @@ export function BookOptionsList({
     (currentMethod === "approval" && bookOptions.some((o) => o.userHasVoted)) ||
     (currentMethod === "ranked" && userRankedVotes.length > 0);
 
-  // Load voting results when voting is closed
-  useEffect(() => {
-    if (showVoteCounts && !isFinalized && !votingResults) {
-      setLoadingResults(true);
-      getMeetingResults(meetingId).then((result) => {
-        setVotingResults(result.success ? result.data : null);
-        setLoadingResults(false);
-      });
-    }
-  }, [showVoteCounts, isFinalized, meetingId, votingResults]);
-
   if (bookOptions.length === 0) {
     return (
       <p className="text-dark-500 py-8 text-center italic">
@@ -83,11 +75,9 @@ export function BookOptionsList({
   }
 
   async function handleVote(bookOptionId: string) {
-    setVotingForId(bookOptionId);
-    const result = await voteForBook(bookOptionId);
-    setVotingForId(null);
+    setVoteTarget(bookOptionId);
+    const result = await vote.run(bookOptionId);
     if (!result.success) alert(result.error);
-    router.refresh();
   }
 
   async function handleFinalize(bookId: string) {
@@ -99,13 +89,9 @@ export function BookOptionsList({
       return;
     }
 
-    setFinalizingBookId(bookId);
-    const result = await finalizeMeeting(meetingId, bookId);
-    if (!result.success) {
-      alert(result.error);
-    }
-    setFinalizingBookId(null);
-    router.refresh();
+    setFinalizeTarget(bookId);
+    const result = await finalize.run(meetingId, bookId);
+    if (!result.success) alert(result.error);
   }
 
   function toggleDescription(bookId: string) {
@@ -207,15 +193,6 @@ export function BookOptionsList({
             onFinalize={handleFinalize}
           />
         )}
-      </div>
-    );
-  }
-
-  // Loading results state
-  if (showVoteCounts && !isFinalized && loadingResults) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-dark-500">Calculating results...</p>
       </div>
     );
   }

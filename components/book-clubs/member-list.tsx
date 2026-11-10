@@ -2,6 +2,7 @@
 
 import { toggleMemberAdmin, removeMember } from "@/app/actions/book-clubs";
 import { useState } from "react";
+import { useAction } from "@/hooks/use-action";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { ClubMember } from "@/server/clubs";
@@ -23,22 +24,18 @@ export function MemberList({
   const [actioningMemberId, setActioningMemberId] = useState<string | null>(
     null
   );
+  const toggleAdmin = useAction(toggleMemberAdmin);
+  const remove = useAction(removeMember, { refresh: false });
+  const busy = toggleAdmin.pending || remove.pending;
 
   async function handleToggleAdmin(member: ClubMember) {
     setActioningMemberId(member.id);
-
-    const result = await toggleMemberAdmin(
+    const result = await toggleAdmin.run(
       bookClubId,
       member.id,
       !member.isAdmin
     );
-
-    if (!result.success) {
-      alert(result.error);
-    }
-
-    setActioningMemberId(null);
-    router.refresh();
+    if (!result.success) alert(result.error);
   }
 
   async function handleRemoveMember(member: ClubMember) {
@@ -52,26 +49,17 @@ export function MemberList({
     }
 
     setActioningMemberId(member.id);
-
-    const result = await removeMember(bookClubId, member.id);
-
-    if (!result.success) {
-      alert(result.error);
-      setActioningMemberId(null);
-    } else if (isSelf) {
-      // Redirect to dashboard if user removed themselves
-      router.push("/dashboard");
-    } else {
-      setActioningMemberId(null);
-      router.refresh();
-    }
+    const result = await remove.run(bookClubId, member.id);
+    if (!result.success) alert(result.error);
+    else if (isSelf) router.push("/dashboard");
+    else router.refresh();
   }
 
   return (
     <div className="space-y-3">
       {members.map((member) => {
         const isSelf = member.id === currentUserId;
-        const isActioning = actioningMemberId === member.id;
+        const isActioning = busy && actioningMemberId === member.id;
 
         return (
           <div

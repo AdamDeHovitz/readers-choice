@@ -5,6 +5,7 @@ import { BookSearch } from "@/components/books/book-search";
 import { BookCard } from "@/components/books/book-card";
 import { Button } from "@/components/ui/button";
 import { nominateBook } from "@/app/actions/nominations";
+import { useAction } from "@/hooks/use-action";
 import { useRouter } from "next/navigation";
 import type { BookSearchResult } from "@/lib/open-library";
 import { CheckCircle2 } from "lucide-react";
@@ -30,47 +31,41 @@ export function NominationForm({
     null
   );
   const [note, setNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  // Check if a book is already nominated
-  const isAlreadyNominated = (bookTitle: string, bookAuthor: string) => {
-    return existingNominations.some(
-      (nom) =>
-        nom.book.title.toLowerCase() === bookTitle.toLowerCase() &&
-        nom.book.author.toLowerCase() === bookAuthor.toLowerCase()
-    );
-  };
-
-  async function handleNominate() {
-    if (!selectedBook) return;
-
-    // Check if already nominated
-    if (isAlreadyNominated(selectedBook.title, selectedBook.author)) {
-      setError("This book has already been nominated for this meeting.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    setError(null);
-
-    const result = await nominateBook(meetingId, selectedBook, note);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
+  const {
+    run: nominate,
+    pending: isSubmitting,
+    error: submitError,
+    reset,
+  } = useAction(nominateBook, {
+    refresh: false,
+    onSuccess: () => {
       setSuccess(true);
-      setIsSubmitting(false);
       setSelectedBook(null);
       setNote("");
-      // Refresh the page after a short delay to show the new nomination
+      // Show the confirmation briefly, then the updated nominations.
       setTimeout(() => {
         router.refresh();
         setSuccess(false);
       }, 2000);
-    }
+    },
+  });
+
+  // Another work with the same title and author counts as the same book.
+  const alreadyNominated =
+    selectedBook !== null &&
+    existingNominations.some(
+      (nom) =>
+        nom.book.title.toLowerCase() === selectedBook.title.toLowerCase() &&
+        nom.book.author.toLowerCase() === selectedBook.author.toLowerCase()
+    );
+  const error = alreadyNominated
+    ? "This book has already been nominated for this meeting."
+    : submitError;
+
+  function handleNominate() {
+    if (!selectedBook || alreadyNominated) return;
+    nominate(meetingId, selectedBook, note);
   }
 
   if (success) {
@@ -166,7 +161,7 @@ export function NominationForm({
           <div className="mt-4 flex gap-3">
             <Button
               onClick={handleNominate}
-              disabled={isSubmitting}
+              disabled={isSubmitting || alreadyNominated}
               className="bg-rust-600 hover:bg-rust-700 text-cream-100 flex-1"
             >
               {isSubmitting ? "Nominating..." : "Nominate This Book"}
@@ -175,7 +170,7 @@ export function NominationForm({
               onClick={() => {
                 setSelectedBook(null);
                 setNote("");
-                setError(null);
+                reset();
               }}
               variant="outline"
               disabled={isSubmitting}

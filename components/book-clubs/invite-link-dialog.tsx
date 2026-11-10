@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { createInviteLink, deactivateInviteLink } from "@/app/actions/invites";
+import { useAction } from "@/hooks/use-action";
 import {
   Dialog,
   DialogContent,
@@ -25,28 +26,26 @@ export function InviteLinkDialog({
 }: InviteLinkDialogProps) {
   const [open, setOpen] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const create = useAction(createInviteLink, {
+    refresh: false,
+    onSuccess: ({ code }) => setInviteCode(code),
+  });
+  const deactivate = useAction(deactivateInviteLink, {
+    refresh: false,
+    onSuccess: () => setInviteCode(null),
+  });
+  const isLoading = create.pending || deactivate.pending;
+  const error = create.error ?? deactivate.error;
 
   const inviteUrl =
     typeof window !== "undefined" && inviteCode
       ? `${window.location.origin}/join/${inviteCode}`
       : "";
 
-  async function handleCreateLink() {
-    setIsLoading(true);
-    setError(null);
-
-    const result = await createInviteLink(bookClubId);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsLoading(false);
-    } else {
-      setInviteCode(result.data.code);
-      setIsLoading(false);
-    }
+  function handleCreateLink() {
+    deactivate.reset();
+    create.run(bookClubId);
   }
 
   async function handleCopy() {
@@ -57,31 +56,16 @@ export function InviteLinkDialog({
     }
   }
 
-  async function handleDeactivate() {
+  function handleDeactivate() {
     if (!inviteCode) return;
-
-    setIsLoading(true);
-    const result = await deactivateInviteLink(bookClubId, inviteCode);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsLoading(false);
-    } else {
-      setInviteCode(null);
-      setIsLoading(false);
-    }
+    create.reset();
+    deactivate.run(bookClubId, inviteCode);
   }
-
-  // Load existing invite link when dialog opens
-  useEffect(() => {
-    if (open && !inviteCode) {
-      handleCreateLink();
-    }
-  }, [open]);
 
   function resetDialog() {
     setInviteCode(null);
-    setError(null);
+    create.reset();
+    deactivate.reset();
     setCopied(false);
   }
 
@@ -90,7 +74,9 @@ export function InviteLinkDialog({
       open={open}
       onOpenChange={(newOpen) => {
         setOpen(newOpen);
-        if (!newOpen) resetDialog();
+        // Opening loads the club's existing link (or creates one).
+        if (newOpen) handleCreateLink();
+        else resetDialog();
       }}
     >
       <DialogTrigger asChild>

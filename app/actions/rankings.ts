@@ -5,16 +5,6 @@ import { runAction, type ActionResult } from "@/server/action";
 import { requireMember } from "@/server/authz";
 import * as rankings from "@/server/rankings";
 
-/** The club's picks for a year with the viewer's ranks. */
-export async function getYearBooks(
-  bookClubId: string,
-  year: number
-): Promise<ActionResult<rankings.YearBook[]>> {
-  return runAction("Failed to load books", (viewer) =>
-    rankings.getYearBooks(viewer, bookClubId, year)
-  );
-}
-
 /** How each member ranked one book in a year. */
 export async function getIndividualBookRankings(
   bookClubId: string,

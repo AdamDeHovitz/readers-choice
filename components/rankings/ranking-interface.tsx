@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { saveYearRankings } from "@/app/actions/rankings";
+import { useAction } from "@/hooks/use-action";
 import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
@@ -166,9 +167,15 @@ export function RankingInterface({
   const [unreadBooks, setUnreadBooks] = useState<YearBook[]>(
     initialBooks.filter((b) => b.rank === null)
   );
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const {
+    run: save,
+    pending: isSaving,
+    error,
+  } = useAction(saveYearRankings, {
+    refresh: false,
+    onSuccess: () => setLastSaved(new Date()),
+  });
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -177,119 +184,41 @@ export function RankingInterface({
     })
   );
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setRankedBooks((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-
-        const newOrder = arrayMove(items, oldIndex, newIndex);
-
-        // Auto-save after reordering
-        saveDraggedRankings(newOrder);
-
-        return newOrder;
-      });
-    }
-  }
-
-  async function saveDraggedRankings(newRankedBooks: YearBook[]) {
-    setIsSaving(true);
-    setError(null);
-
-    const rankedBooksWithRank = newRankedBooks.map((book, index) => ({
-      bookId: book.id,
-      rank: index + 1,
-    }));
-
-    const unreadBookIds = unreadBooks.map((b) => b.id);
-
-    const result = await saveYearRankings(
+  /** Show the new ranking immediately and auto-save it. */
+  function update(ranked: YearBook[], unread: YearBook[]) {
+    setRankedBooks(ranked);
+    setUnreadBooks(unread);
+    save(
       bookClubId,
       year,
-      rankedBooksWithRank,
-      unreadBookIds
+      ranked.map((book, index) => ({ bookId: book.id, rank: index + 1 })),
+      unread.map((book) => book.id)
     );
-
-    if (!result.success) {
-      setError(result.error);
-    } else {
-      setLastSaved(new Date());
-    }
-
-    setIsSaving(false);
   }
 
-  async function handleMarkUnread(bookId: string) {
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    if (!over || active.id === over.id) return;
+    const from = rankedBooks.findIndex((book) => book.id === active.id);
+    const to = rankedBooks.findIndex((book) => book.id === over.id);
+    update(arrayMove(rankedBooks, from, to), unreadBooks);
+  }
+
+  function handleMarkUnread(bookId: string) {
     const book = rankedBooks.find((b) => b.id === bookId);
-    if (book) {
-      const newRankedBooks = rankedBooks.filter((b) => b.id !== bookId);
-      const newUnreadBooks = [...unreadBooks, book];
-
-      setRankedBooks(newRankedBooks);
-      setUnreadBooks(newUnreadBooks);
-
-      // Auto-save
-      setIsSaving(true);
-      setError(null);
-
-      const rankedBooksWithRank = newRankedBooks.map((book, index) => ({
-        bookId: book.id,
-        rank: index + 1,
-      }));
-
-      const result = await saveYearRankings(
-        bookClubId,
-        year,
-        rankedBooksWithRank,
-        newUnreadBooks.map((b) => b.id)
-      );
-
-      if (!result.success) {
-        setError(result.error);
-      } else {
-        setLastSaved(new Date());
-      }
-
-      setIsSaving(false);
-    }
+    if (!book) return;
+    update(
+      rankedBooks.filter((b) => b.id !== bookId),
+      [...unreadBooks, book]
+    );
   }
 
-  async function handleMarkRead(bookId: string) {
+  function handleMarkRead(bookId: string) {
     const book = unreadBooks.find((b) => b.id === bookId);
-    if (book) {
-      const newUnreadBooks = unreadBooks.filter((b) => b.id !== bookId);
-      const newRankedBooks = [...rankedBooks, book];
-
-      setUnreadBooks(newUnreadBooks);
-      setRankedBooks(newRankedBooks);
-
-      // Auto-save
-      setIsSaving(true);
-      setError(null);
-
-      const rankedBooksWithRank = newRankedBooks.map((book, index) => ({
-        bookId: book.id,
-        rank: index + 1,
-      }));
-
-      const result = await saveYearRankings(
-        bookClubId,
-        year,
-        rankedBooksWithRank,
-        newUnreadBooks.map((b) => b.id)
-      );
-
-      if (!result.success) {
-        setError(result.error);
-      } else {
-        setLastSaved(new Date());
-      }
-
-      setIsSaving(false);
-    }
+    if (!book) return;
+    update(
+      [...rankedBooks, book],
+      unreadBooks.filter((b) => b.id !== bookId)
+    );
   }
 
   return (

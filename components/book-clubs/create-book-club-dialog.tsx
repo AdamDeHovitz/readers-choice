@@ -16,31 +16,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { createBookClub } from "@/app/actions/book-clubs";
+import { useAction } from "@/hooks/use-action";
 import { Alert } from "@/components/ui/alert";
 
 export function CreateBookClubDialog() {
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const {
+    run: create,
+    pending: isLoading,
+    error,
+  } = useAction(createBookClub, {
+    onSuccess: ({ bookClubId }) => {
+      setOpen(false);
+      router.push(`/book-clubs/${bookClubId}`);
+    },
+  });
 
-  async function handleSubmit(formData: FormData) {
-    setIsLoading(true);
-    setError(null);
-
-    const result = await createBookClub({
+  function handleSubmit(formData: FormData) {
+    create({
       name: String(formData.get("name") ?? ""),
       description: String(formData.get("description") ?? ""),
     });
-
-    if (!result.success) {
-      setError(result.error);
-      setIsLoading(false);
-    } else {
-      setOpen(false);
-      router.push(`/book-clubs/${result.data.bookClubId}`);
-      router.refresh();
-    }
   }
 
   return (

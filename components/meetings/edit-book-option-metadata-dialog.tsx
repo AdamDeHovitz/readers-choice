@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { updateBookOptionMetadata } from "@/app/actions/meetings";
+import { useAction } from "@/hooks/use-action";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,44 +32,26 @@ export function EditBookOptionMetadataDialog({
   currentDescription,
   currentPageCount,
 }: EditBookOptionMetadataDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState(currentDescription || "");
   const [pageCount, setPageCount] = useState(
     currentPageCount ? String(currentPageCount) : ""
   );
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    run: save,
+    pending: isSaving,
+    error,
+  } = useAction(updateBookOptionMetadata, {
+    onSuccess: () => setOpen(false),
+  });
 
-  async function handleSave() {
-    setIsSaving(true);
-    setError(null);
-
-    const parsedPageCount = pageCount.trim() ? Number(pageCount) : null;
-    if (
-      parsedPageCount !== null &&
-      (!Number.isInteger(parsedPageCount) || parsedPageCount <= 0)
-    ) {
-      setError("Page count must be a positive whole number");
-      setIsSaving(false);
-      return;
-    }
-
-    const result = await updateBookOptionMetadata(
+  function handleSave() {
+    // The server validates the page count (positive whole number).
+    save(
       bookOptionId,
       description,
-      parsedPageCount
+      pageCount.trim() ? Number(pageCount) : null
     );
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSaving(false);
-      return;
-    }
-
-    setOpen(false);
-    setIsSaving(false);
-    router.refresh();
   }
 
   return (

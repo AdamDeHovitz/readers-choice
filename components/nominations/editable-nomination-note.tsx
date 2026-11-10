@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { updateNominationNote } from "@/app/actions/nominations";
 import { NominationNote } from "./nomination-note";
 import { NominationNoteField } from "./nomination-note-field";
+import { useAction } from "@/hooks/use-action";
 
 interface EditableNominationNoteProps {
   bookOptionId: string;
@@ -20,24 +20,19 @@ export function EditableNominationNote({
   note,
   nominatorName,
 }: EditableNominationNoteProps) {
-  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(note ?? "");
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    run: save,
+    pending: isSaving,
+    error,
+    reset,
+  } = useAction(updateNominationNote, {
+    onSuccess: () => setIsEditing(false),
+  });
 
-  async function handleSave() {
-    setIsSaving(true);
-    setError(null);
-    const result = await updateNominationNote(bookOptionId, draft);
-    setIsSaving(false);
-
-    if (!result.success) {
-      setError(result.error);
-      return;
-    }
-    setIsEditing(false);
-    router.refresh();
+  function handleSave() {
+    save(bookOptionId, draft);
   }
 
   if (!isEditing) {
@@ -76,7 +71,7 @@ export function EditableNominationNote({
           variant="outline"
           onClick={() => {
             setIsEditing(false);
-            setError(null);
+            reset();
           }}
           disabled={isSaving}
         >

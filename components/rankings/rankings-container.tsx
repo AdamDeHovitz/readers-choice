@@ -1,7 +1,4 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { getYearBooks } from "@/app/actions/rankings";
+import Link from "next/link";
 import { RankingInterface } from "./ranking-interface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { YearBook } from "@/server/rankings";
@@ -9,31 +6,16 @@ import type { YearBook } from "@/server/rankings";
 interface RankingsContainerProps {
   bookClubId: string;
   years: number[];
-  initialYear: number;
-  initialBooks: YearBook[];
+  year: number;
+  books: YearBook[];
 }
 
 export function RankingsContainer({
   bookClubId,
   years,
-  initialYear,
-  initialBooks,
+  year: selectedYear,
+  books,
 }: RankingsContainerProps) {
-  const [selectedYear, setSelectedYear] = useState(initialYear);
-  const [books, setBooks] = useState<YearBook[]>(initialBooks);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    async function loadBooks() {
-      setIsLoading(true);
-      const result = await getYearBooks(bookClubId, selectedYear);
-      setBooks(result.success ? result.data : []);
-      setIsLoading(false);
-    }
-
-    loadBooks();
-  }, [selectedYear, bookClubId]);
-
   return (
     <div className="space-y-6">
       {/* Header with year selector */}
@@ -48,18 +30,18 @@ export function RankingsContainer({
             </div>
             <div className="flex gap-2">
               {years.map((year) => (
-                <button
+                <Link
                   key={year}
-                  onClick={() => setSelectedYear(year)}
-                  disabled={isLoading}
+                  href={`/book-clubs/${bookClubId}/rankings?year=${year}`}
+                  aria-current={year === selectedYear ? "page" : undefined}
                   className={`font-inria rounded-lg px-4 py-2 font-medium transition-colors ${
                     year === selectedYear
                       ? "bg-gold-600 text-white"
                       : "text-dark-600 border-gold-600/20 hover:bg-cream-100 border bg-white"
-                  } ${isLoading ? "opacity-50" : ""}`}
+                  }`}
                 >
                   {year}
-                </button>
+                </Link>
               ))}
             </div>
           </div>
@@ -78,11 +60,7 @@ export function RankingsContainer({
           </div>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="py-12 text-center">
-              <p className="text-dark-600">Loading books...</p>
-            </div>
-          ) : books.length === 0 ? (
+          {books.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-dark-600">
                 No books were finalized for {selectedYear}.
