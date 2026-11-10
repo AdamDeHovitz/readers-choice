@@ -783,6 +783,10 @@ export type Database = {
         Args: { p_key: string; p_limit: number; p_window_seconds: number };
         Returns: boolean;
       };
+      create_book_club: {
+        Args: { p_creator_id: string; p_description?: string; p_name: string };
+        Returns: string;
+      };
       delete_book_club: {
         Args: {
           p_actor_id: string;
