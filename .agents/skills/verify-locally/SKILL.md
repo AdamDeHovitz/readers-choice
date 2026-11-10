@@ -10,7 +10,7 @@ The local stack (Docker) mirrors production's schema, and `supabase/seed.sql` fi
 ## 1. Start
 
 ```bash
-npm run db:reset     # every migration plus the seed; do this before relying on seeded state
+npm run db:reset     # every migration plus the seed (see Pitfalls before resetting)
 npm run dev:local    # starts the stack if needed; app on http://localhost:3000
 ```
 
@@ -49,8 +49,13 @@ npm run db:reset && npm run test:e2e   # mobile viewport; specs only read seed d
 
 Reset first if you mutated data: e.g. joining Seed Club as dave breaks the non-member spec. Add a spec to `e2e/` when a flow is worth guarding.
 
+## 5. Record it
+
+Paste what you observed (snapshot text, URLs, `db:sql` output) into the PR's `verifications/<pr-number>.md`; `verifications/README.md` has the format and evidence standards.
+
 ## Pitfalls
 
+- **One local stack for every checkout and worktree.** A `db:reset` wipes whatever another session is in the middle of. Reset when you need to (a new migration, or seed state that has drifted from `supabase/seed.sql`), and undo test data you write once you've checked it, so the seed stays as documented.
 - **Port 3000 may already be serving.** `test:e2e` reuses any server on :3000 (`reuseExistingServer`). A server started with plain `npm run dev` uses `.env.local`, which can point at production. Check what's running (`lsof -i :3000`) before running specs or mutating data.
 - **Need a second server?** Don't start another dev server in the same checkout, since they share `.next`. Create a git worktree, copy `node_modules` into it (`cp -cR` on macOS; Turbopack rejects a symlinked `node_modules`), then run `PORT=3100 scripts/dev-local.sh` there.
 - **Build fails right after many file changes while a dev server runs in this checkout?** They share `.next`; rerun the build before debugging.
