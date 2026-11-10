@@ -19,7 +19,7 @@
     "db:reset": "supabase db reset --local",
     "db:types": "scripts/db-types.sh",
     "db:types:check": "scripts/db-types.sh --check",
-    "db:sql": "psql postgresql://postgres:postgres@127.0.0.1:54322/postgres"
+    "db:sql": "scripts/db-sql.sh"
   },
   "repository": {
     "type": "git",
