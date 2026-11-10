@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { logPastMeeting } from "@/app/actions/meetings";
+import { useAction } from "@/hooks/use-action";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,6 @@ interface LogPastMeetingDialogProps {
 export function LogPastMeetingDialog({
   bookClubId,
 }: LogPastMeetingDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"details" | "book">("details");
   const [meetingDate, setMeetingDate] = useState("");
@@ -36,8 +35,17 @@ export function LogPastMeetingDialog({
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     null
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    run: logMeeting,
+    pending: isSubmitting,
+    error,
+    reset,
+  } = useAction(logPastMeeting, {
+    onSuccess: () => {
+      setOpen(false);
+      resetDialog();
+    },
+  });
 
   function resetDialog() {
     setStep("details");
@@ -45,30 +53,12 @@ export function LogPastMeetingDialog({
     setThemeName("");
     setDetails("");
     setSelectedBook(null);
-    setError(null);
+    reset();
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!selectedBook || !meetingDate) return;
-
-    setError(null);
-    setIsSubmitting(true);
-
-    const result = await logPastMeeting(
-      bookClubId,
-      { meetingDate, themeName, details },
-      selectedBook
-    );
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
-      setOpen(false);
-      resetDialog();
-      setIsSubmitting(false);
-      router.refresh();
-    }
+    logMeeting(bookClubId, { meetingDate, themeName, details }, selectedBook);
   }
 
   return (

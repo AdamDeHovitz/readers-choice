@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { deleteMeeting } from "@/app/actions/meetings";
+import { useAction } from "@/hooks/use-action";
 
 interface DeleteMeetingButtonProps {
   meetingId: string;
@@ -18,7 +18,10 @@ export function DeleteMeetingButton({
   meetingName,
 }: DeleteMeetingButtonProps) {
   const router = useRouter();
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { run: remove, pending: isDeleting } = useAction(deleteMeeting, {
+    refresh: false,
+    onSuccess: () => router.push(`/book-clubs/${bookClubId}`),
+  });
 
   async function handleDelete() {
     if (
@@ -29,16 +32,8 @@ export function DeleteMeetingButton({
       return;
     }
 
-    setIsDeleting(true);
-
-    const result = await deleteMeeting(meetingId);
-
-    if (!result.success) {
-      alert(`Error: ${result.error}`);
-      setIsDeleting(false);
-    } else {
-      router.push(`/book-clubs/${bookClubId}`);
-    }
+    const result = await remove(meetingId);
+    if (!result.success) alert(`Error: ${result.error}`);
   }
 
   return (

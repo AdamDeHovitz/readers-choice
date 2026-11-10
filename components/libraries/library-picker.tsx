@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useId, useState } from "react";
 import { saveMyLibraries, searchLibraries } from "@/app/actions/libraries";
+import { useAction } from "@/hooks/use-action";
+import { useDebouncedSearch } from "@/hooks/use-debounced-search";
 import {
   MAX_LIBRARIES,
   type Library,
@@ -19,63 +20,33 @@ interface LibraryPickerProps {
 }
 
 export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
-  const router = useRouter();
   const inputId = useId();
   const [libraries, setLibraries] = useState(initialLibraries);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<LibrarySearchResult[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, startSaving] = useTransition();
+  const search = useDebouncedSearch(query, searchLibraries);
+  const saveLibraries = useAction(saveMyLibraries);
+  const saving = saveLibraries.pending;
+  const searching = search.searching;
+  const error = saveLibraries.error ?? search.error;
 
   const trimmed = query.trim();
   const full = libraries.length >= MAX_LIBRARIES;
 
-  useEffect(() => {
-    if (trimmed.length < 2) return;
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      setSearching(true);
-      const response = await searchLibraries(trimmed);
-      if (cancelled) return;
-      setSearching(false);
-      if (!response.success) {
-        setError(response.error);
-        setResults([]);
-      } else {
-        setError(null);
-        setResults(response.data);
-      }
-    }, 300);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [trimmed]);
-
-  function save(next: Library[]) {
+  /** Show the new list immediately; restore the old one if saving fails. */
+  async function save(next: Library[]) {
     const previous = libraries;
     setLibraries(next);
-    setError(null);
-    startSaving(async () => {
-      const result = await saveMyLibraries(next.map((library) => library.key));
-      if ("error" in result) {
-        setLibraries(previous);
-        setError(result.error);
-      } else {
-        router.refresh();
-      }
-    });
+    const result = await saveLibraries.run(next.map((library) => library.key));
+    if (!result.success) setLibraries(previous);
   }
 
   function add(library: LibrarySearchResult) {
     if (full || libraries.some((saved) => saved.key === library.key)) return;
     save([...libraries, { key: library.key, name: library.name }]);
     setQuery("");
-    setResults([]);
   }
 
-  const visibleResults = trimmed.length >= 2 ? results : [];
+  const visibleResults = search.results;
 
   return (
     <div className="font-inria space-y-5">

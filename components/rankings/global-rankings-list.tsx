@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { TrophyIcon, UsersIcon } from "lucide-react";
 import {
   Dialog,
@@ -25,10 +25,8 @@ export function GlobalRankingsList({
   bookClubId,
   rankings,
   availableYears,
-  selectedYear,
+  selectedYear: currentYear,
 }: GlobalRankingsListProps) {
-  const router = useRouter();
-  const [currentYear, setCurrentYear] = useState(selectedYear);
   const [selectedBook, setSelectedBook] = useState<GlobalRankingBook | null>(
     null
   );
@@ -37,11 +35,6 @@ export function GlobalRankingsList({
   >([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  function handleYearChange(year: number) {
-    setCurrentYear(year);
-    router.push(`/book-clubs/${bookClubId}/global-rankings?year=${year}`);
-  }
 
   async function handleBookClick(book: GlobalRankingBook) {
     setSelectedBook(book);
@@ -83,9 +76,10 @@ export function GlobalRankingsList({
       {availableYears.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {availableYears.map((year) => (
-            <button
+            <Link
               key={year}
-              onClick={() => handleYearChange(year)}
+              href={`/book-clubs/${bookClubId}/global-rankings?year=${year}`}
+              aria-current={year === currentYear ? "page" : undefined}
               className={`font-inria rounded-lg px-4 py-2 font-medium transition-colors ${
                 year === currentYear
                   ? "bg-gold-600 text-white"
@@ -93,7 +87,7 @@ export function GlobalRankingsList({
               }`}
             >
               {year}
-            </button>
+            </Link>
           ))}
         </div>
       )}

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { joinBookClubViaInvite } from "@/app/actions/invites";
+import { useAction } from "@/hooks/use-action";
 
 interface JoinBookClubButtonProps {
   code: string;
@@ -15,19 +15,14 @@ export function JoinBookClubButton({
   bookClubName,
 }: JoinBookClubButtonProps) {
   const router = useRouter();
-  const [isJoining, setIsJoining] = useState(false);
+  const { run: join, pending: isJoining } = useAction(joinBookClubViaInvite, {
+    refresh: false,
+    onSuccess: ({ bookClubId }) => router.push(`/book-clubs/${bookClubId}`),
+  });
 
   async function handleJoin() {
-    setIsJoining(true);
-
-    const result = await joinBookClubViaInvite(code);
-
-    if (!result.success) {
-      alert(result.error);
-      setIsJoining(false);
-    } else {
-      router.push(`/book-clubs/${result.data.bookClubId}`);
-    }
+    const result = await join(code);
+    if (!result.success) alert(result.error);
   }
 
   return (

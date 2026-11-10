@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { searchBooks } from "@/app/actions/books";
+import { useDebouncedSearch } from "@/hooks/use-debounced-search";
 import { Input } from "@/components/ui/input";
 import { BookCard } from "./book-card";
 import type { BookSearchResult } from "@/lib/open-library";
@@ -13,63 +14,11 @@ interface BookSearchProps {
 
 export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<BookSearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Debounced search effect with request cancellation
-  useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      setIsSearching(false);
-      // Cancel any pending requests
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      return;
-    }
-
-    setIsSearching(true);
-
-    // Clear previous timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Cancel previous request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Set new timeout
-    debounceTimeoutRef.current = setTimeout(async () => {
-      // Create new abort controller for this request
-      abortControllerRef.current = new AbortController();
-
-      try {
-        const result = await searchBooks(query);
-        setResults(result.success ? result.data : []);
-      } catch (error) {
-        // Ignore abort errors
-        if (error instanceof Error && error.name !== "AbortError") {
-          console.error("Search error:", error);
-        }
-      } finally {
-        setIsSearching(false);
-      }
-    }, 250); // Slightly faster debounce
-
-    // Cleanup on unmount
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [query]);
+  const { results, searching: isSearching } = useDebouncedSearch(
+    query,
+    searchBooks,
+    { delayMs: 250 }
+  );
 
   function handleInputChange(value: string) {
     setQuery(value);

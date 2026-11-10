@@ -53,4 +53,5 @@ Reset first if you mutated data: e.g. joining Seed Club as dave breaks the non-m
 
 - **Port 3000 may already be serving.** `test:e2e` reuses any server on :3000 (`reuseExistingServer`). A server started with plain `npm run dev` uses `.env.local`, which can point at production. Check what's running (`lsof -i :3000`) before running specs or mutating data.
 - **Need a second server?** Don't start another dev server in the same checkout, since they share `.next`. Create a git worktree, copy `node_modules` into it (`cp -cR` on macOS; Turbopack rejects a symlinked `node_modules`), then run `PORT=3100 scripts/dev-local.sh` there.
+- **Build fails right after many file changes while a dev server runs in this checkout?** They share `.next`; rerun the build before debugging.
 - **Production build check:** `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.

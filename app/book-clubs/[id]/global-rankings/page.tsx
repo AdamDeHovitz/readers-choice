@@ -33,11 +33,11 @@ export default async function GlobalRankingsPage({
 
   // Default to current year or most recent year with data
   const currentYear = new Date().getFullYear();
-  const selectedYear = yearParam
-    ? parseInt(yearParam)
-    : availableYears.includes(currentYear)
+  const selectedYear =
+    availableYears.find((year) => String(year) === yearParam) ??
+    (availableYears.includes(currentYear)
       ? currentYear
-      : availableYears[0] || currentYear;
+      : (availableYears[0] ?? currentYear));
 
   const globalRankings = await getGlobalRankings(viewer, id, selectedYear);
 
