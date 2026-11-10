@@ -149,21 +149,19 @@ export async function getAllBookClubs(
   }));
 }
 
-/** Create a club with its creator as the first admin; returns its id. */
+/** Create a club with its creator as the first admin, atomically; returns its id. */
 export async function createBookClub(
   db: Db,
   club: { name: string; description: string | null },
   creatorId: string
 ): Promise<string> {
-  const { data, error } = await db
-    .from("book_clubs")
-    .insert({ ...club, created_by: creatorId })
-    .select("id")
-    .single();
+  const { data, error } = await db.rpc("create_book_club", {
+    p_name: club.name,
+    p_creator_id: creatorId,
+    ...(club.description && { p_description: club.description }),
+  });
   if (error) throw error;
-
-  await addMember(db, data.id, creatorId, { isAdmin: true });
-  return data.id;
+  return data;
 }
 
 export async function addMember(
