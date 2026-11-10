@@ -8,7 +8,8 @@
 # Prints tab-separated records:
 #   H <tab> <section name, lowercased>     at each "## " heading
 #   C <tab> <section name> <tab> <line>    each content line in a section
-# Outside code, a content line has a letter or digit and isn't a "###" heading.
+# Outside code, a content line has a letter, digit, or non-ASCII character and
+# isn't a "###" heading.
 # Exits 3 if a comment is never closed: GitHub would hide everything after it.
 use strict;
 use warnings;
@@ -31,7 +32,13 @@ sub strip_comments {
       else { $out .= $ticks }
     } elsif ($line =~ s/^<!--(?:-?>)?//) {
       # "<!-->" and "<!--->" are complete (empty) comments.
-      $in_comment = 1 unless $& =~ />$/;
+      next if $& =~ />$/;
+      if ($line =~ /-->/) { $in_comment = 1 }
+      # An unclosed comment only hides what follows when it starts a block
+      # (the line, after any indent and list or quote markers); mid-line,
+      # GitHub shows it as text.
+      elsif ($out =~ /^ {0,3}(?:(?:[-*+]|\d+[.)]|>)[ \t]*)*$/) { $in_comment = 1 }
+      else { $out .= "<!--" }
     } elsif ($line =~ s/^([^`<]+|<)//) {
       $out .= $1;
     }
@@ -59,7 +66,7 @@ while (my $line = <>) {
     print "H\t$section\n";
   } elsif ($line =~ /^ {0,3}#(?:[ \t]|$)/) {
     $section = "";
-  } elsif ($line !~ /^ {0,3}###/ && $line =~ /[[:alnum:]]/) {
+  } elsif ($line !~ /^ {0,3}###/ && $line =~ /[[:alnum:]]|[^\x00-\x7F]/) {
     content($line);
   }
 }

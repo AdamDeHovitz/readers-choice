@@ -115,6 +115,18 @@ describe("check-verification.sh", () => {
     expect(r.out).toContain('"## behavior" is empty');
   });
 
+  it("treats an unclosed <!-- mid-line as text, as GitHub does", () => {
+    const midLine = check(file({ behavior: "A stray <!-- in prose." }));
+    expect(midLine).toMatchObject({ status: 0 });
+    const listItem = check(file({ behavior: "- <!-- hides the rest" }));
+    expect(listItem.status).toBe(1);
+    expect(listItem.out).toContain("unclosed <!--");
+  });
+
+  it("counts non-ASCII text as content", () => {
+    expect(check(file({ behavior: "✅ 通過しました" }))).toMatchObject({ status: 0 });
+  });
+
   it("treats <!--> as a complete comment", () => {
     expect(check(file({ behavior: "<!--> Saw it." }))).toMatchObject({ status: 0 });
   });

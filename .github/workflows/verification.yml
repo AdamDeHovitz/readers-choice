@@ -51,7 +51,7 @@ jobs:
           checker='^(scripts/(check-verification\.sh|verification-sections\.pl)|\.github/workflows/verification\.yml)$'
           touched="$(git diff --name-only "$BASE"...HEAD | grep -E "$checker" || true)"
           if [ -n "$touched" ]; then
-            echo "::warning::This PR changes the verification check itself: $(echo "$touched" | tr "\n" " "). Review those changes before trusting this check."
+            echo "::warning::This PR changes the verification check itself: $(echo "$touched" | paste -sd " " -). Review those changes before trusting this check."
             { echo "### This PR changes the verification check itself"; echo "$touched" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -60,7 +60,7 @@ jobs:
             # The PR's own commits only, not what a merge from main brought in.
             later="$(git log --no-merges --format= --name-only HEAD --not "$last" "origin/$BASE_REF" -- . ":(exclude)verifications/" | sort -u || true)"
             if [ -n "$later" ]; then
-              echo "::warning::Files changed after verifications/$PR.md was last updated: $(echo "$later" | tr "\n" " "). Verify them and update the file."
+              echo "::warning::Files changed after verifications/$PR.md was last updated: $(echo "$later" | paste -sd " " -). Verify them and update the file."
               { echo "### Changed since verifications/$PR.md was last updated"; echo "$later" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
             fi
           fi
