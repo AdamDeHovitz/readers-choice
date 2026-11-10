@@ -1,8 +1,8 @@
 name: Verification
 
-# A PR can't leave draft without verifications/<pr-number>.md
-# (verifications/README.md). Drafts get a warning instead of a failure, so the
-# file can be written after the PR has a number.
+# Fails a ready-for-review PR without a complete verifications/<pr-number>.md
+# (verifications/README.md). Drafts get a warning instead, so the file can be
+# written after the PR has a number.
 on:
   pull_request:
     branches: [main]
@@ -19,12 +19,17 @@ jobs:
   verification-file:
     name: Verification file
     runs-on: ubuntu-latest
+    env:
+      PR: ${{ github.event.pull_request.number }}
+      DRAFT: ${{ github.event.pull_request.draft }}
+      BASE: ${{ github.event.pull_request.base.sha }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0 # history for the review hints below
+
       - name: Check verifications/${{ github.event.pull_request.number }}.md
-        env:
-          PR: ${{ github.event.pull_request.number }}
-          DRAFT: ${{ github.event.pull_request.draft }}
         run: |
           if scripts/check-verification.sh "$PR" 2> errors.txt; then
             echo "verifications/$PR.md is filled in." >> "$GITHUB_STEP_SUMMARY"
@@ -37,3 +42,23 @@ jobs:
             exit 0
           fi
           exit 1
+
+      # Warnings for the reviewer; they never fail the check.
+      - name: Review hints
+        if: ${{ !cancelled() }}
+        run: |
+          checker='^(scripts/(check-verification\.sh|verification-sections\.awk)|\.github/workflows/verification\.yml)$'
+          touched="$(git diff --name-only "$BASE"...HEAD | grep -E "$checker" || true)"
+          if [ -n "$touched" ]; then
+            echo "::warning::This PR changes the verification check itself: $(echo $touched). Review those changes before trusting this check."
+            { echo "### This PR changes the verification check itself"; echo "$touched" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          last="$(git log -1 --format=%H "$BASE"..HEAD -- "verifications/$PR.md")"
+          if [ -n "$last" ]; then
+            later="$(git diff --name-only "$last" HEAD -- . ":(exclude)verifications/" || true)"
+            if [ -n "$later" ]; then
+              echo "::warning::Files changed after verifications/$PR.md was last updated: $(echo $later). Verify them and update the file."
+              { echo "### Changed since verifications/$PR.md was last updated"; echo "$later" | sed 's/^/- /'; } >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi

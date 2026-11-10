@@ -12,7 +12,6 @@ Mobile-first book club app: clubs, meetings, book nominations and voting (approv
 
 Every PR carries `verifications/<pr-number>.md`, a record of what you checked, how, what you saw, and what you didn't check. Read `verifications/README.md` before verifying anything: it has the steps, evidence standards, and recipes by change type.
 
-- Open PRs as drafts. Verify locally, copy `verifications/TEMPLATE.md` to `verifications/<pr>.md`, fill it in, push, then `gh pr ready`. The **Verification** check fails on a ready PR without a complete file.
 - Write down only what you observed. A gap you admit is useful; a check you claim but didn't run is not.
 - A PR is ready for review only when it's marked ready and CI is green. Don't tell the user it's ready before then.
 
@@ -21,8 +20,7 @@ Every PR carries `verifications/<pr-number>.md`, a record of what you checked, h
 A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql` fills it with test data. Nothing here touches production.
 
 - `npm run dev:local` starts the stack if needed and serves the app on http://localhost:3000 against it (`PORT=3010 npm run dev:local` if 3000 is taken). Plain `npm run dev` uses `.env.local` instead.
-- Every checkout and worktree shares the one local stack, so a `db:reset` or a write in one is visible in all of them.
-- `npm run db:reset` re-runs every migration plus the seed. Do it before verifying anything that depends on seeded state.
+- `npm run db:reset` re-runs every migration plus the seed. Every checkout and worktree shares the one stack, so a reset also wipes whatever another session is in the middle of. Reset only when you need to: a new migration, or seed state that has drifted from `supabase/seed.sql`. Undo test data you write once you've checked it, so the seed stays as documented.
 - Log in with email/password (Google doesn't work locally). Users and meeting IDs are listed at the top of `supabase/seed.sql` and in `e2e/seed.ts`: `alice@example.test` (admin), `bob@example.test`, `carol@example.test`, and `dave@example.test` (in a different club). Password: `password123`.
 - The seed has one meeting in each phase: finalized, voting closed, voting open, nominating. Dates are relative to the time of the reset.
 - To verify a change, drive the UI with Playwright (accessibility snapshots, not screenshots), then check the data with `npm run db:sql -- -c "select ..."`. The Supabase MCP tools point at **production**, so use `db:sql` for local data.

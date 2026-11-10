@@ -9,33 +9,40 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 pr="${1:?usage: $0 <pr-number>}"
+if [[ ! $pr =~ ^[0-9]+$ ]]; then
+  echo "usage: $0 <pr-number> (got '$pr')" >&2
+  exit 2
+fi
 file="verifications/$pr.md"
-sections=("Change" "Checks" "Behavior" "Not verified" "Harness gaps")
+sections=("change" "checks" "behavior" "not verified" "harness gaps")
 
 if [[ ! -f "$file" ]]; then
   echo "Missing $file. Copy verifications/TEMPLATE.md to $file, fill it in, and push." >&2
   exit 1
 fi
 
-# Strip HTML comments (the template's guidance) so an untouched section reads
-# as empty, then print each "## " section's remaining non-blank line count.
-counts="$(
-  perl -0pe 's/<!--.*?-->//gs' "$file" | awk '
-    /^## / { name = substr($0, 4); sub(/[ \t]+$/, "", name); n[name] = 0; seen[name] = 1; cur = name; next }
-    /^# / { cur = ""; next }
-    cur != "" && NF { n[cur]++ }
-    END { for (s in seen) print s "\t" n[s] }
-  '
-)"
+# Template guidance lives in HTML comments; an unclosed one would also hide
+# the rest of the file when GitHub renders it.
+stripped="$(perl -0pe 's/<!--.*?-->//gs' "$file")"
+if [[ $stripped == *"<!--"* ]]; then
+  echo "$file: unclosed <!-- comment; everything after it is hidden on GitHub" >&2
+  exit 1
+fi
+
+records="$(printf '%s\n' "$stripped" | awk -f scripts/verification-sections.awk)"
 
 failed=0
 for s in "${sections[@]}"; do
-  line="$(printf '%s\n' "$counts" | awk -F'\t' -v s="$s" '$1 == s')"
-  if [[ -z "$line" ]]; then
-    echo "$file: missing section \"## $s\"" >&2
+  headings="$(printf '%s\n' "$records" | awk -F'\t' -v s="$s" '$1 == "H" && $2 == s' | wc -l | tr -d ' ')"
+  content="$(printf '%s\n' "$records" | awk -F'\t' -v s="$s" '$1 == "C" && $2 == s' | wc -l | tr -d ' ')"
+  if [[ $headings == 0 ]]; then
+    echo "$file: missing section \"## ${s}\"" >&2
     failed=1
-  elif [[ "${line##*$'\t'}" == 0 ]]; then
-    echo "$file: section \"## $s\" is empty (write \"None.\" if that is the honest answer)" >&2
+  elif [[ $headings -gt 1 ]]; then
+    echo "$file: section \"## ${s}\" appears $headings times; keep one" >&2
+    failed=1
+  elif [[ $content == 0 ]]; then
+    echo "$file: section \"## ${s}\" is empty (if nothing applies, say so, e.g. \"None.\")" >&2
     failed=1
   fi
 done

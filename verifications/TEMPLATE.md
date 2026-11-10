@@ -24,7 +24,8 @@ Automated checks you ran, the exact command, and the result. For example:
 ## Behavior
 
 <!--
-One entry per claim from "Change". For each: what you did (who you logged in
+One entry per claim from "Change", as a bullet or a "###" heading (a "##"
+heading would start a new section). For each: what you did (who you logged in
 as, which seeded meeting or club, what you clicked or called), what you
 observed (accessibility snapshot text, URL, `db:sql` output), and whether it
 passed. Paste the observation; don't paraphrase it. Cover the failure paths

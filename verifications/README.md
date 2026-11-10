@@ -1,6 +1,6 @@
 # Verification files
 
-Every PR carries `verifications/<pr-number>.md`: a record of how its author (usually an agent) checked that the change works, and of what they didn't check. A PR can't leave draft without one: the **Verification** check fails on a ready PR whose file is missing or has an empty section.
+Every PR carries `verifications/<pr-number>.md`: a record of how its author (usually an agent) checked that the change works, and of what they didn't check. The **Verification** check fails on a PR marked ready for review whose file is missing or has an empty section. It checks shape only: a file of "None." passes. Whether the evidence is real and enough is the reviewer's call, and with no AI reviewer yet, the reviewer is the only check on quality.
 
 This follows Will Larson's [verification pattern](https://lethain.com/adopting-verification-pattern/). Tests and CI already exist; the point is that the author writes down the steps they actually took, or admits they didn't take them, so the reviewer can see what was proven and what is still a risk.
 
@@ -11,10 +11,10 @@ This follows Will Larson's [verification pattern](https://lethain.com/adopting-v
 3. **Open a draft PR** (`gh pr create --draft`) to get its number.
 4. **Write the file**: `cp verifications/TEMPLATE.md verifications/<pr>.md`, fill it in from what you actually observed, commit, and push. `scripts/check-verification.sh <pr>` runs the same check as CI.
 5. **Mark it ready** (`gh pr ready`) and wait for CI to pass. Only then is the PR ready for review.
-6. **Review**: the reviewer reads the verification file before the diff and weighs "Not verified" as open risk.
-7. **Keep it updated**: if review leads to more commits, verify those too and update the file.
+6. **Review**: the reviewer reads the verification file before the diff and weighs "Not verified" as open risk. The check's run also warns when the PR changes the check itself.
+7. **Keep it updated**: if review leads to more commits, verify those too and update the file. The check warns when files changed after the verification file's last update.
 
-Periodically, `scripts/verification-gaps.sh` lists the "Not verified" and "Harness gaps" sections of recent PRs. Repeated gaps, like seed state that's always missing or a flow that's hard to drive, are the backlog for making this repo easier to verify. Fix them with seed data, e2e specs, scripts, or clearer recipes here.
+Weekly, the reviewer runs `scripts/verification-gaps.sh`, which lists the "Not verified" and "Harness gaps" sections of recent PRs. Repeated gaps, like seed state that's always missing or a flow that's hard to drive, are the backlog for making this repo easier to verify. File an issue for each repeated gap, and fix them with seed data, e2e specs, scripts, or clearer recipes here.
 
 ## What good evidence looks like
 
@@ -28,7 +28,7 @@ Weak and strong versions of the same entry:
 
 > ❌ Verified the voting page works.
 >
-> ✅ As carol (mobile viewport), opened `/meetings/44444444-0000-4000-8000-000000000003` (voting open, approval mode) and pressed **Vote** on *Braiding Sweetgrass*. Its card now shows "Your vote" and a "Remove Vote" button. The votes on that meeting:
+> ✅ As carol (mobile viewport), opened `/meetings/44444444-0000-4000-8000-000000000003` (voting open, Ranked Choice switched off) and pressed **Vote** on *Braiding Sweetgrass*. Its card now shows "Your vote" and a "Remove Vote" button. The votes on that meeting:
 >
 > ```
 > $ npm run db:sql -- -c "select bk.title, u.name from votes v join book_options o on o.id = v.book_option_id join books bk on bk.id = o.book_id join users u on u.id = v.user_id where o.meeting_id = '44444444-0000-4000-8000-000000000003' order by u.name"
@@ -46,11 +46,11 @@ Weak and strong versions of the same entry:
 
 ## Recipes by change type
 
-Use the ones that apply. Mechanics (starting the stack, seed users and meetings, `db:sql`) are in "Local testing" in `AGENTS.md`.
+Use the ones that apply. Mechanics (starting the stack, when to reset it, seed users and meetings, `db:sql`) are in "Local testing" in `AGENTS.md`.
 
 | Change | Verify by |
 | --- | --- |
-| UI (page, component, copy) | `npm run db:reset`, `npm run dev:local`, then drive it with Playwright at a mobile viewport. Record what the accessibility snapshot shows, the states the change touches (empty, loading, error), and which seed user and meeting you used. |
+| UI (page, component, copy) | `npm run dev:local`, then drive it with Playwright at a mobile viewport. Record what the accessibility snapshot shows, the states the change touches (empty, loading, error), and which seed user and meeting you used. |
 | Server action | Drive it through the UI as an allowed user, and confirm the write with `db:sql`. Then show that a user who must be refused (non-member `dave`, or non-admin `bob` for admin actions) can't do it. A page that hides the button is not enough, because the action is a public endpoint: cover its authorization in a unit test, as `app/actions/book-clubs.test.ts` does. |
 | Migration or Postgres function | `npm run db:reset` succeeds. Query the new schema or call the function with `db:sql`, including a call that should be rejected. Confirm the currently deployed code still works on the new schema: CI's Migration compat job does this, and so does running main's e2e specs locally. Note what the production `apply_migration` step will do. |
 | Voting, ranking, or tallying logic | Unit tests in `lib/*.test.ts` for the algorithm, plus one end-to-end ballot through the UI on the voting-open meeting, and the results view on the finalized meeting. |
