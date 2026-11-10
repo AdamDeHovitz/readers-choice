@@ -1,37 +1,21 @@
-import { fixupConfigRules } from "@eslint/compat";
-import pluginJs from "@eslint/js";
-import pluginReact from "eslint-plugin-react";
-import globals from "globals";
-import tseslint from "typescript-eslint";
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
 
-export default [
-  { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
-  { languageOptions: { globals: { ...globals.browser, ...globals.node } } },
-  pluginJs.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...fixupConfigRules(pluginReact.configs.flat.recommended),
-  {
-    settings: {
-      react: {
-        version: "detect",
-      },
-    },
-  },
+export default defineConfig([
+  // Next's recommended rules: React, hooks, a11y, Next and TypeScript.
+  ...nextVitals,
+  ...nextTs,
   {
     rules: {
-      "react/react-in-jsx-scope": "off",
-      "react/prop-types": "off",
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
         "warn",
-        {
-          argsIgnorePattern: "^_",
-          varsIgnorePattern: "^_",
-        },
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
     },
   },
-  // Layering (see AGENTS.md > Architecture). Type-only imports may cross
+  // Layering (see docs/architecture.md). Type-only imports may cross
   // layers so DTO types have a single definition.
   {
     files: ["**/*.{ts,tsx}"],
@@ -100,7 +84,7 @@ export default [
     },
   },
   {
-    files: ["components/**/*.{ts,tsx}"],
+    files: ["components/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -124,17 +108,15 @@ export default [
       ],
     },
   },
-  {
-    ignores: [
-      ".next/**",
-      ".worktrees/**",
-      "node_modules/**",
-      "out/**",
-      ".vercel/**",
-      "public/**",
-      "coverage/**",
-      "scripts/**",
-      ".claude/**",
-    ],
-  },
-];
+  globalIgnores([
+    ".next/**",
+    ".worktrees/**",
+    "out/**",
+    ".vercel/**",
+    "public/**",
+    "coverage/**",
+    "scripts/**",
+    ".claude/**",
+    "next-env.d.ts",
+  ]),
+]);
