@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import type { BookSearchResult } from "@/lib/open-library";
 import { CheckCircle2 } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
-import type { MeetingBookOption } from "@/components/meetings/types";
+import type { MeetingBookOption } from "@/server/meetings";
 import { NominationNote } from "./nomination-note";
 import { NominationNoteField } from "./nomination-note-field";
 import { EditableNominationNote } from "./editable-nomination-note";

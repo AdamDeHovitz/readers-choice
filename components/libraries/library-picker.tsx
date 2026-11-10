@@ -39,12 +39,12 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
       const response = await searchLibraries(trimmed);
       if (cancelled) return;
       setSearching(false);
-      if ("error" in response) {
+      if (!response.success) {
         setError(response.error);
         setResults([]);
       } else {
         setError(null);
-        setResults(response.results);
+        setResults(response.data);
       }
     }, 300);
     return () => {

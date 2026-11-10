@@ -10,31 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getIndividualBookRankings } from "@/app/actions/global-rankings";
+import { getIndividualBookRankings } from "@/app/actions/rankings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface GlobalRankingBook {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl: string | null;
-  totalPoints: number;
-  numberOfRankings: number;
-  averageRank: number;
-}
+import type { GlobalRankingBook, IndividualRanking } from "@/server/rankings";
 
 interface GlobalRankingsListProps {
   bookClubId: string;
   rankings: GlobalRankingBook[];
   availableYears: number[];
   selectedYear: number;
-}
-
-interface IndividualRanking {
-  userId: string;
-  userName: string;
-  userImage: string | null;
-  rank: number | null;
 }
 
 export function GlobalRankingsList({
@@ -65,12 +49,12 @@ export function GlobalRankingsList({
     setIsLoading(true);
 
     try {
-      const rankings = await getIndividualBookRankings(
+      const result = await getIndividualBookRankings(
         bookClubId,
         book.id,
         currentYear
       );
-      setIndividualRankings(rankings);
+      setIndividualRankings(result.success ? result.data : []);
     } catch (error) {
       console.error("Error fetching individual rankings:", error);
     } finally {

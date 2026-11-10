@@ -4,18 +4,10 @@ import { toggleMemberAdmin, removeMember } from "@/app/actions/book-clubs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-
-interface Member {
-  id: string;
-  name: string;
-  email: string | null;
-  avatarUrl: string | null;
-  isAdmin: boolean;
-  joinedAt: string;
-}
+import type { ClubMember } from "@/server/clubs";
 
 interface MemberListProps {
-  members: Member[];
+  members: ClubMember[];
   currentUserId: string;
   currentUserIsAdmin: boolean;
   bookClubId: string;
@@ -32,7 +24,7 @@ export function MemberList({
     null
   );
 
-  async function handleToggleAdmin(member: Member) {
+  async function handleToggleAdmin(member: ClubMember) {
     setActioningMemberId(member.id);
 
     const result = await toggleMemberAdmin(
@@ -41,7 +33,7 @@ export function MemberList({
       !member.isAdmin
     );
 
-    if (result.error) {
+    if (!result.success) {
       alert(result.error);
     }
 
@@ -49,7 +41,7 @@ export function MemberList({
     router.refresh();
   }
 
-  async function handleRemoveMember(member: Member) {
+  async function handleRemoveMember(member: ClubMember) {
     const isSelf = member.id === currentUserId;
     const confirmMessage = isSelf
       ? "Are you sure you want to leave this book club?"
@@ -63,7 +55,7 @@ export function MemberList({
 
     const result = await removeMember(bookClubId, member.id);
 
-    if (result.error) {
+    if (!result.success) {
       alert(result.error);
       setActioningMemberId(null);
     } else if (isSelf) {

@@ -4,22 +4,13 @@ import { useState, useEffect } from "react";
 import { getYearBooks } from "@/app/actions/rankings";
 import { RankingInterface } from "./ranking-interface";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl: string | null;
-  description: string | null;
-  meetingDate: string;
-  rank: number | null;
-}
+import type { YearBook } from "@/server/rankings";
 
 interface RankingsContainerProps {
   bookClubId: string;
   years: number[];
   initialYear: number;
-  initialBooks: Book[];
+  initialBooks: YearBook[];
 }
 
 export function RankingsContainer({
@@ -29,14 +20,14 @@ export function RankingsContainer({
   initialBooks,
 }: RankingsContainerProps) {
   const [selectedYear, setSelectedYear] = useState(initialYear);
-  const [books, setBooks] = useState<Book[]>(initialBooks);
+  const [books, setBooks] = useState<YearBook[]>(initialBooks);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     async function loadBooks() {
       setIsLoading(true);
-      const newBooks = await getYearBooks(bookClubId, selectedYear);
-      setBooks(newBooks);
+      const result = await getYearBooks(bookClubId, selectedYear);
+      setBooks(result.success ? result.data : []);
       setIsLoading(false);
     }
 
@@ -48,7 +39,7 @@ export function RankingsContainer({
       {/* Header with year selector */}
       <Card>
         <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="text-2xl">Personal Rankings</CardTitle>
               <p className="text-dark-600 mt-1">
@@ -61,10 +52,10 @@ export function RankingsContainer({
                   key={year}
                   onClick={() => setSelectedYear(year)}
                   disabled={isLoading}
-                  className={`px-4 py-2 rounded-lg font-medium font-inria transition-colors ${
+                  className={`font-inria rounded-lg px-4 py-2 font-medium transition-colors ${
                     year === selectedYear
                       ? "bg-gold-600 text-white"
-                      : "bg-white text-dark-600 border border-gold-600/20 hover:bg-cream-100"
+                      : "text-dark-600 border-gold-600/20 hover:bg-cream-100 border bg-white"
                   } ${isLoading ? "opacity-50" : ""}`}
                 >
                   {year}
@@ -80,19 +71,19 @@ export function RankingsContainer({
         <CardHeader>
           <div className="space-y-2">
             <CardTitle>Drag to Reorder</CardTitle>
-            <p className="text-sm text-dark-600">
-              Drag books to change their ranking. Mark books as &quot;Not Read&quot; if
-              you didn&apos;t attend that meeting.
+            <p className="text-dark-600 text-sm">
+              Drag books to change their ranking. Mark books as &quot;Not
+              Read&quot; if you didn&apos;t attend that meeting.
             </p>
           </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="text-center py-12">
+            <div className="py-12 text-center">
               <p className="text-dark-600">Loading books...</p>
             </div>
           ) : books.length === 0 ? (
-            <div className="text-center py-12">
+            <div className="py-12 text-center">
               <p className="text-dark-600">
                 No books were finalized for {selectedYear}.
               </p>

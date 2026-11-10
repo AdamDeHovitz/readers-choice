@@ -63,7 +63,7 @@ A beautiful, mobile-first book club management application that helps communitie
 - **[NextAuth.js v5](https://next-auth.js.org/)** - Authentication with Google OAuth and email/password
 - **[Vercel](https://vercel.com/)** - Deployment platform
 - **[Open Library API](https://openlibrary.org/developers/api)** - Book search and metadata
-- **[Google Books API](https://developers.google.com/books)** - Additional book data enrichment
+- **[Google Books API](https://developers.google.com/books)** - Fallback book descriptions
 
 ### Development Tools
 

@@ -1,19 +1,17 @@
-import { auth } from "@/auth";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UsersIcon } from "lucide-react";
-import {
-  getAllBookClubs,
-  getCurrentUserIsSuperAdmin,
-} from "@/app/actions/book-clubs";
+import { viewerIsSuperAdmin } from "@/server/authz";
+import { getAllBookClubs } from "@/server/clubs";
+import { getViewer } from "@/server/viewer";
 import { DeleteBookClubDialog } from "@/components/book-clubs/delete-book-club-dialog";
 
 export default async function BrowsePage() {
-  const session = await auth();
+  const viewer = await getViewer();
   const [bookClubs, isSuperAdmin] = await Promise.all([
-    getAllBookClubs(),
-    getCurrentUserIsSuperAdmin(),
+    getAllBookClubs(viewer),
+    viewerIsSuperAdmin(viewer),
   ]);
 
   return (
@@ -30,7 +28,7 @@ export default async function BrowsePage() {
                 to join.
               </p>
             </div>
-            {session && (
+            {viewer && (
               <Link href="/dashboard">
                 <Button variant="outline">My Book Clubs</Button>
               </Link>
@@ -44,9 +42,9 @@ export default async function BrowsePage() {
           <Card>
             <CardContent className="p-12 text-center">
               <p className="text-dark-600 font-inria">
-                No book clubs yet. {session && "Be the first to create one!"}
+                No book clubs yet. {viewer && "Be the first to create one!"}
               </p>
-              {session && (
+              {viewer && (
                 <Link href="/dashboard">
                   <Button className="mt-4">Create Book Club</Button>
                 </Link>

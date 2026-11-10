@@ -1,367 +1,85 @@
 "use server";
 
-import { authenticatedAction, publicAction } from "@/lib/safe-action";
 import { revalidatePath } from "next/cache";
-import { dbErrorMessage } from "@/lib/db-errors";
-import { isSuperAdmin } from "@/lib/super-admin";
+import { UserError } from "@/lib/user-error";
+import { runAction, type ActionResult } from "@/server/action";
+import { isSuperAdmin, requireAdmin } from "@/server/authz";
+import * as clubs from "@/server/clubs";
+import { optionalText, requiredText } from "@/server/input";
 
-// Type definitions
-interface BookClub {
-  id: string;
+export async function createBookClub(input: {
   name: string;
-  description: string | null;
-  created_at: string;
-  members?: { count: number }[];
-}
-
-export async function createBookClub(formData: FormData) {
-  const name = formData.get("name") as string;
-  const description = formData.get("description") as string;
-
-  if (!name || name.trim().length === 0) {
-    return { error: "Book club name is required" };
-  }
-
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Create the book club
-    const { data: bookClub, error: bookClubError } = await supabase
-      .from("book_clubs")
-      .insert({
-        name: name.trim(),
-        description: description?.trim() || null,
-        created_by: session.user.id,
-      })
-      .select()
-      .single();
-
-    if (bookClubError) throw bookClubError;
-
-    // Add the creator as an admin member
-    const { error: memberError } = await supabase.from("members").insert({
-      user_id: session.user.id,
-      book_club_id: bookClub.id,
-      is_admin: true,
-    });
-
-    if (memberError) throw memberError;
-
-    return { bookClubId: bookClub.id };
-  });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/dashboard");
-  return { success: true, bookClubId: result.data.bookClubId };
-}
-
-export async function getMyBookClubs() {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    const { data, error } = await supabase
-      .from("members")
-      .select(
-        `
-        book_club_id,
-        is_admin,
-        joined_at,
-        book_clubs!inner (
-          id,
-          name,
-          description,
-          created_at
-        )
-      `
-      )
-      .eq("user_id", session.user.id)
-      .order("joined_at", { ascending: false });
-
-    if (error) throw error;
-
-    return (
-      data?.map((member) => {
-        const bookClub = Array.isArray(member.book_clubs)
-          ? member.book_clubs[0]
-          : member.book_clubs;
-        return {
-          id: bookClub.id,
-          name: bookClub.name,
-          description: bookClub.description,
-          createdAt: bookClub.created_at,
-          isAdmin: member.is_admin,
-          joinedAt: member.joined_at,
-        };
-      }) || []
+  description?: string | null;
+}): Promise<ActionResult<{ bookClubId: string }>> {
+  return runAction("Failed to create book club", async ({ db, userId }) => {
+    const bookClubId = await clubs.createBookClub(
+      db,
+      {
+        name: requiredText(input?.name, "Book club name is required"),
+        description: optionalText(input.description),
+      },
+      userId
     );
+
+    revalidatePath("/dashboard");
+    return { bookClubId };
   });
-
-  if (!result.success) {
-    return [];
-  }
-
-  return result.data;
-}
-
-export async function getBookClubDetails(bookClubId: string) {
-  const result = await publicAction(async ({ session, supabase }) => {
-    // Get book club info
-    const { data: bookClub, error: clubError } = await supabase
-      .from("book_clubs")
-      .select("*")
-      .eq("id", bookClubId)
-      .single();
-
-    if (clubError) throw clubError;
-
-    // Get members
-    const { data: members, error: membersError } = await supabase
-      .from("members")
-      .select(
-        `
-        user_id,
-        is_admin,
-        joined_at,
-        users!inner (
-          id,
-          name,
-          email,
-          avatar_url
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .order("joined_at", { ascending: true });
-
-    if (membersError) throw membersError;
-
-    // Check if current user is a member (if logged in)
-    const currentUserMember = session?.user?.id
-      ? members?.find((m) => m.user_id === session.user.id)
-      : null;
-
-    return {
-      ...bookClub,
-      members:
-        members?.map((m) => {
-          const user = Array.isArray(m.users) ? m.users[0] : m.users;
-          return {
-            id: user.id,
-            name: user.name,
-            // Clubs are publicly browsable; contact details are for members only
-            email: currentUserMember ? user.email : null,
-            avatarUrl: user.avatar_url,
-            isAdmin: m.is_admin,
-            joinedAt: m.joined_at,
-          };
-        }) || [],
-      currentUserIsAdmin: currentUserMember?.is_admin || false,
-      currentUserIsMember: !!currentUserMember,
-    };
-  });
-
-  if (!result.success) {
-    return null;
-  }
-
-  return result.data;
 }
 
 export async function toggleMemberAdmin(
   bookClubId: string,
   userId: string,
   isAdmin: boolean
-) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Check if current user is an admin
-    const { data: currentMember } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
+): Promise<ActionResult> {
+  return runAction("Failed to update member role", async (viewer) => {
+    await requireAdmin(
+      viewer.db,
+      bookClubId,
+      viewer.userId,
+      "Only admins can manage member roles"
+    );
+    await clubs.setMemberAdmin(viewer.db, bookClubId, userId, isAdmin === true);
 
-    if (!currentMember?.is_admin) {
-      throw new Error("Only admins can manage member roles");
-    }
-
-    // Update atomically; the DB refuses to demote the club's last admin
-    const { error } = await supabase.rpc("set_member_admin", {
-      p_book_club_id: bookClubId,
-      p_user_id: userId,
-      p_is_admin: isAdmin,
-    });
-
-    if (error) throw new Error(dbErrorMessage(error) ?? error.message);
-    return { success: true };
+    revalidatePath(`/book-clubs/${bookClubId}`);
   });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath(`/book-clubs/${bookClubId}`);
-  return { success: true };
 }
 
-export async function removeMember(bookClubId: string, userId: string) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Check if current user is an admin or removing themselves
-    const { data: currentMember } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    const isSelfRemoval = userId === session.user.id;
-    const isAdmin = currentMember?.is_admin;
-
-    if (!isSelfRemoval && !isAdmin) {
-      throw new Error("Only admins can remove other members");
-    }
-
-    // Remove atomically; the DB refuses to remove the club's last admin
-    const { error } = await supabase.rpc("remove_club_member", {
-      p_book_club_id: bookClubId,
-      p_user_id: userId,
-    });
-
-    if (error) throw new Error(dbErrorMessage(error) ?? error.message);
-    return { success: true };
-  });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath(`/book-clubs/${bookClubId}`);
-  return { success: true };
-}
-
-export async function updateBookClubDescription(
+/** Admins can remove anyone; members can remove themselves (leave). */
+export async function removeMember(
   bookClubId: string,
-  description: string
-) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    // Check if current user is an admin
-    const { data: currentMember } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!currentMember?.is_admin) {
-      throw new Error("Only admins can edit book club details");
+  userId: string
+): Promise<ActionResult> {
+  return runAction("Failed to remove member", async (viewer) => {
+    if (userId !== viewer.userId) {
+      await requireAdmin(
+        viewer.db,
+        bookClubId,
+        viewer.userId,
+        "Only admins can remove other members"
+      );
     }
+    await clubs.removeMember(viewer.db, bookClubId, userId);
 
-    // Update the description
-    const { error } = await supabase
-      .from("book_clubs")
-      .update({ description: description.trim() || null })
-      .eq("id", bookClubId);
-
-    if (error) throw error;
-    return { success: true };
+    revalidatePath(`/book-clubs/${bookClubId}`);
   });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath(`/book-clubs/${bookClubId}`);
-  return { success: true };
 }
 
-export async function getCurrentUserIsSuperAdmin() {
-  const result = await authenticatedAction(async ({ session, supabase }) =>
-    isSuperAdmin(supabase, session.user.id)
-  );
-  return result.success && result.data;
-}
-
+/** Super admins only; the name must be typed exactly to confirm. */
 export async function deleteBookClub(
   bookClubId: string,
   confirmationName: string
-) {
-  const result = await authenticatedAction(async ({ session, supabase }) => {
-    if (!(await isSuperAdmin(supabase, session.user.id))) {
-      throw new Error("Only super admins can delete book clubs");
+): Promise<ActionResult> {
+  return runAction("Failed to delete book club", async ({ db, userId }) => {
+    if (!(await isSuperAdmin(db, userId))) {
+      throw new UserError("Only super admins can delete book clubs");
     }
+    await clubs.deleteBookClub(db, bookClubId, userId, confirmationName);
 
-    const { error } = await supabase.rpc("delete_book_club", {
-      p_book_club_id: bookClubId,
-      p_actor_id: session.user.id,
-      p_confirmation_name: confirmationName,
-    });
-
-    if (error) throw new Error(error.message);
-    return { success: true };
+    revalidatePath("/dashboard");
+    revalidatePath("/browse");
+    revalidatePath(`/book-clubs/${bookClubId}`, "layout");
+    revalidatePath("/meetings", "layout");
   });
-
-  if (!result.success) {
-    return { error: result.error };
-  }
-
-  revalidatePath("/dashboard");
-  revalidatePath("/browse");
-  revalidatePath(`/book-clubs/${bookClubId}`, "layout");
-  revalidatePath("/meetings", "layout");
-  return { success: true };
-}
-
-/**
- * Get all book clubs (public - for browse page)
- */
-export async function getAllBookClubs() {
-  const result = await publicAction(async ({ session, supabase }) => {
-    // 1. Fetch all book clubs with their member count
-    const { data: bookClubs, error } = await supabase
-      .from("book_clubs")
-      .select(
-        `
-        id,
-        name,
-        description,
-        created_at,
-        members(count)
-      `
-      )
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    if (!bookClubs) return [];
-
-    // 2. Fetch current user's memberships efficiently
-    const memberBookClubIds = new Set<string>();
-    if (session?.user?.id) {
-      const { data: userMemberships } = await supabase
-        .from("members")
-        .select("book_club_id")
-        .eq("user_id", session.user.id);
-
-      if (userMemberships) {
-        userMemberships.forEach((m) => memberBookClubIds.add(m.book_club_id));
-      }
-    }
-
-    // 3. Combine the data
-    return bookClubs.map((club) => ({
-      id: club.id,
-      name: club.name,
-      description: club.description,
-      createdAt: club.created_at,
-      memberCount: club.members?.[0]?.count || 0,
-      isMember: memberBookClubIds.has(club.id),
-    }));
-  });
-
-  if (!result.success) {
-    return [];
-  }
-
-  return result.data;
 }
 
 // Joining a club requires an invite code; see joinBookClubViaInvite in

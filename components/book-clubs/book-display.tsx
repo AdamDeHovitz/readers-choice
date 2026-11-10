@@ -3,32 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { UsersIcon } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { sanitizeDescription } from "@/lib/sanitize-description";
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl: string | null;
-  description?: string | null;
-  pageCount?: number | null;
-  publishedYear?: number | null;
-}
-
-interface Meeting {
-  id: string;
-  meetingDate: string;
-  isFinalized: boolean;
-  themeName?: string | null;
-  details?: string | null;
-}
+import type { MeetingSummary } from "@/server/meetings";
 
 interface BookDisplayProps {
-  book: Book | null;
-  meeting?: Meeting;
+  /** The featured meeting; its selected book is shown. */
+  meeting: MeetingSummary | null;
   label: "Current Book" | "Previous Book" | "Upcoming";
 }
 
-export function BookDisplay({ book, meeting, label }: BookDisplayProps) {
+export function BookDisplay({ meeting, label }: BookDisplayProps) {
+  const book = meeting?.selectedBook;
   if (!book) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -62,9 +46,9 @@ export function BookDisplay({ book, meeting, label }: BookDisplayProps) {
         <h2 className="font-voga text-dark-900 text-center text-4xl tracking-wider uppercase">
           {label}
         </h2>
-        {meeting?.themeName && (
+        {meeting?.theme && (
           <p className="text-dark-700 font-inria mt-2 text-center text-xl">
-            {formatDate(meeting.meetingDate)} - {meeting.themeName}
+            {formatDate(meeting.meetingDate)} - {meeting.theme.name}
           </p>
         )}
       </div>
@@ -106,7 +90,7 @@ export function BookDisplay({ book, meeting, label }: BookDisplayProps) {
                 )}
 
                 {/* Meeting Link */}
-                {meeting?.id && (
+                {meeting && (
                   <Link
                     href={`/meetings/${meeting.id}`}
                     className="text-rust-700 hover:text-rust-800 font-inria inline-flex items-center gap-2 font-medium"

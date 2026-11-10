@@ -1,9 +1,3 @@
-import { auth } from "@/auth";
-import { getMeetingDetails } from "@/app/actions/meetings";
-import {
-  getUserVotingPreference,
-  getUserRankedVotes,
-} from "@/app/actions/meeting-voting";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
@@ -11,13 +5,15 @@ import { BookOptionsList } from "@/components/meetings/book-options-list";
 import { NominationForm } from "@/components/nominations/nomination-form";
 import { redirect } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
-import { getMyLibraries } from "@/app/actions/libraries";
 import {
   BookAvailability,
   BookAvailabilityFallback,
 } from "@/components/libraries/book-availability";
-import { isNominationClosed } from "@/lib/nomination-note";
-import { isVotingClosed } from "@/lib/ballot-validation";
+import { getMeetingPhase } from "@/lib/meeting-schedule";
+import { getMyLibraries } from "@/server/libraries";
+import { getMeetingDetails } from "@/server/meetings";
+import { getViewer } from "@/server/viewer";
+import { getUserRankedVotes, getUserVotingPreference } from "@/server/voting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MeetingPage({
@@ -25,14 +21,12 @@ export default async function MeetingPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  const { id } = await params;
-
-  if (!session?.user?.id) {
+  const [viewer, { id }] = await Promise.all([getViewer(), params]);
+  if (!viewer) {
     redirect("/login");
   }
 
-  const meeting = await getMeetingDetails(id);
+  const meeting = await getMeetingDetails(viewer, id);
 
   if (!meeting) {
     redirect("/dashboard");
@@ -49,25 +43,16 @@ export default async function MeetingPage({
     ? new Date(meeting.votingDeadline)
     : null;
 
-  // Same deadline rules the server actions enforce (deadline instant is open)
-  const nominationsOpen = !isNominationClosed({
-    is_finalized: meeting.isFinalized,
-    nomination_deadline: meeting.nominationDeadline,
-  });
-
-  const votingOpen =
-    !nominationsOpen &&
-    nominationDeadline !== null &&
-    !isVotingClosed({
-      is_finalized: meeting.isFinalized,
-      voting_deadline: meeting.votingDeadline,
-    });
+  // Same deadline rules the server actions enforce.
+  const phase = getMeetingPhase(meeting);
+  const nominationsOpen = phase === "nominating";
+  const votingOpen = phase === "voting";
 
   // Fetch user's voting preference, ranked votes, and libraries in parallel
   const [userVotingMethod, userRankedVotes, libraries] = await Promise.all([
-    getUserVotingPreference(id),
-    getUserRankedVotes(id),
-    votingOpen ? getMyLibraries() : Promise.resolve([]),
+    getUserVotingPreference(viewer, id),
+    getUserRankedVotes(viewer, id),
+    votingOpen ? getMyLibraries(viewer) : [],
   ]);
 
   // Library availability streams in per book, so slow lookups never hold up
@@ -92,7 +77,7 @@ export default async function MeetingPage({
       <BookClubNav
         bookClubId={meeting.bookClub.id}
         bookClubName={meeting.bookClub.name}
-        userName={session.user.name || "User"}
+        userName={viewer.name}
       />
 
       <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
@@ -214,7 +199,7 @@ export default async function MeetingPage({
                 <NominationForm
                   meetingId={meeting.id}
                   existingNominations={meeting.bookOptions}
-                  currentUserId={session.user.id}
+                  currentUserId={viewer.userId}
                 />
               </CardContent>
             </Card>
@@ -254,7 +239,7 @@ export default async function MeetingPage({
                     selectedBookId={meeting.selectedBookId}
                     currentUserIsAdmin={meeting.currentUserIsAdmin}
                     meetingId={meeting.id}
-                    isVotingOpen={votingOpen || false}
+                    isVotingOpen={votingOpen}
                     userVotingMethod={userVotingMethod}
                     userRankedVotes={userRankedVotes}
                     availability={availability}

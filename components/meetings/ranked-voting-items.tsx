@@ -10,11 +10,12 @@ import { BookMeta } from "@/components/books/book-meta";
 import { sanitizeDescription } from "@/lib/sanitize-description";
 import { NominationNote } from "@/components/nominations/nomination-note";
 import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
-import type { MeetingBook, MeetingBookOption } from "./types";
+import type { Book } from "@/server/books";
+import type { MeetingBookOption } from "@/server/meetings";
 
 export const RANKED_ZONE_ID = "ranked-zone";
 
-function CoverThumbnail({ book }: { book: MeetingBook }) {
+function CoverThumbnail({ book }: { book: Book }) {
   if (!book.coverUrl) return null;
 
   return (

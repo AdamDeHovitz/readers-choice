@@ -1,15 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  formatGoogleBook,
-  getBookById,
-  searchBooks,
-  type GoogleBook,
-} from "./google-books";
-import { parseYear } from "./utils";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { findGoogleBooksDescription, searchVolumes } from "./google-books";
 
-function makeBook(volumeInfo: Partial<GoogleBook["volumeInfo"]>): GoogleBook {
-  return { id: "vol-1", volumeInfo: { title: "A Title", ...volumeInfo } };
-}
+type Item = { title: string; description?: string };
 
 function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -19,206 +11,127 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
   });
 }
 
-describe("formatGoogleBook", () => {
-  it("maps a complete volume", () => {
-    const result = formatGoogleBook(
-      makeBook({
-        title: "The Art of Fielding",
-        authors: ["Chad Harbach"],
-        description: "<p>A â€œbaseballâ€\u009d novel</p>",
-        publishedDate: "2011-09-07",
-        pageCount: 512,
-        imageLinks: { thumbnail: "http://books.google.com/cover.jpg" },
-        industryIdentifiers: [
-          { type: "ISBN_10", identifier: "0316126691" },
-          { type: "ISBN_13", identifier: "9780316126694" },
-        ],
-      })
+const fetchMock = vi.fn<typeof fetch>();
+
+/** Answer each request with the next list of volumes. */
+function respondWith(...pages: Item[][]) {
+  for (const items of pages) {
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({ items: items.map((volumeInfo) => ({ volumeInfo })) })
     );
+  }
+}
 
-    expect(result).toEqual({
-      id: "vol-1",
-      title: "The Art of Fielding",
-      author: "Chad Harbach",
-      coverUrl: "https://books.google.com/cover.jpg",
-      description: '<p>A "baseball" novel</p>',
-      publishedYear: 2011,
-      pageCount: 512,
-      isbn: "9780316126694",
-      externalId: "vol-1",
-      externalSource: "google_books",
-    });
-  });
+const queries = () =>
+  fetchMock.mock.calls.map(([url]) =>
+    new URL(String(url)).searchParams.get("q")
+  );
 
-  it("prefers ISBN-13 over ISBN-10 regardless of order", () => {
-    const result = formatGoogleBook(
-      makeBook({
-        industryIdentifiers: [
-          { type: "ISBN_13", identifier: "9780000000002" },
-          { type: "ISBN_10", identifier: "0000000000" },
-        ],
-      })
-    );
-    expect(result.isbn).toBe("9780000000002");
-  });
-
-  it("falls back to ISBN-10, then to undefined", () => {
-    expect(
-      formatGoogleBook(
-        makeBook({
-          industryIdentifiers: [
-            { type: "OTHER", identifier: "OCLC:1" },
-            { type: "ISBN_10", identifier: "0000000000" },
-          ],
-        })
-      ).isbn
-    ).toBe("0000000000");
-    expect(formatGoogleBook(makeBook({})).isbn).toBeUndefined();
-  });
-
-  it("joins multiple authors and defaults missing authors", () => {
-    expect(formatGoogleBook(makeBook({ authors: ["A", "B"] })).author).toBe(
-      "A, B"
-    );
-    expect(formatGoogleBook(makeBook({})).author).toBe("Unknown Author");
-    expect(formatGoogleBook(makeBook({ authors: [] })).author).toBe(
-      "Unknown Author"
-    );
-  });
-
-  it("upgrades cover URLs to https and falls back to smallThumbnail", () => {
-    expect(
-      formatGoogleBook(
-        makeBook({ imageLinks: { smallThumbnail: "http://x.test/small.jpg" } })
-      ).coverUrl
-    ).toBe("https://x.test/small.jpg");
-    expect(
-      formatGoogleBook(
-        makeBook({
-          imageLinks: {
-            thumbnail: "https://x.test/thumb.jpg",
-            smallThumbnail: "http://x.test/small.jpg",
-          },
-        })
-      ).coverUrl
-    ).toBe("https://x.test/thumb.jpg");
-    expect(formatGoogleBook(makeBook({})).coverUrl).toBeUndefined();
-  });
-
-  it.each([
-    ["2011", 2011],
-    ["2011-09", 2011],
-    ["2011-09-07", 2011],
-    ["199?", undefined],
-    ["", undefined],
-    [undefined, undefined],
-  ])("parses publishedDate %j as %j (never NaN)", (date, expected) => {
-    const result = formatGoogleBook(makeBook({ publishedDate: date }));
-    expect(result.publishedYear).toBe(expected);
-  });
-
-  it("omits an empty description", () => {
-    expect(
-      formatGoogleBook(makeBook({ description: "   " })).description
-    ).toBeUndefined();
-  });
+beforeEach(() => {
+  vi.stubGlobal("fetch", fetchMock);
+  vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
-describe("parseYear", () => {
-  it.each([
-    ["May 2, 2011", 2011],
-    ["c1999", 1999],
-    ["June 1960", 1960],
-    ["12345", undefined],
-    ["19", undefined],
-    [null, undefined],
-  ])("parses %j as %j", (value, expected) => {
-    expect(parseYear(value)).toBe(expected);
-  });
+afterEach(() => {
+  fetchMock.mockReset();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
-describe("searchBooks", () => {
-  const fetchMock = vi.fn<typeof fetch>();
+describe("searchVolumes", () => {
+  it("queries the volumes endpoint, dropping blank descriptions", async () => {
+    respondWith([
+      { title: "One", description: "<p>Hello</p>" },
+      { title: "Two", description: "   " },
+    ]);
 
-  beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(console, "error").mockImplementation(() => {});
-  });
+    const results = await searchVolumes("isbn:123");
 
-  afterEach(() => {
-    fetchMock.mockReset();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
-
-  it("queries the volumes endpoint and formats items", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({
-        items: [
-          makeBook({ title: "One", authors: ["X"] }),
-          { ...makeBook({ title: "Two" }), id: "vol-2" },
-        ],
-      })
-    );
-
-    const results = await searchBooks("isbn:123");
-
-    expect(results.map((r) => r.title)).toEqual(["One", "Two"]);
-    expect(results[1].id).toBe("vol-2");
+    expect(results).toEqual([
+      { title: "One", description: "<p>Hello</p>" },
+      { title: "Two", description: undefined },
+    ]);
     const url = new URL(String(fetchMock.mock.calls[0][0]));
     expect(url.origin + url.pathname).toBe(
       "https://www.googleapis.com/books/v1/volumes"
     );
-    expect(url.searchParams.get("q")).toBe("isbn:123");
     expect(url.searchParams.get("maxResults")).toBe("10");
   });
 
-  it("returns [] when the response has no items", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ totalItems: 0 }));
-    expect(await searchBooks("nothing")).toEqual([]);
+  it("returns [] with no items, a non-ok response, or a network error", async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ totalItems: 0 }));
+    expect(await searchVolumes("q")).toEqual([]);
 
-    fetchMock.mockResolvedValue(jsonResponse({ items: [] }));
-    expect(await searchBooks("nothing")).toEqual([]);
-  });
-
-  it("returns [] on a non-ok response", async () => {
-    fetchMock.mockResolvedValue(
+    fetchMock.mockResolvedValueOnce(
       jsonResponse({ error: "quota" }, { status: 429, statusText: "Too Many" })
     );
-    expect(await searchBooks("anything")).toEqual([]);
-  });
+    expect(await searchVolumes("q")).toEqual([]);
 
-  it("returns [] when fetch rejects", async () => {
-    fetchMock.mockRejectedValue(new Error("network down"));
-    expect(await searchBooks("anything")).toEqual([]);
+    fetchMock.mockRejectedValueOnce(new Error("network down"));
+    expect(await searchVolumes("q")).toEqual([]);
   });
 });
 
-describe("getBookById", () => {
-  const fetchMock = vi.fn<typeof fetch>();
+describe("findGoogleBooksDescription", () => {
+  const book = { title: "The Art of Fielding", author: "Chad Harbach" };
 
-  beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
-    vi.spyOn(console, "error").mockImplementation(() => {});
+  it("uses the ISBN lookup first when it has a description", async () => {
+    respondWith([{ title: book.title, description: "From ISBN" }]);
+
+    expect(
+      await findGoogleBooksDescription({ ...book, isbn: "9780316126694" })
+    ).toBe("From ISBN");
+    expect(queries()).toEqual(["isbn:9780316126694"]);
   });
 
-  afterEach(() => {
-    fetchMock.mockReset();
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
+  it("falls back to title + author when the ISBN result has no description", async () => {
+    respondWith(
+      [{ title: book.title }],
+      [{ title: book.title, description: "From title" }]
+    );
 
-  it("fetches and formats a single volume", async () => {
-    fetchMock.mockResolvedValue(jsonResponse(makeBook({ title: "Solo" })));
-    const result = await getBookById("vol-1");
-    expect(result?.title).toBe("Solo");
-    expect(String(fetchMock.mock.calls[0][0])).toBe(
-      "https://www.googleapis.com/books/v1/volumes/vol-1"
+    expect(await findGoogleBooksDescription({ ...book, isbn: "1" })).toBe(
+      "From title"
+    );
+    expect(queries()[1]).toBe(
+      "intitle:The Art of Fielding inauthor:Chad Harbach"
     );
   });
 
-  it("returns null on a non-ok response", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({}, { status: 404 }));
-    expect(await getBookById("missing")).toBeNull();
+  it("skips the ISBN lookup when there is no ISBN", async () => {
+    respondWith([{ title: book.title, description: "From title" }]);
+    expect(await findGoogleBooksDescription(book)).toBe("From title");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("strips subtitles, parentheticals and extra authors from the query", async () => {
+    respondWith([]);
+    await findGoogleBooksDescription({
+      title: "Dune: Deluxe Edition (Book 1)",
+      author: "Frank Herbert, Someone Else",
+    });
+    expect(queries()).toEqual(["intitle:Dune inauthor:Frank Herbert"]);
+  });
+
+  it("prefers the result whose title matches, else the first", async () => {
+    respondWith([
+      { title: "Study Guide", description: "Wrong book" },
+      { title: "The Art of Fielding: A Novel", description: "Right book" },
+    ]);
+    expect(await findGoogleBooksDescription(book)).toBe("Right book");
+
+    respondWith([
+      { title: "Something", description: "First" },
+      { title: "Else", description: "Second" },
+    ]);
+    expect(await findGoogleBooksDescription(book)).toBe("First");
+  });
+
+  it("returns null when nothing has a description or the API fails", async () => {
+    respondWith([], []);
+    expect(await findGoogleBooksDescription({ ...book, isbn: "1" })).toBeNull();
+
+    fetchMock.mockRejectedValue(new Error("boom"));
+    expect(await findGoogleBooksDescription({ ...book, isbn: "1" })).toBeNull();
   });
 });

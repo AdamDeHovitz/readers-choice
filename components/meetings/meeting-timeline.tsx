@@ -1,27 +1,10 @@
 import Link from "next/link";
 import { BookCover } from "@/components/books/book-cover";
 import { Card, CardContent } from "@/components/ui/card";
-
-interface Meeting {
-  id: string;
-  meetingDate: string;
-  nominationDeadline?: string | null;
-  votingDeadline: string | null;
-  isFinalized: boolean;
-  theme: {
-    id: string;
-    name: string;
-  } | null;
-  selectedBook: {
-    id: string;
-    title: string;
-    author: string;
-    coverUrl: string | null;
-  } | null;
-}
+import type { MeetingSummary } from "@/server/meetings";
 
 interface MeetingTimelineProps {
-  meetings: Meeting[];
+  meetings: MeetingSummary[];
 }
 
 export function MeetingTimeline({ meetings }: MeetingTimelineProps) {

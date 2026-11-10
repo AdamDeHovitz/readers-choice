@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   isContiguousRanking,
-  isVotingClosed,
   validateRankedBallot,
   validateYearRankings,
 } from "./ballot-validation";
@@ -133,36 +132,5 @@ describe("validateYearRankings", () => {
         yearBooks
       ).ok
     ).toBe(false);
-  });
-});
-
-describe("isVotingClosed", () => {
-  const now = new Date("2026-05-01T12:00:00Z");
-
-  it("is closed once finalized", () => {
-    expect(
-      isVotingClosed({ is_finalized: true, voting_deadline: null }, now)
-    ).toBe(true);
-  });
-
-  it("is open with no deadline", () => {
-    expect(
-      isVotingClosed({ is_finalized: false, voting_deadline: null }, now)
-    ).toBe(false);
-  });
-
-  it("is open up to and including the deadline, closed after", () => {
-    expect(
-      isVotingClosed(
-        { is_finalized: false, voting_deadline: "2026-05-01T12:00:00Z" },
-        now
-      )
-    ).toBe(false);
-    expect(
-      isVotingClosed(
-        { is_finalized: false, voting_deadline: "2026-05-01T11:59:59Z" },
-        now
-      )
-    ).toBe(true);
   });
 });

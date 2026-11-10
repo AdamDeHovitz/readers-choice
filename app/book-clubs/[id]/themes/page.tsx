@@ -1,7 +1,7 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/app/actions/book-clubs";
-import { getBookClubThemes } from "@/app/actions/themes";
+import { getBookClubDetails } from "@/server/clubs";
+import { getBookClubThemes } from "@/server/themes";
+import { getViewer } from "@/server/viewer";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { SuggestThemeDialog } from "@/components/themes/suggest-theme-dialog";
 import { ThemesList } from "@/components/themes/themes-list";
@@ -12,17 +12,14 @@ export default async function ThemesPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  const { id: bookClubId } = await params;
-
-  if (!session?.user) {
+  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
+  if (!viewer) {
     redirect("/login");
   }
 
-  // Parallelize book club details and themes queries
   const [bookClub, themes] = await Promise.all([
-    getBookClubDetails(bookClubId),
-    getBookClubThemes(bookClubId),
+    getBookClubDetails(viewer, bookClubId),
+    getBookClubThemes(viewer, bookClubId),
   ]);
 
   if (!bookClub) {
@@ -30,14 +27,14 @@ export default async function ThemesPage({
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={bookClubId}
         bookClubName={bookClub.name}
-        userName={session.user.name || "User"}
+        userName={viewer.name}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="space-y-6">
           {/* Header */}
           <Card>
@@ -61,14 +58,18 @@ export default async function ThemesPage({
               <CardTitle>
                 All Themes
                 {themes.length > 0 && (
-                  <span className="ml-2 text-base font-normal text-dark-500">
+                  <span className="text-dark-500 ml-2 text-base font-normal">
                     ({themes.length})
                   </span>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ThemesList themes={themes} currentUserId={session.user.id!} isAdmin={bookClub.isAdmin} />
+              <ThemesList
+                themes={themes}
+                currentUserId={viewer.userId}
+                isAdmin={bookClub.currentUserIsAdmin}
+              />
             </CardContent>
           </Card>
         </div>

@@ -10,7 +10,10 @@ interface JoinBookClubButtonProps {
   bookClubName: string;
 }
 
-export function JoinBookClubButton({ code, bookClubName }: JoinBookClubButtonProps) {
+export function JoinBookClubButton({
+  code,
+  bookClubName,
+}: JoinBookClubButtonProps) {
   const router = useRouter();
   const [isJoining, setIsJoining] = useState(false);
 
@@ -19,17 +22,21 @@ export function JoinBookClubButton({ code, bookClubName }: JoinBookClubButtonPro
 
     const result = await joinBookClubViaInvite(code);
 
-    if (result.error) {
+    if (!result.success) {
       alert(result.error);
       setIsJoining(false);
-    } else if (result.bookClubId) {
-      // Success - redirect to the book club
-      router.push(`/book-clubs/${result.bookClubId}`);
+    } else {
+      router.push(`/book-clubs/${result.data.bookClubId}`);
     }
   }
 
   return (
-    <Button onClick={handleJoin} disabled={isJoining} size="lg" className="w-full sm:w-auto">
+    <Button
+      onClick={handleJoin}
+      disabled={isJoining}
+      size="lg"
+      className="w-full sm:w-auto"
+    >
       {isJoining ? "Joining..." : `Join ${bookClubName}`}
     </Button>
   );
