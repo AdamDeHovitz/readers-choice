@@ -8,11 +8,20 @@ Mobile-first book club app: clubs, meetings, book nominations and voting (approv
 - `npm run build` needs `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; locally, dummy values work (as in CI): `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
 - `npm run test:integration` hits the live Open Library API; it's excluded from the default run.
 
+## Verification loop
+
+Every PR carries `verifications/<pr-number>.md`, a record of what you checked, how, what you saw, and what you didn't check. Read `verifications/README.md` before verifying anything: it has the steps, evidence standards, and recipes by change type.
+
+- Open PRs as drafts. Verify locally, copy `verifications/TEMPLATE.md` to `verifications/<pr>.md`, fill it in, push, then `gh pr ready`. The **Verification** check fails on a ready PR without a complete file.
+- Write down only what you observed. A gap you admit is useful; a check you claim but didn't run is not.
+- A PR is ready for review only when it's marked ready and CI is green. Don't tell the user it's ready before then.
+
 ## Local testing (verify changes in a real browser)
 
 A local Supabase stack (Docker) mirrors production's schema; `supabase/seed.sql` fills it with test data. Nothing here touches production.
 
-- `npm run dev:local` starts the stack if needed and serves the app on http://localhost:3000 against it. Plain `npm run dev` uses `.env.local` instead.
+- `npm run dev:local` starts the stack if needed and serves the app on http://localhost:3000 against it (`PORT=3010 npm run dev:local` if 3000 is taken). Plain `npm run dev` uses `.env.local` instead.
+- Every checkout and worktree shares the one local stack, so a `db:reset` or a write in one is visible in all of them.
 - `npm run db:reset` re-runs every migration plus the seed. Do it before verifying anything that depends on seeded state.
 - Log in with email/password (Google doesn't work locally). Users and meeting IDs are listed at the top of `supabase/seed.sql` and in `e2e/seed.ts`: `alice@example.test` (admin), `bob@example.test`, `carol@example.test`, and `dave@example.test` (in a different club). Password: `password123`.
 - The seed has one meeting in each phase: finalized, voting closed, voting open, nominating. Dates are relative to the time of the reset.

@@ -1,0 +1,39 @@
+name: Verification
+
+# A PR can't leave draft without verifications/<pr-number>.md
+# (verifications/README.md). Drafts get a warning instead of a failure, so the
+# file can be written after the PR has a number.
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, reopened, synchronize, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verification-file:
+    name: Verification file
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check verifications/${{ github.event.pull_request.number }}.md
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          if scripts/check-verification.sh "$PR" 2> errors.txt; then
+            echo "verifications/$PR.md is filled in." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          cat errors.txt >&2
+          { echo "### verifications/$PR.md isn't ready"; sed 's/^/- /' errors.txt; } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$DRAFT" = "true" ]; then
+            echo "::warning::Draft PR: add verifications/$PR.md before marking it ready for review."
+            exit 0
+          fi
+          exit 1
