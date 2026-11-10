@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateMeeting, deleteMeeting } from "@/app/actions/meetings";
-import { addBookToDatabase } from "@/app/actions/books";
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { fromDateTimeInput, toDateTimeInput } from "@/lib/datetime-input";
 import type { BookSearchResult } from "@/lib/open-library";
 import {
   EditMeetingDetailsStep,
@@ -35,12 +35,6 @@ interface EditMeetingDialogProps {
   currentTheme: string | null;
   currentDetails?: string | null;
   currentBook: CurrentBook | null;
-}
-
-/** Format an ISO date string for a datetime-local input (local time). */
-function formatDateForInput(dateString: string): string {
-  const date = new Date(dateString);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}T${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
 function toBookSearchResult(book: CurrentBook | null): BookSearchResult | null {
@@ -71,12 +65,12 @@ export function EditMeetingDialog({
 
   function getInitialValues(): EditMeetingFormValues {
     return {
-      meetingDate: formatDateForInput(currentDate),
+      meetingDate: toDateTimeInput(currentDate),
       nominationDeadline: currentNominationDeadline
-        ? formatDateForInput(currentNominationDeadline)
+        ? toDateTimeInput(currentNominationDeadline)
         : "",
       votingDeadline: currentVotingDeadline
-        ? formatDateForInput(currentVotingDeadline)
+        ? toDateTimeInput(currentVotingDeadline)
         : "",
       themeName: currentTheme || "",
       details: currentDetails || "",
@@ -120,31 +114,24 @@ export function EditMeetingDialog({
     setError(null);
     setIsSubmitting(true);
 
-    let bookId = currentBook?.id || null;
+    const newBook =
+      changeBook && selectedBook && selectedBook.id !== currentBook?.id
+        ? selectedBook
+        : null;
 
-    // If user wants to change the book and selected a new one
-    if (changeBook && selectedBook && selectedBook.id !== currentBook?.id) {
-      const bookResult = await addBookToDatabase(selectedBook);
-      if (bookResult.error) {
-        setError(bookResult.error);
-        setIsSubmitting(false);
-        return;
-      }
-      bookId = bookResult.bookId!;
-    }
-
-    // Update meeting
     const result = await updateMeeting(
       meetingId,
-      new Date(meetingDate).toISOString(),
-      nominationDeadline ? new Date(nominationDeadline).toISOString() : null,
-      votingDeadline ? new Date(votingDeadline).toISOString() : null,
-      themeName || null,
-      bookId,
-      details || null
+      {
+        meetingDate: fromDateTimeInput(meetingDate) ?? "",
+        nominationDeadline: fromDateTimeInput(nominationDeadline),
+        votingDeadline: fromDateTimeInput(votingDeadline),
+        themeName,
+        details,
+      },
+      newBook
     );
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {
@@ -169,7 +156,7 @@ export function EditMeetingDialog({
 
     const result = await deleteMeeting(meetingId);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {

@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/app/actions/book-clubs";
+import { getBookClubDetails } from "@/server/clubs";
+import { getViewer } from "@/server/viewer";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { MemberList } from "@/components/book-clubs/member-list";
 import { InviteLinkDialog } from "@/components/book-clubs/invite-link-dialog";
@@ -11,28 +11,26 @@ export default async function MembersPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  const { id: bookClubId } = await params;
-
-  if (!session?.user) {
+  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
+  if (!viewer) {
     redirect("/login");
   }
 
-  const bookClub = await getBookClubDetails(bookClubId);
+  const bookClub = await getBookClubDetails(viewer, bookClubId);
 
   if (!bookClub) {
     redirect("/dashboard");
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={bookClubId}
         bookClubName={bookClub.name}
-        userName={session.user.name || "User"}
+        userName={viewer.name}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -54,7 +52,7 @@ export default async function MembersPage({
           <CardContent>
             <MemberList
               members={bookClub.members}
-              currentUserId={session.user.id!}
+              currentUserId={viewer.userId}
               currentUserIsAdmin={bookClub.currentUserIsAdmin}
               bookClubId={bookClubId}
             />

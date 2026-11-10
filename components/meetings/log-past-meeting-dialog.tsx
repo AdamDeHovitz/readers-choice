@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { logPastMeeting } from "@/app/actions/meetings";
-import { addBookToDatabase } from "@/app/actions/books";
 import {
   Dialog,
   DialogContent,
@@ -55,25 +54,13 @@ export function LogPastMeetingDialog({
     setError(null);
     setIsSubmitting(true);
 
-    // First, add book to database
-    const bookResult = await addBookToDatabase(selectedBook);
-
-    if (bookResult.error) {
-      setError(bookResult.error);
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Then log the past meeting
     const result = await logPastMeeting(
       bookClubId,
-      meetingDate,
-      themeName || null,
-      bookResult.bookId!,
-      details || null
+      { meetingDate, themeName, details },
+      selectedBook
     );
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {

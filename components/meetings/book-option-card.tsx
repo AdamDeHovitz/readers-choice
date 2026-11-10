@@ -6,7 +6,7 @@ import { BookMeta } from "@/components/books/book-meta";
 import { sanitizeDescription } from "@/lib/sanitize-description";
 import { NominationNote } from "@/components/nominations/nomination-note";
 import { EditBookOptionMetadataDialog } from "./edit-book-option-metadata-dialog";
-import type { MeetingBookOptionWithVotes } from "./types";
+import type { MeetingBookOptionWithVotes } from "@/server/meetings";
 
 const LONG_DESCRIPTION_LENGTH = 150;
 

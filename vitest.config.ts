@@ -17,16 +17,23 @@ export default defineConfig({
       ".next",
       // Agent worktrees are full repo copies
       ".claude/**",
+      ".worktrees/**",
       ...(integration ? [] : ["**/*.integration.test.ts"]),
     ],
     coverage: {
-      include: ["lib/**", "app/actions/**"],
-      exclude: ["**/*.test.ts", "**/__fixtures__/**"],
+      include: ["lib/**", "server/**", "app/actions/**"],
+      exclude: [
+        "**/*.test.ts",
+        "**/__fixtures__/**",
+        "server/database.types.ts",
+      ],
     },
   },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./"),
+      // Throws outside React Server Components; tests are the server here.
+      "server-only": path.resolve(__dirname, "test/empty-module.ts"),
     },
   },
 });

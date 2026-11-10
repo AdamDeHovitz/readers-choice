@@ -1,1177 +1,284 @@
 "use server";
 
-import { auth } from "@/auth";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { isVotingClosed } from "@/lib/ballot-validation";
-import { dbErrorMessage } from "@/lib/db-errors";
+import type { BookSearchResult } from "@/lib/open-library";
+import { UserError } from "@/lib/user-error";
+import { runAction, type ActionResult } from "@/server/action";
+import { requireAdmin } from "@/server/authz";
+import { saveBook } from "@/server/books";
+import { optionalDate, optionalText, requiredDate } from "@/server/input";
+import { getBookOptionContext, getMeetingContext } from "@/server/meetings";
+import { findOrCreateTheme } from "@/server/themes";
 
-interface VotingWindow {
-  book_club_id: string;
-  is_finalized: boolean | null;
-  voting_deadline: string | null;
+/** Editable meeting fields. Dates are ISO strings; blank means none. */
+export interface MeetingFields {
+  meetingDate: string;
+  nominationDeadline?: string | null;
+  votingDeadline?: string | null;
+  themeName?: string | null;
+  details?: string | null;
 }
 
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  cover_url: string | null;
-  description: string | null;
-  page_count: number | null;
-  published_year: number | null;
+function parseMeetingFields(fields: MeetingFields) {
+  return {
+    meetingDate: requiredDate(fields?.meetingDate, "Meeting date is required"),
+    nominationDeadline: optionalDate(
+      fields.nominationDeadline,
+      "Invalid nomination deadline"
+    ),
+    votingDeadline: optionalDate(
+      fields.votingDeadline,
+      "Invalid voting deadline"
+    ),
+    themeName: optionalText(fields.themeName),
+    details: optionalText(fields.details),
+  };
 }
 
-interface Theme {
-  id: string;
-  name: string;
+function revalidateMeeting(meetingId: string, bookClubId: string) {
+  revalidatePath(`/meetings/${meetingId}`);
+  revalidatePath(`/book-clubs/${bookClubId}`);
 }
 
-interface Meeting {
-  id: string;
-  meeting_date: string;
-  nomination_deadline: string | null;
-  voting_deadline: string | null;
-  is_finalized: boolean;
-  finalized_at: string | null;
-  selected_book_id: string | null;
-  created_at: string;
-  details: string | null;
-  themes: Theme | null;
-  selected_book: Book | null;
-}
-
-interface BookOption {
-  id: string;
-  meeting_id: string;
-  book_id: string;
-  added_by: string | null;
-  description_override: string | null;
-  page_count_override: number | null;
-  nomination_note: string | null;
-  created_at: string;
-  books: Book;
-  nominator: { name: string } | null;
-  votes: { id: string; user_id: string }[];
-}
-
-function getAdminClient() {
-  return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
-}
-
-/**
- * Create a new meeting for a book club
- */
-export async function createMeeting(formData: FormData) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  const bookClubId = formData.get("bookClubId") as string;
-  const meetingDate = formData.get("meetingDate") as string;
-  const nominationDeadline = formData.get("nominationDeadline") as string;
-  const votingDeadline = formData.get("votingDeadline") as string;
-  const themeName = formData.get("themeName") as string;
-  const details = formData.get("details") as string;
-
-  if (!bookClubId || !meetingDate) {
-    return { error: "Book club ID and meeting date are required" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Check if current user is an admin
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member?.is_admin) {
-      return { error: "Only admins can create meetings" };
-    }
-
-    // Get or create theme if provided
-    let themeId = null;
-    if (themeName && themeName.trim().length > 0) {
-      // First, check if theme already exists
-      const { data: existingTheme } = await supabase
-        .from("themes")
-        .select("id")
-        .eq("book_club_id", bookClubId)
-        .eq("name", themeName.trim())
-        .single();
-
-      if (existingTheme) {
-        // Use existing theme
-        themeId = existingTheme.id;
-      } else {
-        // Create new theme
-        const { data: newTheme, error: themeError } = await supabase
-          .from("themes")
-          .insert({
-            book_club_id: bookClubId,
-            name: themeName.trim(),
-            submitted_by: session.user.id,
-          })
-          .select("id")
-          .single();
-
-        if (themeError) throw themeError;
-        themeId = newTheme.id;
-      }
-    }
-
-    // Create the meeting
-    const { data: meeting, error: meetingError } = await supabase
-      .from("meetings")
-      .insert({
-        book_club_id: bookClubId,
-        meeting_date: meetingDate,
-        nomination_deadline: nominationDeadline || null,
-        voting_deadline: votingDeadline || null,
-        theme_id: themeId,
-        details: details || null,
-      })
-      .select()
-      .single();
-
-    if (meetingError) throw meetingError;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
-    return { success: true, meetingId: meeting.id };
-  } catch (error) {
-    console.error("Error creating meeting:", error);
-    return { error: "Failed to create meeting" };
-  }
-}
-
-/**
- * Log a past meeting with a book already selected
- */
-export async function logPastMeeting(
+/** Schedule an upcoming meeting (admins only). */
+export async function createMeeting(
   bookClubId: string,
-  meetingDate: string,
-  themeName: string | null,
-  bookId: string,
-  details: string | null
-) {
-  const session = await auth();
+  fields: MeetingFields
+): Promise<ActionResult<{ meetingId: string }>> {
+  return runAction("Failed to create meeting", async ({ db, userId }) => {
+    const input = parseMeetingFields(fields);
+    await requireAdmin(
+      db,
+      bookClubId,
+      userId,
+      "Only admins can create meetings"
+    );
 
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Check if current user is an admin
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member?.is_admin) {
-      return { error: "Only admins can log past meetings" };
-    }
-
-    // Get or create theme if provided
-    let themeId = null;
-    if (themeName && themeName.trim().length > 0) {
-      // First, check if theme already exists
-      const { data: existingTheme } = await supabase
-        .from("themes")
-        .select("id")
-        .eq("book_club_id", bookClubId)
-        .eq("name", themeName.trim())
-        .single();
-
-      if (existingTheme) {
-        // Use existing theme
-        themeId = existingTheme.id;
-      } else {
-        // Create new theme
-        const { data: newTheme, error: themeError } = await supabase
-          .from("themes")
-          .insert({
-            book_club_id: bookClubId,
-            name: themeName.trim(),
-            submitted_by: session.user.id,
-          })
-          .select("id")
-          .single();
-
-        if (themeError) throw themeError;
-        themeId = newTheme.id;
-      }
-    }
-
-    // Create the meeting as already finalized
-    const { data: meeting, error: meetingError } = await supabase
+    const themeId = await findOrCreateTheme(
+      db,
+      bookClubId,
+      input.themeName,
+      userId
+    );
+    const { data: meeting, error } = await db
       .from("meetings")
       .insert({
         book_club_id: bookClubId,
-        meeting_date: meetingDate,
+        meeting_date: input.meetingDate,
+        nomination_deadline: input.nominationDeadline,
+        voting_deadline: input.votingDeadline,
         theme_id: themeId,
-        selected_book_id: bookId,
-        details: details,
-        is_finalized: true,
-        finalized_at: new Date().toISOString(),
-        finalized_by: session.user.id,
+        details: input.details,
       })
-      .select()
+      .select("id")
       .single();
-
-    if (meetingError) throw meetingError;
-
-    revalidatePath(`/book-clubs/${bookClubId}`);
-    return { success: true, meetingId: meeting.id };
-  } catch (error) {
-    console.error("Error logging past meeting:", error);
-    return { error: "Failed to log past meeting" };
-  }
-}
-
-/**
- * Get meetings for a book club
- */
-export async function getBookClubMeetings(bookClubId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return [];
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return [];
-    }
-
-    // Get meetings with related data
-    const { data: meetings, error } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        nomination_deadline,
-        voting_deadline,
-        is_finalized,
-        finalized_at,
-        selected_book_id,
-        created_at,
-        details,
-        themes (
-          id,
-          name
-        ),
-        selected_book:books!meetings_selected_book_id_fkey (
-          id,
-          title,
-          author,
-          cover_url,
-          description,
-          page_count,
-          published_year
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .order("meeting_date", { ascending: false });
-
     if (error) throw error;
 
-    // Supabase types can be tricky with joins, so we cast to unknown then Meeting[]
-    // But since we defined interfaces, we can try to map carefully
-    return (
-      (meetings as unknown as Meeting[])?.map((meeting) => ({
-        id: meeting.id,
-        meetingDate: meeting.meeting_date,
-        nominationDeadline: meeting.nomination_deadline,
-        votingDeadline: meeting.voting_deadline,
-        isFinalized: meeting.is_finalized,
-        finalizedAt: meeting.finalized_at,
-        selectedBookId: meeting.selected_book_id,
-        createdAt: meeting.created_at,
-        details: meeting.details,
-        theme: meeting.themes
-          ? {
-              id: meeting.themes.id,
-              name: meeting.themes.name,
-            }
-          : null,
-        selectedBook: meeting.selected_book
-          ? {
-              id: meeting.selected_book.id,
-              title: meeting.selected_book.title,
-              author: meeting.selected_book.author,
-              coverUrl: meeting.selected_book.cover_url,
-              description: meeting.selected_book.description,
-              pageCount: meeting.selected_book.page_count,
-              publishedYear: meeting.selected_book.published_year,
-            }
-          : null,
-      })) || []
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    return { meetingId: meeting.id };
+  });
+}
+
+/** Record a meeting that already happened, with its book (admins only). */
+export async function logPastMeeting(
+  bookClubId: string,
+  fields: Pick<MeetingFields, "meetingDate" | "themeName" | "details">,
+  book: BookSearchResult
+): Promise<ActionResult<{ meetingId: string }>> {
+  return runAction("Failed to log past meeting", async ({ db, userId }) => {
+    const input = parseMeetingFields(fields);
+    await requireAdmin(
+      db,
+      bookClubId,
+      userId,
+      "Only admins can log past meetings"
     );
-  } catch (error) {
-    console.error("Error fetching meetings:", error);
-    return [];
-  }
+
+    const [themeId, bookId] = await Promise.all([
+      findOrCreateTheme(db, bookClubId, input.themeName, userId),
+      saveBook(db, book),
+    ]);
+    const { data: meeting, error } = await db
+      .from("meetings")
+      .insert({
+        book_club_id: bookClubId,
+        meeting_date: input.meetingDate,
+        theme_id: themeId,
+        selected_book_id: bookId,
+        details: input.details,
+        is_finalized: true,
+        finalized_at: new Date().toISOString(),
+        finalized_by: userId,
+      })
+      .select("id")
+      .single();
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${bookClubId}`);
+    return { meetingId: meeting.id };
+  });
 }
 
 /**
- * Get a single meeting with all details
+ * Update a meeting's details (admins only). A blank theme clears it.
+ * Pass `newBook` to change the selected book; omit it to keep the current one.
  */
-export async function getMeetingDetails(meetingId: string) {
-  const session = await auth();
+export async function updateMeeting(
+  meetingId: string,
+  fields: MeetingFields,
+  newBook?: BookSearchResult | null
+): Promise<ActionResult> {
+  return runAction("Failed to update meeting", async ({ db, userId }) => {
+    const input = parseMeetingFields(fields);
+    const meeting = await getMeetingContext(db, meetingId);
+    await requireAdmin(
+      db,
+      meeting.bookClubId,
+      userId,
+      "Only admins can update meetings"
+    );
 
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get meeting details
-    const { data: meetingData, error: meetingError } = await supabase
+    const [themeId, bookId] = await Promise.all([
+      findOrCreateTheme(db, meeting.bookClubId, input.themeName, userId),
+      newBook ? saveBook(db, newBook) : null,
+    ]);
+    const { error } = await db
       .from("meetings")
-      .select(
-        `
-        *,
-        book_clubs!inner (
-          id,
-          name
-        ),
-        themes (
-          id,
-          name
-        )
-      `
-      )
-      .eq("id", meetingId)
-      .single();
+      .update({
+        meeting_date: input.meetingDate,
+        nomination_deadline: input.nominationDeadline,
+        voting_deadline: input.votingDeadline,
+        theme_id: themeId,
+        details: input.details,
+        ...(bookId && { selected_book_id: bookId }),
+      })
+      .eq("id", meetingId);
+    if (error) throw error;
 
-    if (meetingError) throw meetingError;
-    // Temporary cast to handle nested joins not in strict Meeting type
-    const meeting = meetingData as unknown as Meeting & {
-      book_clubs: { id: string; name: string };
-    };
-
-    const bookClubId = meeting.book_clubs.id;
-
-    // Parallelize membership check, book options, and selected book queries
-    const [memberResult, bookOptionsResult, selectedBookResult] =
-      await Promise.all([
-        supabase
-          .from("members")
-          .select("is_admin")
-          .eq("book_club_id", bookClubId)
-          .eq("user_id", session.user.id)
-          .single(),
-        supabase
-          .from("book_options")
-          .select(
-            `
-          id,
-          created_at,
-          added_by,
-          description_override,
-          page_count_override,
-          nomination_note,
-          nominator:users!book_options_added_by_fkey (
-            name
-          ),
-          books!inner (
-            id,
-            title,
-            author,
-            cover_url,
-            description,
-            page_count,
-            published_year
-          ),
-          votes (
-            id,
-            user_id
-          )
-        `
-          )
-          .eq("meeting_id", meetingId),
-        meeting.selected_book_id
-          ? supabase
-              .from("books")
-              .select(
-                "id, title, author, cover_url, description, page_count, published_year"
-              )
-              .eq("id", meeting.selected_book_id)
-              .single()
-          : Promise.resolve({ data: null }),
-      ]);
-
-    if (!memberResult.data) {
-      return null;
-    }
-
-    if (bookOptionsResult.error) throw bookOptionsResult.error;
-
-    const member = memberResult.data;
-    const bookOptions = bookOptionsResult.data as unknown as BookOption[];
-    const selectedBook = selectedBookResult.data
-      ? {
-          id: selectedBookResult.data.id,
-          title: selectedBookResult.data.title,
-          author: selectedBookResult.data.author,
-          coverUrl: selectedBookResult.data.cover_url,
-          description: selectedBookResult.data.description,
-          pageCount: selectedBookResult.data.page_count,
-          publishedYear: selectedBookResult.data.published_year,
-        }
-      : null;
-
-    return {
-      id: meeting.id,
-      meetingDate: meeting.meeting_date,
-      nominationDeadline: meeting.nomination_deadline,
-      votingDeadline: meeting.voting_deadline,
-      isFinalized: meeting.is_finalized,
-      finalizedAt: meeting.finalized_at,
-      selectedBookId: meeting.selected_book_id,
-      selectedBook,
-      details: meeting.details,
-      bookClub: {
-        id: meeting.book_clubs.id,
-        name: meeting.book_clubs.name,
-      },
-      theme: meeting.themes
-        ? {
-            id: meeting.themes.id,
-            name: meeting.themes.name,
-          }
-        : null,
-      bookOptions:
-        bookOptions?.map((option) => {
-          const book = option.books;
-          return {
-            id: option.id,
-            book: {
-              id: book.id,
-              title: book.title,
-              author: book.author,
-              coverUrl: book.cover_url,
-              description: option.description_override,
-              pageCount: option.page_count_override,
-              publishedYear: book.published_year,
-            },
-            voteCount: option.votes?.length || 0,
-            userHasVoted: option.votes?.some(
-              (v) => v.user_id === session.user.id
-            ),
-            createdAt: option.created_at,
-            addedBy: option.added_by,
-            nominatorName: option.nominator?.name ?? null,
-            nominationNote: option.nomination_note,
-          };
-        }) || [],
-      currentUserIsAdmin: member.is_admin,
-    };
-  } catch (error) {
-    console.error("Error fetching meeting details:", error);
-    return null;
-  }
+    revalidateMeeting(meetingId, meeting.bookClubId);
+  });
 }
 
+/** Delete a meeting and (by cascade) its options and votes (admins only). */
+export async function deleteMeeting(meetingId: string): Promise<ActionResult> {
+  return runAction("Failed to delete meeting", async ({ db, userId }) => {
+    const meeting = await getMeetingContext(db, meetingId);
+    await requireAdmin(
+      db,
+      meeting.bookClubId,
+      userId,
+      "You must be an admin to delete meetings"
+    );
+
+    const { error } = await db.from("meetings").delete().eq("id", meetingId);
+    if (error) throw error;
+
+    revalidatePath(`/book-clubs/${meeting.bookClubId}/schedule`);
+    revalidatePath(`/book-clubs/${meeting.bookClubId}`);
+  });
+}
+
+/** Add a book option to an unfinalized meeting (admins only). */
+export async function addBookOption(
+  meetingId: string,
+  book: BookSearchResult
+): Promise<ActionResult> {
+  return runAction("Failed to add book option", async ({ db, userId }) => {
+    const meeting = await getMeetingContext(db, meetingId);
+    if (meeting.isFinalized) throw new UserError("Meeting has been finalized");
+    await requireAdmin(
+      db,
+      meeting.bookClubId,
+      userId,
+      "Only admins can add book options"
+    );
+
+    const bookId = await saveBook(db, book);
+    const { error } = await db
+      .from("book_options")
+      .insert({ meeting_id: meetingId, book_id: bookId, added_by: userId });
+    if (error) throw error;
+
+    revalidatePath(`/meetings/${meetingId}`);
+  });
+}
+
+/** Override a nomination's description and page count (admins only). */
 export async function updateBookOptionMetadata(
   bookOptionId: string,
   description: string,
   pageCount: number | null
-) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  if (pageCount !== null && (!Number.isInteger(pageCount) || pageCount <= 0)) {
-    return { error: "Page count must be a positive whole number" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    const { data: bookOption, error: optionError } = await supabase
-      .from("book_options")
-      .select(
-        `
-        id,
-        meeting_id,
-        meetings!inner (
-          book_club_id
-        )
-      `
-      )
-      .eq("id", bookOptionId)
-      .single();
-
-    if (optionError) throw optionError;
-    if (!bookOption) {
-      return { error: "Book option not found" };
+): Promise<ActionResult> {
+  return runAction("Failed to update book details", async ({ db, userId }) => {
+    if (
+      pageCount !== null &&
+      (!Number.isInteger(pageCount) || pageCount <= 0)
+    ) {
+      throw new UserError("Page count must be a positive whole number");
     }
+    const option = await getBookOptionContext(db, bookOptionId);
+    await requireAdmin(
+      db,
+      option.meeting.bookClubId,
+      userId,
+      "Only admins can edit book details"
+    );
 
-    const meeting = Array.isArray(bookOption.meetings)
-      ? bookOption.meetings[0]
-      : bookOption.meetings;
-
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (memberError) throw memberError;
-    if (!member?.is_admin) {
-      return { error: "Only admins can edit book details" };
-    }
-
-    const { error: updateError } = await supabase
+    const { error } = await db
       .from("book_options")
       .update({
-        description_override: description.trim() || null,
+        description_override: optionalText(description),
         page_count_override: pageCount,
       })
       .eq("id", bookOptionId);
-
-    if (updateError) throw updateError;
-
-    revalidatePath(`/meetings/${bookOption.meeting_id}`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating book option metadata:", error);
-    return { error: "Failed to update book details" };
-  }
-}
-
-/**
- * Delete a meeting
- */
-export async function deleteMeeting(meetingId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Not authenticated" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get meeting to check book club membership
-    const { data: meeting } = await supabase
-      .from("meetings")
-      .select("book_club_id")
-      .eq("id", meetingId)
-      .single();
-
-    if (!meeting) {
-      return { error: "Meeting not found" };
-    }
-
-    // Check if user is admin
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member?.is_admin) {
-      return { error: "You must be an admin to delete meetings" };
-    }
-
-    // Delete the meeting (cascade will handle related records)
-    const { error: deleteError } = await supabase
-      .from("meetings")
-      .delete()
-      .eq("id", meetingId);
-
-    if (deleteError) throw deleteError;
-
-    revalidatePath(`/book-clubs/${meeting.book_club_id}/schedule`);
-    revalidatePath(`/book-clubs/${meeting.book_club_id}`);
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting meeting:", error);
-    return { error: "Failed to delete meeting" };
-  }
-}
-
-/**
- * Add a book option to a meeting
- */
-export async function addBookOption(meetingId: string, bookId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get meeting's book club
-    const { data: meeting } = await supabase
-      .from("meetings")
-      .select("book_club_id, is_finalized")
-      .eq("id", meetingId)
-      .single();
-
-    if (!meeting) {
-      return { error: "Meeting not found" };
-    }
-
-    if (meeting.is_finalized) {
-      return { error: "Meeting has been finalized" };
-    }
-
-    // Check if user is an admin
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member?.is_admin) {
-      return { error: "Only admins can add book options" };
-    }
-
-    // Add book option
-    const { error } = await supabase.from("book_options").insert({
-      meeting_id: meetingId,
-      book_id: bookId,
-      added_by: session.user.id,
-    });
-
     if (error) throw error;
 
-    revalidatePath(`/meetings/${meetingId}`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error adding book option:", error);
-    return { error: "Failed to add book option" };
-  }
+    revalidatePath(`/meetings/${option.meeting.id}`);
+  });
 }
 
-/**
- * Vote for a book option
- */
-export async function voteForBook(bookOptionId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get book option's meeting
-    const { data: bookOption, error: optionError } = await supabase
-      .from("book_options")
-      .select(
-        `
-        meeting_id,
-        meetings!inner (
-          book_club_id,
-          is_finalized,
-          voting_deadline
-        )
-      `
-      )
-      .eq("id", bookOptionId)
-      .maybeSingle();
-
-    if (optionError) throw optionError;
-
-    if (!bookOption) {
-      return { error: "Book option not found" };
-    }
-
-    const meeting = (bookOption as unknown as { meetings: VotingWindow })
-      .meetings;
-    if (isVotingClosed(meeting)) {
-      return { error: "Voting has closed" };
-    }
-
-    // Check if user is a member
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (memberError) throw memberError;
-
-    if (!member) {
-      return { error: "Only members can vote" };
-    }
-
-    // Toggle the vote atomically (re-checks the voting window in the DB)
-    const { error: toggleError } = await supabase.rpc("toggle_book_vote", {
-      p_book_option_id: bookOptionId,
-      p_user_id: session.user.id,
-    });
-
-    if (toggleError) {
-      const message = dbErrorMessage(toggleError);
-      if (message) return { error: message };
-      throw toggleError;
-    }
-
-    revalidatePath(`/meetings/${bookOption.meeting_id}`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error voting:", error);
-    return { error: "Failed to vote" };
-  }
-}
-
-/**
- * Finalize a meeting and select the winning book
- */
+/** Pick the meeting's book from its options (admins only). */
 export async function finalizeMeeting(
   meetingId: string,
   selectedBookId: string
-) {
-  const session = await auth();
+): Promise<ActionResult> {
+  return runAction("Failed to finalize meeting", async ({ db, userId }) => {
+    const meeting = await getMeetingContext(db, meetingId);
+    if (meeting.isFinalized) throw new UserError("Meeting already finalized");
+    await requireAdmin(
+      db,
+      meeting.bookClubId,
+      userId,
+      "Only admins can finalize meetings"
+    );
 
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get meeting
-    const { data: meeting, error: meetingError } = await supabase
-      .from("meetings")
-      .select("book_club_id, is_finalized")
-      .eq("id", meetingId)
-      .maybeSingle();
-
-    if (meetingError) throw meetingError;
-
-    if (!meeting) {
-      return { error: "Meeting not found" };
-    }
-
-    if (meeting.is_finalized) {
-      return { error: "Meeting already finalized" };
-    }
-
-    // Check if user is an admin
-    const { data: member, error: memberError } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (memberError) throw memberError;
-
-    if (!member?.is_admin) {
-      return { error: "Only admins can finalize meetings" };
-    }
-
-    // The selected book must be one of this meeting's options
-    const { data: option, error: optionError } = await supabase
+    const { data: option, error: optionError } = await db
       .from("book_options")
       .select("id")
       .eq("meeting_id", meetingId)
       .eq("book_id", selectedBookId)
       .maybeSingle();
-
     if (optionError) throw optionError;
-
     if (!option) {
-      return { error: "Selected book is not an option for this meeting" };
+      throw new UserError("Selected book is not an option for this meeting");
     }
 
-    // Finalize meeting; the is_finalized guard makes concurrent finalizes
-    // resolve to exactly one winner
-    const { data: finalized, error } = await supabase
+    // The is_finalized guard makes concurrent finalizes pick exactly one winner.
+    const { data: finalized, error } = await db
       .from("meetings")
       .update({
         is_finalized: true,
         selected_book_id: selectedBookId,
         finalized_at: new Date().toISOString(),
-        finalized_by: session.user.id,
+        finalized_by: userId,
       })
       .eq("id", meetingId)
       .eq("is_finalized", false)
       .select("id");
-
     if (error) throw error;
+    if (finalized.length === 0)
+      throw new UserError("Meeting already finalized");
 
-    if (!finalized || finalized.length === 0) {
-      return { error: "Meeting already finalized" };
-    }
-
-    revalidatePath(`/meetings/${meetingId}`);
-    revalidatePath(`/book-clubs/${meeting.book_club_id}`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error finalizing meeting:", error);
-    return { error: "Failed to finalize meeting" };
-  }
-}
-
-/**
- * Update a meeting's details (date, theme, or book)
- */
-export async function updateMeeting(
-  meetingId: string,
-  meetingDate: string,
-  nominationDeadline: string | null,
-  votingDeadline: string | null,
-  themeName: string | null,
-  bookId: string | null,
-  details: string | null
-) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = getAdminClient();
-
-    // Get meeting and check permissions
-    const { data: meeting } = await supabase
-      .from("meetings")
-      .select("book_club_id, theme_id")
-      .eq("id", meetingId)
-      .single();
-
-    if (!meeting) {
-      return { error: "Meeting not found" };
-    }
-
-    // Check if user is an admin
-    const { data: member } = await supabase
-      .from("members")
-      .select("is_admin")
-      .eq("book_club_id", meeting.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member?.is_admin) {
-      return { error: "Only admins can update meetings" };
-    }
-
-    // Handle theme update
-    let themeId = meeting.theme_id;
-
-    if (themeName !== null) {
-      const trimmedTheme = themeName.trim();
-      if (trimmedTheme.length > 0) {
-        // Themes are shared club-wide rows (other meetings and theme votes
-        // reference them), so never rename one: find or create by name.
-        const { data: existingTheme, error: findError } = await supabase
-          .from("themes")
-          .select("id")
-          .eq("book_club_id", meeting.book_club_id)
-          .eq("name", trimmedTheme)
-          .maybeSingle();
-
-        if (findError) throw findError;
-
-        if (existingTheme) {
-          themeId = existingTheme.id;
-        } else {
-          const { data: newTheme, error: insertError } = await supabase
-            .from("themes")
-            .insert({
-              book_club_id: meeting.book_club_id,
-              name: trimmedTheme,
-              submitted_by: session.user.id,
-            })
-            .select("id")
-            .single();
-
-          if (insertError?.code === "23505") {
-            // Created concurrently; use that row
-            const { data: racedTheme, error: refetchError } = await supabase
-              .from("themes")
-              .select("id")
-              .eq("book_club_id", meeting.book_club_id)
-              .eq("name", trimmedTheme)
-              .single();
-
-            if (refetchError) throw refetchError;
-            themeId = racedTheme.id;
-          } else if (insertError) {
-            throw insertError;
-          } else {
-            themeId = newTheme.id;
-          }
-        }
-      } else if (meeting.theme_id) {
-        // Remove theme if empty string provided
-        themeId = null;
-      }
-    }
-
-    // Update meeting
-    const updateData: {
-      meeting_date: string;
-      nomination_deadline: string | null;
-      voting_deadline: string | null;
-      theme_id: string | null;
-      details: string | null;
-      selected_book_id?: string;
-    } = {
-      meeting_date: meetingDate,
-      nomination_deadline: nominationDeadline,
-      voting_deadline: votingDeadline,
-      theme_id: themeId,
-      details: details,
-    };
-
-    if (bookId !== null) {
-      updateData.selected_book_id = bookId;
-    }
-
-    const { error } = await supabase
-      .from("meetings")
-      .update(updateData)
-      .eq("id", meetingId);
-
-    if (error) throw error;
-
-    revalidatePath(`/meetings/${meetingId}`);
-    revalidatePath(`/book-clubs/${meeting.book_club_id}`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error updating meeting:", error);
-    return { error: "Failed to update meeting" };
-  }
-}
-
-/**
- * Get the current state of a book club (nominating, voting, or no active meeting)
- */
-export async function getBookClubState(bookClubId: string) {
-  try {
-    const supabase = getAdminClient();
-
-    const now = new Date().toISOString();
-
-    // Get the next upcoming meeting
-    const { data: upcomingMeeting } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        nomination_deadline,
-        voting_deadline,
-        is_finalized,
-        theme:themes(id, name)
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", false)
-      .gte("meeting_date", now)
-      .order("meeting_date", { ascending: true })
-      .limit(1)
-      .single();
-
-    // Get the most recent finalized meeting (for book display)
-    const { data: previousMeeting } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        theme:themes(id, name),
-        selected_book:books!meetings_selected_book_id_fkey(
-          id,
-          title,
-          author,
-          cover_url
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", true)
-      .order("meeting_date", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!upcomingMeeting) {
-      // State 3: No active meeting
-      return {
-        state: "inactive" as const,
-        meeting: null,
-        book: previousMeeting || null,
-      };
-    }
-
-    // Check if we're in nomination or voting phase
-    const currentTime = new Date();
-    const nominationDeadline = upcomingMeeting.nomination_deadline
-      ? new Date(upcomingMeeting.nomination_deadline)
-      : null;
-    const votingDeadline = upcomingMeeting.voting_deadline
-      ? new Date(upcomingMeeting.voting_deadline)
-      : null;
-
-    // State 1: Nomination phase - before nomination_deadline
-    if (!nominationDeadline || currentTime <= nominationDeadline) {
-      return {
-        state: "nominating" as const,
-        meeting: upcomingMeeting,
-        book: previousMeeting || null,
-      };
-    }
-
-    // State 2: Voting phase - after nomination_deadline, before voting_deadline (or meeting)
-    if (!votingDeadline || currentTime <= votingDeadline) {
-      return {
-        state: "voting" as const,
-        meeting: upcomingMeeting,
-        book: previousMeeting || null,
-      };
-    }
-
-    // State 3: Past deadlines but meeting not finalized yet - treat as voting
-    return {
-      state: "voting" as const,
-      meeting: upcomingMeeting,
-      book: previousMeeting || null,
-    };
-  } catch (error) {
-    console.error("Error getting book club state:", error);
-    return {
-      state: "inactive" as const,
-      meeting: null,
-      book: null,
-    };
-  }
-}
-
-/**
- * Get previous meeting details
- */
-export async function getPreviousMeeting(bookClubId: string) {
-  try {
-    const supabase = getAdminClient();
-
-    const now = new Date().toISOString();
-
-    const { data: meeting, error } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        is_finalized,
-        theme:themes(id, name),
-        selected_book:books!meetings_selected_book_id_fkey(
-          id,
-          title,
-          author,
-          cover_url
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", true)
-      .not("selected_book_id", "is", null)
-      .lte("meeting_date", now)
-      .order("meeting_date", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error("Error fetching previous meeting:", error);
-      return null;
-    }
-
-    return meeting;
-  } catch (error) {
-    console.error("Error in getPreviousMeeting:", error);
-    return null;
-  }
-}
-
-/**
- * Get the latest finalized meeting (regardless of date)
- * Used to display the most recent book selection on the splash page
- */
-export async function getLatestFinalizedMeeting(bookClubId: string) {
-  try {
-    const supabase = getAdminClient();
-
-    const { data: meeting, error } = await supabase
-      .from("meetings")
-      .select(
-        `
-        id,
-        meeting_date,
-        is_finalized,
-        theme:themes(id, name),
-        selected_book:books!meetings_selected_book_id_fkey(
-          id,
-          title,
-          author,
-          cover_url
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .eq("is_finalized", true)
-      .not("selected_book_id", "is", null)
-      .order("meeting_date", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error) {
-      console.error("Error fetching latest finalized meeting:", error);
-      return null;
-    }
-
-    return meeting;
-  } catch (error) {
-    console.error("Error in getLatestFinalizedMeeting:", error);
-    return null;
-  }
+    revalidateMeeting(meetingId, meeting.bookClubId);
+  });
 }

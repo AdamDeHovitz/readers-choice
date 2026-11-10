@@ -27,7 +27,8 @@ export function ThemeCombobox({
 
   useEffect(() => {
     async function loadSuggestions() {
-      const themes = await getThemeSuggestions(bookClubId);
+      const result = await getThemeSuggestions(bookClubId);
+      const themes = result.success ? result.data : [];
       setSuggestions(themes);
       setFilteredSuggestions(themes.slice(0, 10)); // Show top 10 by default
     }
@@ -73,13 +74,13 @@ export function ThemeCombobox({
         autoComplete="off"
       />
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white border border-gold-600/20 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+        <div className="border-gold-600/20 absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border bg-white shadow-lg">
           {filteredSuggestions.map((theme, index) => (
             <button
               key={index}
               type="button"
               onClick={() => handleSuggestionClick(theme)}
-              className="w-full text-left px-4 py-2 hover:bg-cream-100 first:rounded-t-lg last:rounded-b-lg text-sm font-inria text-dark-900"
+              className="hover:bg-cream-100 font-inria text-dark-900 w-full px-4 py-2 text-left text-sm first:rounded-t-lg last:rounded-b-lg"
             >
               {theme}
             </button>

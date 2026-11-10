@@ -42,7 +42,7 @@ export function DeleteBookClubDialog({
 
     const result = await deleteBookClub(bookClubId, confirmationName);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsDeleting(false);
     } else {

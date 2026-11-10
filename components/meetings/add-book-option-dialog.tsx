@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addBookOption } from "@/app/actions/meetings";
-import { addBookToDatabase } from "@/app/actions/books";
 import {
   Dialog,
   DialogContent,
@@ -36,19 +35,9 @@ export function AddBookOptionDialog({ meetingId }: AddBookOptionDialogProps) {
     setError(null);
     setIsSubmitting(true);
 
-    // First, add book to database
-    const bookResult = await addBookToDatabase(selectedBook);
+    const optionResult = await addBookOption(meetingId, selectedBook);
 
-    if (bookResult.error) {
-      setError(bookResult.error);
-      setIsSubmitting(false);
-      return;
-    }
-
-    // Then add as option to meeting
-    const optionResult = await addBookOption(meetingId, bookResult.bookId!);
-
-    if (optionResult.error) {
+    if (!optionResult.success) {
       setError(optionResult.error);
       setIsSubmitting(false);
     } else {

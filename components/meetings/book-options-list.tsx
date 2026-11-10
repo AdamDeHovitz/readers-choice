@@ -2,18 +2,16 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { voteForBook, finalizeMeeting } from "@/app/actions/meetings";
-import {
-  calculateMeetingResults,
-  type VotingResults,
-} from "@/app/actions/meeting-voting";
+import { finalizeMeeting } from "@/app/actions/meetings";
+import { getMeetingResults, voteForBook } from "@/app/actions/meeting-voting";
+import type { VotingResults } from "@/server/voting";
 import { VotingMethodToggle } from "./voting-method-toggle";
 import { MeetingRankedVoting } from "./meeting-ranked-voting";
 import { VotingResultsDisplay } from "./voting-results";
 import { AdminFinalizeSection } from "./admin-finalize-section";
 import { BookOptionCard } from "./book-option-card";
 import { FinalizedVotingResults } from "./finalized-voting-results";
-import type { MeetingBookOptionWithVotes } from "./types";
+import type { MeetingBookOptionWithVotes } from "@/server/meetings";
 
 interface BookOptionsListProps {
   bookOptions: MeetingBookOptionWithVotes[];
@@ -69,8 +67,8 @@ export function BookOptionsList({
   useEffect(() => {
     if (showVoteCounts && !isFinalized && !votingResults) {
       setLoadingResults(true);
-      calculateMeetingResults(meetingId).then((results) => {
-        setVotingResults(results);
+      getMeetingResults(meetingId).then((result) => {
+        setVotingResults(result.success ? result.data : null);
         setLoadingResults(false);
       });
     }
@@ -86,8 +84,9 @@ export function BookOptionsList({
 
   async function handleVote(bookOptionId: string) {
     setVotingForId(bookOptionId);
-    await voteForBook(bookOptionId);
+    const result = await voteForBook(bookOptionId);
     setVotingForId(null);
+    if (!result.success) alert(result.error);
     router.refresh();
   }
 
@@ -102,7 +101,7 @@ export function BookOptionsList({
 
     setFinalizingBookId(bookId);
     const result = await finalizeMeeting(meetingId, bookId);
-    if (result.error) {
+    if (!result.success) {
       alert(result.error);
     }
     setFinalizingBookId(null);

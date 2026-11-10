@@ -61,7 +61,7 @@ export function EditBookOptionMetadataDialog({
       parsedPageCount
     );
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSaving(false);
       return;

@@ -1,4 +1,3 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import {
   hashPassword,
   MAX_PASSWORD_BYTES,
@@ -10,6 +9,8 @@ import {
   getClientIp,
   type RateLimitRule,
 } from "@/lib/rate-limit";
+import { createAdminClient } from "@/server/db";
+import { findAccountByEmail } from "@/server/users";
 
 const IP_RULE: RateLimitRule = {
   scope: "register:ip",
@@ -35,16 +36,7 @@ function tooManyRequests() {
 }
 
 export async function POST(req: Request) {
-  const supabase = createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    }
-  );
+  const supabase = createAdminClient();
 
   // Rate limit before looking at the body so every request counts.
   if (!(await consumeRateLimit(supabase, IP_RULE, getClientIp(req.headers)))) {
@@ -91,13 +83,7 @@ export async function POST(req: Request) {
     return Response.json({ error: "Password is too long" }, { status: 400 });
   }
 
-  const { data: existing } = await supabase
-    .from("users")
-    .select("id")
-    .eq("email", email)
-    .maybeSingle();
-
-  if (existing) {
+  if (await findAccountByEmail(supabase, email)) {
     return Response.json({ error: REGISTRATION_REJECTED }, { status: 400 });
   }
 

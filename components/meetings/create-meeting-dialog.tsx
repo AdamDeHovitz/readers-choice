@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createMeeting } from "@/app/actions/meetings";
+import { fromDateTimeInput } from "@/lib/datetime-input";
 import {
   Dialog,
   DialogContent,
@@ -34,13 +35,18 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
     setError(null);
     setIsSubmitting(true);
 
-    const formData = new FormData(e.currentTarget);
-    formData.append("bookClubId", bookClubId);
-    formData.append("themeName", themeName);
+    const form = new FormData(e.currentTarget);
+    const field = (name: string) => String(form.get(name) ?? "");
 
-    const result = await createMeeting(formData);
+    const result = await createMeeting(bookClubId, {
+      meetingDate: fromDateTimeInput(field("meetingDate")) ?? "",
+      nominationDeadline: fromDateTimeInput(field("nominationDeadline")),
+      votingDeadline: fromDateTimeInput(field("votingDeadline")),
+      themeName,
+      details: field("details"),
+    });
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {

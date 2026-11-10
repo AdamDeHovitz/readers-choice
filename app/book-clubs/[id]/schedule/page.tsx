@@ -1,7 +1,7 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/app/actions/book-clubs";
-import { getBookClubMeetings } from "@/app/actions/meetings";
+import { getBookClubDetails } from "@/server/clubs";
+import { getBookClubMeetings } from "@/server/meetings";
+import { getViewer } from "@/server/viewer";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
 import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
@@ -13,16 +13,14 @@ export default async function SchedulePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = await auth();
-  const { id: bookClubId } = await params;
-
-  if (!session?.user) {
+  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
+  if (!viewer) {
     redirect("/login");
   }
 
   const [bookClub, meetings] = await Promise.all([
-    getBookClubDetails(bookClubId),
-    getBookClubMeetings(bookClubId),
+    getBookClubDetails(viewer, bookClubId),
+    getBookClubMeetings(viewer, bookClubId),
   ]);
 
   if (!bookClub) {
@@ -30,14 +28,14 @@ export default async function SchedulePage({
   }
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={bookClubId}
         bookClubName={bookClub.name}
-        userName={session.user.name || "User"}
+        userName={viewer.name}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

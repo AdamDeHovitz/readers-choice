@@ -40,11 +40,11 @@ export function InviteLinkDialog({
 
     const result = await createInviteLink(bookClubId);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsLoading(false);
-    } else if (result.code) {
-      setInviteCode(result.code);
+    } else {
+      setInviteCode(result.data.code);
       setIsLoading(false);
     }
   }
@@ -63,7 +63,7 @@ export function InviteLinkDialog({
     setIsLoading(true);
     const result = await deactivateInviteLink(bookClubId, inviteCode);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsLoading(false);
     } else {
@@ -95,7 +95,7 @@ export function InviteLinkDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline">
-          <UserPlusIcon className="h-4 w-4 mr-2" />
+          <UserPlusIcon className="mr-2 h-4 w-4" />
           Invite Members
         </Button>
       </DialogTrigger>
@@ -110,13 +110,13 @@ export function InviteLinkDialog({
 
         <div className="space-y-4">
           {isLoading && !inviteCode ? (
-            <div className="text-center py-8">
-              <p className="text-sm text-dark-600">Generating invite link...</p>
+            <div className="py-8 text-center">
+              <p className="text-dark-600 text-sm">Generating invite link...</p>
             </div>
           ) : inviteCode ? (
             <>
               <div className="space-y-2">
-                <label className="text-sm font-medium font-inria text-dark-600">
+                <label className="font-inria text-dark-600 text-sm font-medium">
                   Invite Link
                 </label>
                 <div className="flex gap-2">
@@ -138,25 +138,25 @@ export function InviteLinkDialog({
                   </Button>
                 </div>
                 {copied && (
-                  <p className="text-sm text-rust-700">Copied to clipboard!</p>
+                  <p className="text-rust-700 text-sm">Copied to clipboard!</p>
                 )}
               </div>
 
-              <div className="p-3 bg-gold-50 border border-gold-600 rounded-lg">
-                <p className="text-sm text-dark-900">
-                  This link never expires and can be used multiple times. You can
-                  deactivate it at any time.
+              <div className="bg-gold-50 border-gold-600 rounded-lg border p-3">
+                <p className="text-dark-900 text-sm">
+                  This link never expires and can be used multiple times. You
+                  can deactivate it at any time.
                 </p>
               </div>
 
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <Button
                   variant="outline"
                   onClick={handleDeactivate}
                   disabled={isLoading}
                   className="border-red-300 text-red-700 hover:bg-red-50"
                 >
-                  <XIcon className="h-4 w-4 mr-2" />
+                  <XIcon className="mr-2 h-4 w-4" />
                   Deactivate Link
                 </Button>
                 <Button variant="outline" onClick={() => setOpen(false)}>
@@ -167,7 +167,7 @@ export function InviteLinkDialog({
           ) : null}
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
-import { auth } from "@/auth";
-import { getMyLibraries } from "@/app/actions/libraries";
+import { getMyLibraries } from "@/server/libraries";
+import { getViewer } from "@/server/viewer";
 import { AppNav } from "@/components/navigation/app-nav";
 import { LibraryPicker } from "@/components/libraries/library-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,20 +17,20 @@ export default async function SettingsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const viewer = await getViewer();
+  if (!viewer) {
     redirect("/login");
   }
 
   const [libraries, params] = await Promise.all([
-    getMyLibraries(),
+    getMyLibraries(viewer),
     searchParams,
   ]);
   const returnTo = safeReturnTo(params.returnTo);
 
   return (
     <div className="bg-cream-100 min-h-screen">
-      <AppNav userName={session.user.name ?? "You"} />
+      <AppNav userName={viewer.name} />
 
       <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         {returnTo && (

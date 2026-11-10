@@ -19,7 +19,9 @@ vi.mock("@supabase/supabase-js", () => ({
   createClient: () => ({ from, rpc }),
 }));
 
-import { deleteBookClub, getCurrentUserIsSuperAdmin } from "./book-clubs";
+import { viewerIsSuperAdmin } from "@/server/authz";
+import { createAdminClient } from "@/server/db";
+import { deleteBookClub } from "./book-clubs";
 
 const session: Session = {
   user: { id: "actor-id", name: "Reader", email: "reader@example.test" },
@@ -46,6 +48,7 @@ describe("super-admin club deletion", () => {
   it("rejects unauthenticated deletion without accessing the database", async () => {
     auth.mockResolvedValue(null);
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+      success: false,
       error: "Unauthorized",
     });
     expect(from).not.toHaveBeenCalled();
@@ -58,6 +61,7 @@ describe("super-admin club deletion", () => {
       user: { ...session.user, is_super_admin: true },
     } as Session);
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+      success: false,
       error: "Only super admins can delete book clubs",
     });
     expect(from).toHaveBeenCalledWith("users");
@@ -74,13 +78,14 @@ describe("super-admin club deletion", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it("fails closed if the role lookup fails", async () => {
+  it("fails closed, without leaking the cause, if the role lookup fails", async () => {
     maybeSingle.mockResolvedValue({
       data: { is_super_admin: true },
       error: { message: "Lookup failed" },
     });
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
-      error: "Lookup failed",
+      success: false,
+      error: "Failed to delete book club",
     });
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -92,6 +97,7 @@ describe("super-admin club deletion", () => {
     });
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: true,
+      data: undefined,
     });
     expect(from).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith("delete_book_club", {
@@ -117,27 +123,47 @@ describe("super-admin club deletion", () => {
       data: { is_super_admin: true },
       error: null,
     });
-    rpc.mockResolvedValue({ error: { message } });
+    rpc.mockResolvedValue({ error: { message, code: "P0001" } });
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+      success: false,
       error: message,
     });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
-});
 
-describe("super-admin control visibility", () => {
-  it("is false for signed-out visitors", async () => {
-    auth.mockResolvedValue(null);
-    expect(await getCurrentUserIsSuperAdmin()).toBe(false);
-  });
-
-  it("is false for ordinary users and true for a database-assigned super admin", async () => {
-    expect(await getCurrentUserIsSuperAdmin()).toBe(false);
+  it("hides unexpected database failures", async () => {
     maybeSingle.mockResolvedValue({
       data: { is_super_admin: true },
       error: null,
     });
-    expect(await getCurrentUserIsSuperAdmin()).toBe(true);
+    rpc.mockResolvedValue({
+      error: { message: "connection reset", code: "08006" },
+    });
+    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+      success: false,
+      error: "Failed to delete book club",
+    });
+  });
+});
+
+describe("super-admin control visibility", () => {
+  const viewer = () => ({
+    userId: session.user.id,
+    name: "Reader",
+    db: createAdminClient(),
+  });
+
+  it("is false for signed-out visitors", async () => {
+    expect(await viewerIsSuperAdmin(null)).toBe(false);
+  });
+
+  it("is false for ordinary users and true for a database-assigned super admin", async () => {
+    expect(await viewerIsSuperAdmin(viewer())).toBe(false);
+    maybeSingle.mockResolvedValue({
+      data: { is_super_admin: true },
+      error: null,
+    });
+    expect(await viewerIsSuperAdmin(viewer())).toBe(true);
   });
 
   it("is false when the role cannot be read", async () => {
@@ -145,6 +171,6 @@ describe("super-admin control visibility", () => {
       data: null,
       error: { message: "Unavailable" },
     });
-    expect(await getCurrentUserIsSuperAdmin()).toBe(false);
+    expect(await viewerIsSuperAdmin(viewer())).toBe(false);
   });
 });
