@@ -78,6 +78,13 @@ jobs:
       # and postgres-meta aren't used in CI; skipping them saves image pulls.
       - name: Start Supabase (background)
         run: scripts/ci-background.sh start supabase npx supabase start -x studio,postgres-meta
+      # Build meanwhile too: serving a build beats next dev compiling pages
+      # mid-test. The URL is the local stack's (supabase/config.toml api.port);
+      # dev-local.sh --prebuilt checks it.
+      - name: Build the app (background)
+        run: scripts/ci-background.sh start build npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
       # Headless tests only need the headless shell, and the runner image
       # already has the system libraries it needs, so no --with-deps.
       - run: npx playwright install --only-shell chromium
@@ -85,8 +92,11 @@ jobs:
         run: scripts/ci-background.sh wait supabase
       - name: Database types match migrations
         run: npm run db:types:check
+      - name: Wait for the build
+        run: scripts/ci-background.sh wait build
       - run: npx playwright test --reporter=list,html,json
         env:
+          E2E_PREBUILT: "1"
           PLAYWRIGHT_HTML_OPEN: never
           PLAYWRIGHT_JSON_OUTPUT_FILE: test-results/results.json
       - uses: actions/upload-artifact@v7
