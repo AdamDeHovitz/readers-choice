@@ -28,7 +28,7 @@ import {
   SortableRankedBookItem,
   SortableUnrankedBookItem,
 } from "./ranked-voting-items";
-import type { MeetingBookOption } from "./types";
+import type { MeetingBookOption } from "@/server/meetings";
 
 interface MeetingRankedVotingProps {
   meetingId: string;
@@ -82,7 +82,7 @@ export function MeetingRankedVoting({
 
     const result = await saveRankedVotes(meetingId, rankings);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
     } else {
       setLastSaved(new Date());

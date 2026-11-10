@@ -1,27 +1,28 @@
-import { auth } from "@/auth";
 import { AppNav } from "@/components/navigation/app-nav";
 import { CreateBookClubDialog } from "@/components/book-clubs/create-book-club-dialog";
 import { BookClubCard } from "@/components/book-clubs/book-club-card";
-import { getMyBookClubs } from "@/app/actions/book-clubs";
+import { getMyBookClubs } from "@/server/clubs";
+import { getViewer } from "@/server/viewer";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
-  const session = await auth();
-
-  if (!session?.user) {
+  const viewer = await getViewer();
+  if (!viewer) {
     redirect("/login");
   }
 
-  const bookClubs = await getMyBookClubs();
+  const bookClubs = await getMyBookClubs(viewer);
 
   return (
-    <div className="min-h-screen bg-cream-100">
-      <AppNav userName={session.user.name ?? "You"} />
+    <div className="bg-cream-100 min-h-screen">
+      <AppNav userName={viewer.name} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold font-inria text-dark-900">My Book Clubs</h2>
+            <h2 className="font-inria text-dark-900 text-3xl font-bold">
+              My Book Clubs
+            </h2>
             <p className="text-dark-600 mt-1">
               Manage your reading communities
             </p>
@@ -30,8 +31,8 @@ export default async function DashboardPage() {
         </div>
 
         {bookClubs.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <h3 className="text-xl font-semibold font-inria text-dark-900 mb-2">
+          <div className="rounded-lg bg-white p-12 text-center shadow-sm">
+            <h3 className="font-inria text-dark-900 mb-2 text-xl font-semibold">
               No book clubs yet
             </h3>
             <p className="text-dark-600 mb-6">
@@ -40,7 +41,7 @@ export default async function DashboardPage() {
             <CreateBookClubDialog />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {bookClubs.map((club) => (
               <BookClubCard
                 key={club.id}

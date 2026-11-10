@@ -23,21 +23,12 @@ import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { Alert } from "@/components/ui/alert";
-
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl: string | null;
-  description: string | null;
-  meetingDate: string;
-  rank: number | null;
-}
+import type { YearBook } from "@/server/rankings";
 
 interface RankingInterfaceProps {
   bookClubId: string;
   year: number;
-  initialBooks: Book[];
+  initialBooks: YearBook[];
 }
 
 function SortableBookItem({
@@ -45,7 +36,7 @@ function SortableBookItem({
   rank,
   onMarkUnread,
 }: {
-  book: Book;
+  book: YearBook;
   rank: number;
   onMarkUnread: (bookId: string) => void;
 }) {
@@ -119,7 +110,7 @@ function UnreadBookItem({
   book,
   onMarkRead,
 }: {
-  book: Book;
+  book: YearBook;
   onMarkRead: (bookId: string) => void;
 }) {
   return (
@@ -167,12 +158,12 @@ export function RankingInterface({
   year,
   initialBooks,
 }: RankingInterfaceProps) {
-  const [rankedBooks, setRankedBooks] = useState<Book[]>(
+  const [rankedBooks, setRankedBooks] = useState<YearBook[]>(
     initialBooks
       .filter((b) => b.rank !== null)
       .sort((a, b) => a.rank! - b.rank!)
   );
-  const [unreadBooks, setUnreadBooks] = useState<Book[]>(
+  const [unreadBooks, setUnreadBooks] = useState<YearBook[]>(
     initialBooks.filter((b) => b.rank === null)
   );
   const [isSaving, setIsSaving] = useState(false);
@@ -204,7 +195,7 @@ export function RankingInterface({
     }
   }
 
-  async function saveDraggedRankings(newRankedBooks: Book[]) {
+  async function saveDraggedRankings(newRankedBooks: YearBook[]) {
     setIsSaving(true);
     setError(null);
 
@@ -222,7 +213,7 @@ export function RankingInterface({
       unreadBookIds
     );
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
     } else {
       setLastSaved(new Date());
@@ -256,7 +247,7 @@ export function RankingInterface({
         newUnreadBooks.map((b) => b.id)
       );
 
-      if (result.error) {
+      if (!result.success) {
         setError(result.error);
       } else {
         setLastSaved(new Date());
@@ -291,7 +282,7 @@ export function RankingInterface({
         newUnreadBooks.map((b) => b.id)
       );
 
-      if (result.error) {
+      if (!result.success) {
         setError(result.error);
       } else {
         setLastSaved(new Date());

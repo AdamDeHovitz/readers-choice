@@ -7,7 +7,7 @@ This follows Will Larson's [verification pattern](https://lethain.com/adopting-v
 ## The loop
 
 1. **Implement** the change.
-2. **Verify it locally**: run the automated checks, then drive the real app against the local stack (see [Recipes](#recipes-by-change-type) and "Local testing" in `AGENTS.md`). Fix what you find and verify again.
+2. **Verify it locally**: run the automated checks, then drive the real app against the local stack (see [Recipes](#recipes-by-change-type) and the `verify-locally` skill in `.agents/skills/`). Fix what you find and verify again.
 3. **Open a draft PR** (`gh pr create --draft`) to get its number.
 4. **Write the file**: `cp verifications/TEMPLATE.md verifications/<pr>.md`, fill it in from what you actually observed, commit, and push. `scripts/check-verification.sh <pr>` runs the same check as CI.
 5. **Mark it ready** (`gh pr ready`) and wait for CI to pass. Only then is the PR ready for review.
@@ -46,7 +46,7 @@ Weak and strong versions of the same entry:
 
 ## Recipes by change type
 
-Use the ones that apply. Mechanics (starting the stack, when to reset it, seed users and meetings, `db:sql`) are in "Local testing" in `AGENTS.md`.
+Use the ones that apply. Mechanics (starting the stack, when to reset it, seed users and meetings, `db:sql`) are in the `verify-locally` skill (`.agents/skills/verify-locally/SKILL.md`).
 
 | Change | Verify by |
 | --- | --- |

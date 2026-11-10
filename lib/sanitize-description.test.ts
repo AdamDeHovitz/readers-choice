@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeDescription, stripHtmlTags } from "./sanitize-description";
+import { sanitizeDescription } from "./sanitize-description";
 
 // Any "<" left in the output must start one of these bare tags
 const SAFE_TAG = /^<\/?(p|br|i|b|em|strong)>/;
@@ -60,13 +60,5 @@ describe("sanitizeDescription", () => {
 
   it("renders encoded allowed tags as markup", () => {
     expect(sanitizeDescription("&lt;i&gt;Dune&lt;/i&gt;")).toBe("<i>Dune</i>");
-  });
-});
-
-describe("stripHtmlTags", () => {
-  it("returns plain text", () => {
-    expect(stripHtmlTags("<p>Hello<br>world &amp; <b>more</b></p>")).toBe(
-      "Hello world & more"
-    );
   });
 });

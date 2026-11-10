@@ -1,6 +1,8 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getInviteLinkDetails, checkMembership } from "@/app/actions/invites";
+import { isMember } from "@/server/authz";
+import { createAdminClient } from "@/server/db";
+import { getInviteDetails } from "@/server/invites";
+import { getViewer } from "@/server/viewer";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JoinBookClubButton } from "@/components/book-clubs/join-book-club-button";
@@ -11,11 +13,11 @@ export default async function JoinPage({
 }: {
   params: Promise<{ code: string }>;
 }) {
-  const session = await auth();
-  const { code } = await params;
-
-  // Get invite link details
-  const inviteDetails = await getInviteLinkDetails(code);
+  const [viewer, { code }] = await Promise.all([getViewer(), params]);
+  const inviteDetails = await getInviteDetails(
+    viewer?.db ?? createAdminClient(),
+    code
+  );
 
   // If link is invalid, show error
   if (!inviteDetails) {
@@ -29,7 +31,7 @@ export default async function JoinPage({
             <p className="text-dark-600 mb-4">
               This invite link is invalid, expired, or has been deactivated.
             </p>
-            {session?.user ? (
+            {viewer ? (
               <Link
                 href="/dashboard"
                 className="text-gold-700 hover:text-dark-900 font-inria font-medium"
@@ -51,13 +53,11 @@ export default async function JoinPage({
   }
 
   // If not logged in, redirect to login with callback
-  if (!session?.user) {
+  if (!viewer) {
     redirect(`/login?callbackUrl=/join/${encodeURIComponent(code)}`);
   }
 
-  // Check if user is already a member
-  const isMember = await checkMembership(inviteDetails.bookClubId);
-  if (isMember) {
+  if (await isMember(viewer.db, inviteDetails.bookClubId, viewer.userId)) {
     // User is already a member, redirect to the book club
     redirect(`/book-clubs/${inviteDetails.bookClubId}`);
   }
@@ -74,7 +74,7 @@ export default async function JoinPage({
               Readers&apos; Choice
             </Link>
             <div className="flex items-center gap-4">
-              <span className="text-dark-600 text-sm">{session.user.name}</span>
+              <span className="text-dark-600 text-sm">{viewer.name}</span>
               <SignOutButton />
             </div>
           </div>

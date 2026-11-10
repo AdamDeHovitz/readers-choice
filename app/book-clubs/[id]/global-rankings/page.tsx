@@ -1,10 +1,7 @@
-import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/app/actions/book-clubs";
-import {
-  getGlobalRankings,
-  getYearsWithRankings,
-} from "@/app/actions/global-rankings";
+import { getBookClubDetails } from "@/server/clubs";
+import { getGlobalRankings, getYearsWithRankings } from "@/server/rankings";
+import { getViewer } from "@/server/viewer";
 import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GlobalRankingsList } from "@/components/rankings/global-rankings-list";
@@ -16,17 +13,18 @@ export default async function GlobalRankingsPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ year?: string }>;
 }) {
-  const session = await auth();
-  const { id } = await params;
-  const { year: yearParam } = await searchParams;
-
-  if (!session?.user) {
+  const [viewer, { id }, { year: yearParam }] = await Promise.all([
+    getViewer(),
+    params,
+    searchParams,
+  ]);
+  if (!viewer) {
     redirect("/login");
   }
 
   const [bookClub, availableYears] = await Promise.all([
-    getBookClubDetails(id),
-    getYearsWithRankings(id),
+    getBookClubDetails(viewer, id),
+    getYearsWithRankings(viewer, id),
   ]);
 
   if (!bookClub) {
@@ -41,25 +39,25 @@ export default async function GlobalRankingsPage({
       ? currentYear
       : availableYears[0] || currentYear;
 
-  const globalRankings = await getGlobalRankings(id, selectedYear);
+  const globalRankings = await getGlobalRankings(viewer, id, selectedYear);
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="bg-cream-100 min-h-screen">
       <BookClubNav
         bookClubId={id}
         bookClubName={bookClub.name}
-        userName={session.user.name || "User"}
+        userName={viewer.name}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl font-bold font-inria text-dark-900">
+            <CardTitle className="font-inria text-dark-900 text-2xl font-bold">
               Global Rankings
             </CardTitle>
-            <p className="text-sm text-dark-600 mt-2">
-              Rankings based on all members&apos; votes using Borda Count scoring.
-              Books ranked higher by members earn more points.
+            <p className="text-dark-600 mt-2 text-sm">
+              Rankings based on all members&apos; votes using Borda Count
+              scoring. Books ranked higher by members earn more points.
             </p>
           </CardHeader>
           <CardContent>

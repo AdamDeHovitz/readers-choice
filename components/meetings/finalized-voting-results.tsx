@@ -3,10 +3,8 @@
 import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
-import {
-  calculateMeetingResults,
-  type VotingResults,
-} from "@/app/actions/meeting-voting";
+import { getMeetingResults } from "@/app/actions/meeting-voting";
+import type { VotingResults } from "@/server/voting";
 import { VotingResultsDisplay } from "./voting-results";
 
 /**
@@ -26,10 +24,10 @@ export function FinalizedVotingResults({ meetingId }: { meetingId: string }) {
 
     setIsLoading(true);
     setError(null);
-    const loaded = await calculateMeetingResults(meetingId);
+    const result = await getMeetingResults(meetingId);
     setIsLoading(false);
-    if (loaded) {
-      setResults(loaded);
+    if (result.success && result.data) {
+      setResults(result.data);
     } else {
       setError("Couldn't load voting results.");
     }

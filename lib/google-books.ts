@@ -1,50 +1,19 @@
 /**
- * Google Books API integration
- * Docs: https://developers.google.com/books/docs/v1/using
+ * Google Books, used only as a fallback source of book descriptions when
+ * Open Library has none. Docs: https://developers.google.com/books/docs/v1/using
  */
 
 import { normalizeApiHtml } from "./normalize-text";
-import { parseYear } from "./utils";
-
-export interface GoogleBook {
-  id: string;
-  volumeInfo: {
-    title: string;
-    authors?: string[];
-    description?: string;
-    publishedDate?: string;
-    imageLinks?: {
-      thumbnail?: string;
-      smallThumbnail?: string;
-    };
-    industryIdentifiers?: Array<{
-      type: string;
-      identifier: string;
-    }>;
-    pageCount?: number;
-    categories?: string[];
-  };
-}
-
-export interface BookSearchResult {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl?: string;
-  description?: string;
-  publishedYear?: number;
-  pageCount?: number;
-  isbn?: string;
-  externalId: string;
-  externalSource: "google_books";
-}
 
 const GOOGLE_BOOKS_API = "https://www.googleapis.com/books/v1/volumes";
 
-/**
- * Search for books using Google Books API
- */
-export async function searchBooks(query: string): Promise<BookSearchResult[]> {
+interface Volume {
+  title: string;
+  description?: string;
+}
+
+/** Search volumes; returns [] on any failure so callers can fall through. */
+export async function searchVolumes(query: string): Promise<Volume[]> {
   try {
     const params = new URLSearchParams({
       q: query,
@@ -52,85 +21,49 @@ export async function searchBooks(query: string): Promise<BookSearchResult[]> {
       printType: "books",
       langRestrict: "en",
     });
-
     const response = await fetch(`${GOOGLE_BOOKS_API}?${params}`);
-
     if (!response.ok) {
       throw new Error(`Google Books API error: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    const data: {
+      items?: { volumeInfo: { title: string; description?: string } }[];
+    } = await response.json();
 
-    if (!data.items || data.items.length === 0) {
-      return [];
-    }
-
-    return data.items.map((item: GoogleBook) => formatGoogleBook(item));
+    return (data.items ?? []).map(({ volumeInfo }) => ({
+      title: volumeInfo.title,
+      description: normalizeApiHtml(volumeInfo.description) || undefined,
+    }));
   } catch (error) {
-    console.error("Error searching books:", error);
+    console.error("Error searching Google Books:", error);
     return [];
   }
 }
 
 /**
- * Get a single book by Google Books ID
+ * Find a description for a book: by ISBN first (most accurate), then by
+ * title and first author, preferring a result whose title matches.
  */
-export async function getBookById(
-  googleBooksId: string
-): Promise<BookSearchResult | null> {
-  try {
-    const response = await fetch(
-      `${GOOGLE_BOOKS_API}/${encodeURIComponent(googleBooksId)}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`Google Books API error: ${response.statusText}`);
-    }
-
-    const data: GoogleBook = await response.json();
-    return formatGoogleBook(data);
-  } catch (error) {
-    console.error("Error fetching book:", error);
-    return null;
+export async function findGoogleBooksDescription(book: {
+  title: string;
+  author: string;
+  isbn?: string;
+}): Promise<string | null> {
+  if (book.isbn) {
+    const [byIsbn] = await searchVolumes(`isbn:${book.isbn}`);
+    if (byIsbn?.description) return byIsbn.description;
   }
-}
 
-/**
- * Format a Google Books response into our internal format
- */
-export function formatGoogleBook(book: GoogleBook): BookSearchResult {
-  const { volumeInfo } = book;
+  // Drop subtitles, parentheticals and extra authors; they hurt matching.
+  const title = book.title.split(":")[0].split("(")[0].trim();
+  const author = book.author.split(",")[0].trim();
+  const results = await searchVolumes(`intitle:${title} inauthor:${author}`);
 
-  // Get ISBN (prefer ISBN-13 over ISBN-10)
-  const isbn13 = volumeInfo.industryIdentifiers?.find(
-    (id) => id.type === "ISBN_13"
-  )?.identifier;
-  const isbn10 = volumeInfo.industryIdentifiers?.find(
-    (id) => id.type === "ISBN_10"
-  )?.identifier;
-  const isbn = isbn13 || isbn10;
-
-  // Get published year
-  const publishedYear = parseYear(volumeInfo.publishedDate);
-
-  // Get authors (join multiple authors with comma)
-  const author = volumeInfo.authors?.join(", ") || "Unknown Author";
-
-  // Get cover image (prefer thumbnail over small thumbnail)
-  const rawCover =
-    volumeInfo.imageLinks?.thumbnail || volumeInfo.imageLinks?.smallThumbnail;
-  const coverUrl = rawCover?.replace(/^http:\/\//, "https://");
-
-  return {
-    id: book.id,
-    title: volumeInfo.title,
-    author,
-    coverUrl,
-    description: normalizeApiHtml(volumeInfo.description) || undefined,
-    publishedYear,
-    pageCount: volumeInfo.pageCount,
-    isbn,
-    externalId: book.id,
-    externalSource: "google_books",
-  };
+  const wanted = title.toLowerCase();
+  const match =
+    results.find((r) => {
+      const found = r.title.toLowerCase();
+      return found.includes(wanted) || wanted.includes(found);
+    }) ?? results[0];
+  return match?.description ?? null;
 }

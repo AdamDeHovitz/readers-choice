@@ -89,17 +89,3 @@ export function validateYearRankings(
 
   return valid;
 }
-
-/**
- * Voting is closed once the meeting is finalized or its voting deadline has
- * passed. The deadline instant itself is still open, matching
- * getBookClubState() and the save_* database functions.
- */
-export function isVotingClosed(
-  meeting: { is_finalized: boolean | null; voting_deadline: string | null },
-  now: Date = new Date()
-): boolean {
-  if (meeting.is_finalized) return true;
-  if (!meeting.voting_deadline) return false;
-  return now.getTime() > new Date(meeting.voting_deadline).getTime();
-}

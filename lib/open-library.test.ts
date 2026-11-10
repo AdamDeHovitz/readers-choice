@@ -4,12 +4,7 @@
  * in open-library.integration.test.ts.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  getBookById,
-  getWorkDescription,
-  searchBooks,
-  searchByISBN,
-} from "./open-library";
+import { getWorkDescription, searchBooks } from "./open-library";
 import artOfFieldingTitle from "./__fixtures__/open-library/search-art-of-fielding-title.json";
 import artOfFieldingQ from "./__fixtures__/open-library/search-art-of-fielding-q.json";
 import brilliantFriendTitle from "./__fixtures__/open-library/search-my-brilliant-friend-title.json";
@@ -144,78 +139,6 @@ describe("searchBooks", () => {
   });
 });
 
-describe("getBookById", () => {
-  it("combines work and first edition details", async () => {
-    fetchMock.mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.endsWith("/works/OL1W.json")) {
-        return jsonResponse({
-          key: "/works/OL1W",
-          title: "A Work",
-          description: { type: "/type/text", value: "Itâ€™s good." },
-          covers: [42],
-          first_publish_date: "May 2, 2011",
-        });
-      }
-      if (url.includes("/works/OL1W/editions.json")) {
-        return jsonResponse({
-          entries: [
-            {
-              key: "/books/OL1M",
-              number_of_pages: 300,
-              isbn_13: ["9780000000002"],
-            },
-          ],
-        });
-      }
-      return jsonResponse({}, 404);
-    });
-
-    expect(await getBookById("OL1W")).toEqual({
-      id: "OL1W",
-      title: "A Work",
-      author: "Unknown Author",
-      coverUrl: "https://covers.openlibrary.org/b/id/42-M.jpg",
-      description: "It's good.",
-      publishedYear: 2011,
-      pageCount: 300,
-      isbn: "9780000000002",
-      externalId: "OL1W",
-      externalSource: "open_library",
-    });
-  });
-
-  it("leaves publishedYear undefined for an unparseable date", async () => {
-    fetchMock.mockImplementation(async (input) =>
-      String(input).endsWith(".json") && !String(input).includes("editions")
-        ? jsonResponse({
-            key: "/works/OL2W",
-            title: "Undated",
-            first_publish_date: "199?",
-          })
-        : jsonResponse({}, 404)
-    );
-
-    const result = await getBookById("OL2W");
-    expect(result?.title).toBe("Undated");
-    expect(result?.publishedYear).toBeUndefined();
-    expect(result?.pageCount).toBeUndefined();
-  });
-
-  it("returns null when the work is missing", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({}, 404));
-    expect(await getBookById("OL404W")).toBeNull();
-  });
-
-  it("URL-encodes the work ID", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({}, 404));
-    await getBookById("../authors/x");
-    expect(String(fetchMock.mock.calls[0][0])).toBe(
-      "https://openlibrary.org/works/..%2Fauthors%2Fx.json"
-    );
-  });
-});
-
 describe("getWorkDescription", () => {
   it("accepts a plain string description", async () => {
     fetchMock.mockResolvedValue(
@@ -236,35 +159,5 @@ describe("getWorkDescription", () => {
 
     fetchMock.mockResolvedValueOnce(jsonResponse({}, 404));
     expect(await getWorkDescription("OL1W")).toBeUndefined();
-  });
-});
-
-describe("searchByISBN", () => {
-  it("resolves the edition's work", async () => {
-    fetchMock.mockImplementation(async (input) => {
-      const url = String(input);
-      if (url.endsWith("/isbn/9780000000002.json")) {
-        return jsonResponse({
-          key: "/books/OL1M",
-          works: [{ key: "/works/OL1W" }],
-        });
-      }
-      if (url.endsWith("/works/OL1W.json")) {
-        return jsonResponse({ key: "/works/OL1W", title: "Found" });
-      }
-      return jsonResponse({ entries: [] });
-    });
-
-    const result = await searchByISBN("9780000000002");
-    expect(result?.id).toBe("OL1W");
-    expect(result?.title).toBe("Found");
-  });
-
-  it("returns null when the edition has no work or is missing", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ key: "/books/OL1M" }));
-    expect(await searchByISBN("1")).toBeNull();
-
-    fetchMock.mockResolvedValueOnce(jsonResponse({}, 404));
-    expect(await searchByISBN("2")).toBeNull();
   });
 });

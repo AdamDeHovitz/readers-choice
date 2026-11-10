@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { VotingResults } from "@/app/actions/meeting-voting";
+import type { VotingResults } from "@/server/voting";
 
 interface VotingResultsDisplayProps {
   results: VotingResults;

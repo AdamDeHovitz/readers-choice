@@ -42,7 +42,7 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
 
     const result = await suggestTheme(bookClubId, themeName);
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsSubmitting(false);
     } else {

@@ -6,28 +6,10 @@ import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
 import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
-
-interface Theme {
-  id: string;
-  name: string;
-  createdAt: string;
-  submittedBy: {
-    id: string;
-    name: string;
-    image: string | null;
-  };
-  upvoteCount: number;
-  userHasUpvoted: boolean;
-  timesUsed: number;
-  meetings: {
-    id: string;
-    meetingDate: string;
-    isFinalized: boolean;
-  }[];
-}
+import type { ClubTheme } from "@/server/themes";
 
 interface ThemesListProps {
-  themes: Theme[];
+  themes: ClubTheme[];
   currentUserId: string;
   isAdmin: boolean;
 }
@@ -61,7 +43,7 @@ export function ThemesList({
 
     const result = await toggleThemeUpvote(themeId);
 
-    if (!result.error) {
+    if (result.success) {
       router.refresh();
     }
 
@@ -77,7 +59,7 @@ export function ThemesList({
 
     const result = await deleteTheme(themeId);
 
-    if (result.error) {
+    if (!result.success) {
       alert(`Error: ${result.error}`);
       setDeletingStates((prev) => ({ ...prev, [themeId]: false }));
     } else {
@@ -97,7 +79,10 @@ export function ThemesList({
     if (b.upvoteCount !== a.upvoteCount) {
       return b.upvoteCount - a.upvoteCount;
     }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    return (
+      new Date(b.createdAt ?? 0).getTime() -
+      new Date(a.createdAt ?? 0).getTime()
+    );
   });
 
   if (themes.length === 0) {
@@ -206,7 +191,7 @@ export function ThemesList({
                     </div>
                   )}
                   {/* Show delete button if user is the submitter or an admin, and theme is unused */}
-                  {(theme.submittedBy.id === currentUserId || isAdmin) &&
+                  {(theme.submittedBy?.id === currentUserId || isAdmin) &&
                     theme.timesUsed === 0 && (
                       <Button
                         variant="ghost"
@@ -223,7 +208,7 @@ export function ThemesList({
 
                 {/* Submitter icon only */}
                 <div className="flex items-center gap-1.5">
-                  {theme.submittedBy.image ? (
+                  {theme.submittedBy?.image ? (
                     <Image
                       src={theme.submittedBy.image}
                       alt={theme.submittedBy.name}
@@ -232,7 +217,7 @@ export function ThemesList({
                       className="rounded-full"
                       title={`Suggested by ${theme.submittedBy.name}`}
                     />
-                  ) : (
+                  ) : theme.submittedBy ? (
                     <div
                       className="bg-gold-200 flex h-4 w-4 items-center justify-center rounded-full"
                       title={`Suggested by ${theme.submittedBy.name}`}
@@ -241,7 +226,7 @@ export function ThemesList({
                         {theme.submittedBy.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                  )}
+                  ) : null}
                   <span className="text-dark-500 text-xs">
                     {theme.upvoteCount}{" "}
                     {theme.upvoteCount === 1 ? "vote" : "votes"}

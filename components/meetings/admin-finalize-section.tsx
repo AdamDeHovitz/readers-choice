@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import type { MeetingBookOption } from "./types";
+import type { MeetingBookOption } from "@/server/meetings";
 
 interface AdminFinalizeSectionProps {
   bookOptions: MeetingBookOption[];

@@ -28,14 +28,17 @@ export function CreateBookClubDialog() {
     setIsLoading(true);
     setError(null);
 
-    const result = await createBookClub(formData);
+    const result = await createBookClub({
+      name: String(formData.get("name") ?? ""),
+      description: String(formData.get("description") ?? ""),
+    });
 
-    if (result.error) {
+    if (!result.success) {
       setError(result.error);
       setIsLoading(false);
-    } else if (result.success && result.bookClubId) {
+    } else {
       setOpen(false);
-      router.push(`/book-clubs/${result.bookClubId}`);
+      router.push(`/book-clubs/${result.data.bookClubId}`);
       router.refresh();
     }
   }

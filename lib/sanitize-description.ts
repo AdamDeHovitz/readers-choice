@@ -86,25 +86,3 @@ export function sanitizeDescription(
   if (!description) return "";
   return sanitizeHtml(description);
 }
-
-/**
- * Strips all HTML tags from description, returning plain text
- * Useful for previews or plain text rendering
- */
-export function stripHtmlTags(description: string | null | undefined): string {
-  if (!description) return "";
-
-  // First decode entities
-  let text = decodeHtmlEntities(description);
-
-  // Replace <br> tags with spaces
-  text = text.replace(/<br\s*\/?>/gi, " ");
-
-  // Remove all HTML tags
-  text = text.replace(/<[^>]+>/g, "");
-
-  // Clean up multiple spaces
-  text = text.replace(/\s+/g, " ").trim();
-
-  return text;
-}

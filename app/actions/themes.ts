@@ -1,414 +1,81 @@
 "use server";
 
-import { auth } from "@/auth";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
-import { findFuzzyMatch } from "@/lib/fuzzy-match";
+import { UserError } from "@/lib/user-error";
+import { runAction, type ActionResult } from "@/server/action";
+import { requireMember } from "@/server/authz";
+import * as themes from "@/server/themes";
 
-/**
- * Suggest a new theme for a book club
- */
-export async function suggestTheme(bookClubId: string, themeName: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+/** Suggest a theme for future meetings. */
+export async function suggestTheme(
+  bookClubId: string,
+  themeName: string
+): Promise<ActionResult<{ themeId: string }>> {
+  return runAction("Failed to suggest theme", async ({ db, userId }) => {
+    await requireMember(
+      db,
+      bookClubId,
+      userId,
+      "You must be a member to suggest themes"
     );
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return { error: "You must be a member to suggest themes" };
-    }
-
-    // Get all themes for fuzzy matching
-    const { data: allThemes } = await supabase
-      .from("themes")
-      .select("id, name")
-      .eq("book_club_id", bookClubId);
-
-    // Check if theme already exists using fuzzy matching
-    const fuzzyMatch = findFuzzyMatch(themeName.trim(), allThemes || []);
-
-    if (fuzzyMatch) {
-      return {
-        error: `Theme "${fuzzyMatch.name}" already exists (similar to "${themeName}")`,
-      };
-    }
-
-    // Create the theme
-    const { data: theme, error: themeError } = await supabase
-      .from("themes")
-      .insert({
-        book_club_id: bookClubId,
-        name: themeName.trim(),
-        submitted_by: session.user.id,
-      })
-      .select("id")
-      .single();
-
-    if (themeError) throw themeError;
+    const themeId = await themes.suggestTheme(
+      db,
+      bookClubId,
+      themeName,
+      userId
+    );
 
     revalidatePath(`/book-clubs/${bookClubId}/themes`);
-    return { success: true, themeId: theme.id };
-  } catch (error) {
-    console.error("Error suggesting theme:", error);
-    return { error: "Failed to suggest theme" };
-  }
+    return { themeId };
+  });
 }
 
-/**
- * Toggle upvote on a theme
- */
-export async function toggleThemeUpvote(themeId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+/** Toggle the viewer's upvote on a theme. */
+export async function toggleThemeUpvote(
+  themeId: string
+): Promise<ActionResult<{ upvoted: boolean }>> {
+  return runAction("Failed to toggle upvote", async ({ db, userId }) => {
+    const theme = await themes.getThemeContext(db, themeId);
+    await requireMember(
+      db,
+      theme.bookClubId,
+      userId,
+      "You must be a member to vote on themes"
     );
+    const upvoted = await themes.toggleThemeUpvote(db, themeId, userId);
 
-    // Get theme to check book_club_id
-    const { data: theme, error: themeError } = await supabase
-      .from("themes")
-      .select("book_club_id")
-      .eq("id", themeId)
-      .single();
-
-    if (themeError || !theme) {
-      return { error: "Theme not found" };
-    }
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", theme.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return { error: "You must be a member to vote on themes" };
-    }
-
-    // Check if user has already upvoted
-    const { data: existingUpvote } = await supabase
-      .from("theme_votes")
-      .select("id")
-      .eq("theme_id", themeId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (existingUpvote) {
-      // Remove upvote
-      const { error: deleteError } = await supabase
-        .from("theme_votes")
-        .delete()
-        .eq("id", existingUpvote.id);
-
-      if (deleteError) throw deleteError;
-
-      revalidatePath(`/book-clubs/${theme.book_club_id}/themes`);
-      return { success: true, action: "removed" };
-    } else {
-      // Add upvote
-      const { error: insertError } = await supabase
-        .from("theme_votes")
-        .insert({
-          theme_id: themeId,
-          user_id: session.user.id,
-        });
-
-      if (insertError) throw insertError;
-
-      revalidatePath(`/book-clubs/${theme.book_club_id}/themes`);
-      return { success: true, action: "added" };
-    }
-  } catch (error) {
-    console.error("Error toggling theme upvote:", error);
-    return { error: "Failed to toggle upvote" };
-  }
+    revalidatePath(`/book-clubs/${theme.bookClubId}/themes`);
+    return { upvoted };
+  });
 }
 
-/**
- * Get theme suggestions for autocomplete (unused themes sorted by popularity)
- */
-export async function getThemeSuggestions(bookClubId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return [];
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
+/** Delete an unused theme (its submitter or a club admin only). */
+export async function deleteTheme(themeId: string): Promise<ActionResult> {
+  return runAction("Failed to delete theme", async ({ db, userId }) => {
+    const theme = await themes.getThemeContext(db, themeId);
+    const membership = await requireMember(
+      db,
+      theme.bookClubId,
+      userId,
+      "You must be a member to delete themes"
     );
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return [];
+    if (theme.submittedBy !== userId && !membership.isAdmin) {
+      throw new UserError(
+        "You can only delete themes you submitted or be an admin"
+      );
     }
+    await themes.deleteUnusedTheme(db, theme);
 
-    // Get all themes with vote counts and meetings
-    const { data: themes, error } = await supabase
-      .from("themes")
-      .select(
-        `
-        id,
-        name,
-        theme_votes (
-          id
-        ),
-        meetings (
-          id
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId);
-
-    if (error) throw error;
-
-    // Transform and sort: unused themes first, then by vote count
-    const suggestions = (themes || [])
-      .map((theme: any) => ({
-        name: theme.name,
-        voteCount: theme.theme_votes?.length || 0,
-        isUsed: theme.meetings?.length > 0,
-      }))
-      .sort((a, b) => {
-        // Unused themes first
-        if (a.isUsed !== b.isUsed) {
-          return a.isUsed ? 1 : -1;
-        }
-        // Then by vote count (descending)
-        return b.voteCount - a.voteCount;
-      })
-      .map((theme) => theme.name);
-
-    return suggestions;
-  } catch (error) {
-    console.error("Error fetching theme suggestions:", error);
-    return [];
-  }
+    revalidatePath(`/book-clubs/${theme.bookClubId}/themes`);
+  });
 }
 
-/**
- * Delete a theme (only if submitted by user and not used in any meetings)
- */
-export async function deleteTheme(themeId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return { error: "Unauthorized" };
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    // Get theme with meetings
-    const { data: theme, error: themeError } = await supabase
-      .from("themes")
-      .select(
-        `
-        id,
-        name,
-        book_club_id,
-        submitted_by,
-        meetings (id)
-      `
-      )
-      .eq("id", themeId)
-      .single();
-
-    if (themeError || !theme) {
-      return { error: "Theme not found" };
-    }
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id, is_admin")
-      .eq("book_club_id", theme.book_club_id)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return { error: "You must be a member to delete themes" };
-    }
-
-    // Check if user is the submitter or an admin
-    if (theme.submitted_by !== session.user.id && !member.is_admin) {
-      return {
-        error: "You can only delete themes you submitted or be an admin",
-      };
-    }
-
-    // Check if theme has been used in meetings
-    if (theme.meetings && theme.meetings.length > 0) {
-      return {
-        error: "Cannot delete theme that has been used in meetings",
-      };
-    }
-
-    // Delete the theme (votes will cascade delete)
-    const { error: deleteError } = await supabase
-      .from("themes")
-      .delete()
-      .eq("id", themeId);
-
-    if (deleteError) throw deleteError;
-
-    revalidatePath(`/book-clubs/${theme.book_club_id}/themes`);
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting theme:", error);
-    return { error: "Failed to delete theme" };
-  }
-}
-
-/**
- * Get all themes for a book club with upvote counts and usage
- */
-export async function getBookClubThemes(bookClubId: string) {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return [];
-  }
-
-  try {
-    const supabase = createSupabaseClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
-
-    // Check if user is a member
-    const { data: member } = await supabase
-      .from("members")
-      .select("user_id")
-      .eq("book_club_id", bookClubId)
-      .eq("user_id", session.user.id)
-      .single();
-
-    if (!member) {
-      return [];
-    }
-
-    // Get themes with related data
-    const { data: themes, error } = await supabase
-      .from("themes")
-      .select(
-        `
-        id,
-        name,
-        created_at,
-        submitted_by,
-        users (
-          id,
-          name,
-          avatar_url
-        ),
-        theme_votes (
-          user_id
-        ),
-        meetings (
-          id,
-          meeting_date,
-          is_finalized
-        )
-      `
-      )
-      .eq("book_club_id", bookClubId)
-      .order("created_at", { ascending: false });
-
-    if (error) {
-      console.error("Supabase error details:", error);
-      throw error;
-    }
-
-    return (
-      themes?.map((theme: any) => ({
-        id: theme.id,
-        name: theme.name,
-        createdAt: theme.created_at,
-        submittedBy: {
-          id: theme.users.id,
-          name: theme.users.name,
-          image: theme.users.avatar_url,
-        },
-        upvoteCount: theme.theme_votes?.length || 0,
-        userHasUpvoted: theme.theme_votes?.some(
-          (upvote: any) => upvote.user_id === session.user.id
-        ),
-        timesUsed: theme.meetings?.length || 0,
-        meetings: theme.meetings?.map((meeting: any) => ({
-          id: meeting.id,
-          meetingDate: meeting.meeting_date,
-          isFinalized: meeting.is_finalized,
-        })),
-      })) || []
-    );
-  } catch (error) {
-    console.error("Error fetching themes:", error);
-    return [];
-  }
+/** Theme names for the meeting form's autocomplete. */
+export async function getThemeSuggestions(
+  bookClubId: string
+): Promise<ActionResult<string[]>> {
+  return runAction("Failed to load themes", async ({ db, userId }) => {
+    await requireMember(db, bookClubId, userId);
+    return themes.getThemeSuggestions(db, bookClubId);
+  });
 }

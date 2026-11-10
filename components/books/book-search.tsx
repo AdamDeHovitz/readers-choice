@@ -48,12 +48,12 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
       abortControllerRef.current = new AbortController();
 
       try {
-        const books = await searchBooks(query);
-        setResults(books);
+        const result = await searchBooks(query);
+        setResults(result.success ? result.data : []);
       } catch (error) {
         // Ignore abort errors
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Search error:', error);
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Search error:", error);
         }
       } finally {
         setIsSearching(false);
@@ -86,12 +86,12 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
           className="w-full"
         />
         {isSearching && (
-          <p className="text-sm text-dark-500 mt-2">Searching...</p>
+          <p className="text-dark-500 mt-2 text-sm">Searching...</p>
         )}
       </div>
 
       {results.length > 0 && (
-        <div className="space-y-2 max-h-96 overflow-y-auto">
+        <div className="max-h-96 space-y-2 overflow-y-auto">
           {results.map((book) => (
             <BookCard
               key={book.id}
@@ -107,7 +107,7 @@ export function BookSearch({ onSelectBook, selectedBookId }: BookSearchProps) {
       )}
 
       {query.trim().length >= 2 && results.length === 0 && !isSearching && (
-        <p className="text-sm text-dark-500 text-center py-8">
+        <p className="text-dark-500 py-8 text-center text-sm">
           No books found. Try a different search term.
         </p>
       )}
