@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { setVotingMethod } from "@/app/actions/meeting-voting";
+import { useAction } from "@/hooks/use-action";
 
 interface VotingMethodToggleProps {
   meetingId: string;
@@ -19,7 +20,11 @@ export function VotingMethodToggle({
   hasExistingVotes,
 }: VotingMethodToggleProps) {
   const [isRanked, setIsRanked] = useState(currentMethod === "ranked");
-  const [isSwitching, setIsSwitching] = useState(false);
+  // Refreshing swaps in the ballot UI for the new method.
+  const { run: switchMethod, pending: isSwitching } = useAction(
+    setVotingMethod,
+    { onSuccess: (_, _meetingId, method) => setIsRanked(method === "ranked") }
+  );
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingMethod, setPendingMethod] = useState<
     "approval" | "ranked" | null
@@ -39,22 +44,10 @@ export function VotingMethodToggle({
   }
 
   async function performSwitch(method: "approval" | "ranked") {
-    setIsSwitching(true);
     setShowConfirm(false);
-
-    const result = await setVotingMethod(meetingId, method);
-
-    if (result.success) {
-      setIsRanked(method === "ranked");
-      // Force a page refresh to update the voting UI
-      window.location.reload();
-    } else {
-      // Revert on error
-      setIsRanked(currentMethod === "ranked");
-    }
-
-    setIsSwitching(false);
     setPendingMethod(null);
+    const result = await switchMethod(meetingId, method);
+    if (!result.success) alert(result.error);
   }
 
   function handleCancel() {

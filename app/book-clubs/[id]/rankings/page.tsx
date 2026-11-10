@@ -8,10 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function RankingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ year?: string }>;
 }) {
-  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
+  const [viewer, { id: bookClubId }, { year: yearParam }] = await Promise.all([
+    getViewer(),
+    params,
+    searchParams,
+  ]);
   if (!viewer) {
     redirect("/login");
   }
@@ -51,9 +57,9 @@ export default async function RankingsPage({
     );
   }
 
-  // Get books for the most recent year initially
-  const initialYear = years[0];
-  const initialBooks = await getYearBooks(viewer, bookClubId, initialYear);
+  // ?year= picks a year (default: the most recent).
+  const year = years.find((y) => String(y) === yearParam) ?? years[0];
+  const books = await getYearBooks(viewer, bookClubId, year);
 
   return (
     <div className="bg-cream-100 min-h-screen">
@@ -67,8 +73,8 @@ export default async function RankingsPage({
         <RankingsContainer
           bookClubId={bookClubId}
           years={years}
-          initialYear={initialYear}
-          initialBooks={initialBooks}
+          year={year}
+          books={books}
         />
       </main>
     </div>

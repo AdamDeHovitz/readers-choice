@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
 import { Button } from "@/components/ui/button";
 import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
 import Image from "next/image";
 import type { ClubTheme } from "@/server/themes";
+import { useAction } from "@/hooks/use-action";
 
 interface ThemesListProps {
   themes: ClubTheme[];
@@ -21,11 +21,12 @@ export function ThemesList({
   currentUserId,
   isAdmin,
 }: ThemesListProps) {
-  const router = useRouter();
-  const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
-  const [deletingStates, setDeletingStates] = useState<Record<string, boolean>>(
-    {}
-  );
+  const upvote = useAction(toggleThemeUpvote);
+  const remove = useAction(deleteTheme);
+  // Which theme the in-flight request is for, to disable its button.
+  const [target, setTarget] = useState<string | null>(null);
+  const isUpvoting = (themeId: string) => upvote.pending && target === themeId;
+  const isDeleting = (themeId: string) => remove.pending && target === themeId;
   const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>(
     {}
   );
@@ -39,32 +40,18 @@ export function ThemesList({
   }
 
   async function handleUpvote(themeId: string) {
-    setVotingStates((prev) => ({ ...prev, [themeId]: true }));
-
-    const result = await toggleThemeUpvote(themeId);
-
-    if (result.success) {
-      router.refresh();
-    }
-
-    setVotingStates((prev) => ({ ...prev, [themeId]: false }));
+    setTarget(themeId);
+    const result = await upvote.run(themeId);
+    if (!result.success) alert(`Error: ${result.error}`);
   }
 
   async function handleDelete(themeId: string, themeName: string) {
     if (!confirm(`Are you sure you want to delete the theme "${themeName}"?`)) {
       return;
     }
-
-    setDeletingStates((prev) => ({ ...prev, [themeId]: true }));
-
-    const result = await deleteTheme(themeId);
-
-    if (!result.success) {
-      alert(`Error: ${result.error}`);
-      setDeletingStates((prev) => ({ ...prev, [themeId]: false }));
-    } else {
-      router.refresh();
-    }
+    setTarget(themeId);
+    const result = await remove.run(themeId);
+    if (!result.success) alert(`Error: ${result.error}`);
   }
 
   // Filter themes based on selected filter
@@ -154,7 +141,7 @@ export function ThemesList({
                   variant={theme.userHasUpvoted ? "default" : "outline"}
                   size="icon-sm"
                   onClick={() => handleUpvote(theme.id)}
-                  disabled={votingStates[theme.id]}
+                  disabled={isUpvoting(theme.id)}
                   className="h-7 w-7"
                 >
                   <ArrowUpIcon className="h-3.5 w-3.5" />
@@ -197,7 +184,7 @@ export function ThemesList({
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleDelete(theme.id, theme.name)}
-                        disabled={deletingStates[theme.id]}
+                        disabled={isDeleting(theme.id)}
                         className="h-7 w-7 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                         title="Delete theme"
                       >

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteBookClub } from "@/app/actions/book-clubs";
+import { useAction } from "@/hooks/use-action";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,7 +18,6 @@ import { Trash2Icon } from "lucide-react";
 import { Alert } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useId } from "react";
 
 interface DeleteBookClubDialogProps {
   bookClubId: string;
@@ -30,27 +30,23 @@ export function DeleteBookClubDialog({
 }: DeleteBookClubDialogProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [confirmationName, setConfirmationName] = useState("");
   const confirmationId = useId();
-
-  async function handleDelete() {
-    if (isDeleting || confirmationName !== bookClubName) return;
-    setIsDeleting(true);
-    setError(null);
-
-    const result = await deleteBookClub(bookClubId, confirmationName);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsDeleting(false);
-    } else {
+  const {
+    run: deleteClub,
+    pending: isDeleting,
+    error,
+    reset,
+  } = useAction(deleteBookClub, {
+    onSuccess: () => {
       setOpen(false);
-      setIsDeleting(false);
       router.push("/browse");
-      router.refresh();
-    }
+    },
+  });
+
+  function handleDelete() {
+    if (isDeleting || confirmationName !== bookClubName) return;
+    deleteClub(bookClubId, confirmationName);
   }
 
   return (
@@ -60,7 +56,7 @@ export function DeleteBookClubDialog({
         if (isDeleting) return;
         setOpen(nextOpen);
         setConfirmationName("");
-        setError(null);
+        reset();
       }}
     >
       <DialogTrigger asChild>

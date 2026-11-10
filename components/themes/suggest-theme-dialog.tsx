@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { suggestTheme } from "@/app/actions/themes";
 import {
   Dialog,
@@ -15,42 +14,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
+import { useAction } from "@/hooks/use-action";
 
 interface SuggestThemeDialogProps {
   bookClubId: string;
 }
 
 export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [themeName, setThemeName] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    run: suggest,
+    pending: isSubmitting,
+    error,
+    reset,
+  } = useAction(suggestTheme, {
+    onSuccess: () => {
+      setOpen(false);
+      resetDialog();
+    },
+  });
 
   function resetDialog() {
     setThemeName("");
-    setError(null);
+    reset();
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-
     if (!themeName.trim()) return;
-
-    setError(null);
-    setIsSubmitting(true);
-
-    const result = await suggestTheme(bookClubId, themeName);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
-      setOpen(false);
-      resetDialog();
-      setIsSubmitting(false);
-      router.refresh();
-    }
+    suggest(bookClubId, themeName);
   }
 
   return (

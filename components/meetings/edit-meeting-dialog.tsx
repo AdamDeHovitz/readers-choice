@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { fromDateTimeInput, toDateTimeInput } from "@/lib/datetime-input";
+import { useAction } from "@/hooks/use-action";
 import type { BookSearchResult } from "@/lib/open-library";
 import {
   EditMeetingDetailsStep,
@@ -82,8 +83,21 @@ export function EditMeetingDialog({
     () => toBookSearchResult(currentBook)
   );
   const [changeBook, setChangeBook] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const update = useAction(updateMeeting, {
+    onSuccess: () => {
+      setOpen(false);
+      resetDialog();
+    },
+  });
+  const remove = useAction(deleteMeeting, {
+    refresh: false,
+    onSuccess: () => {
+      setOpen(false);
+      router.push(`/book-clubs/${bookClubId}/schedule`);
+    },
+  });
+  const isSubmitting = update.pending || remove.pending;
+  const error = update.error ?? remove.error;
 
   const {
     meetingDate,
@@ -105,21 +119,20 @@ export function EditMeetingDialog({
     setValues(getInitialValues());
     setSelectedBook(toBookSearchResult(currentBook));
     setChangeBook(false);
-    setError(null);
+    update.reset();
+    remove.reset();
   }
 
-  async function handleSubmit() {
+  function handleSubmit() {
     if (!meetingDate) return;
-
-    setError(null);
-    setIsSubmitting(true);
+    remove.reset();
 
     const newBook =
       changeBook && selectedBook && selectedBook.id !== currentBook?.id
         ? selectedBook
         : null;
 
-    const result = await updateMeeting(
+    update.run(
       meetingId,
       {
         meetingDate: fromDateTimeInput(meetingDate) ?? "",
@@ -130,19 +143,9 @@ export function EditMeetingDialog({
       },
       newBook
     );
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
-      setOpen(false);
-      resetDialog();
-      setIsSubmitting(false);
-      router.refresh();
-    }
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (
       !confirm(
         "Are you sure you want to delete this meeting? This action cannot be undone."
@@ -150,25 +153,8 @@ export function EditMeetingDialog({
     ) {
       return;
     }
-
-    setError(null);
-    setIsSubmitting(true);
-
-    const result = await deleteMeeting(meetingId);
-
-    if (!result.success) {
-      setError(result.error);
-      setIsSubmitting(false);
-    } else {
-      setOpen(false);
-      resetDialog();
-      setIsSubmitting(false);
-      // Redirect to schedule page after deletion
-      router.push(
-        window.location.pathname.replace(/\/meetings\/.*/, "/schedule")
-      );
-      router.refresh();
-    }
+    update.reset();
+    remove.run(meetingId);
   }
 
   return (

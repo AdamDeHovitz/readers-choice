@@ -45,7 +45,7 @@ export async function doThing(
 2. Put queries and writes in the matching `server/<domain>.ts`, or add a domain module. Map rows to camelCase DTOs there and export the DTO type.
 3. Pure rules (phases, validation, scoring) go in `lib/` with unit tests. Example: `lib/meeting-schedule.ts` is the only place that decides whether nominations or voting are open.
 4. Reads for a page: call the query from the page. Mutations: add an action as above.
-5. Components `import type` DTOs from `server/` and call actions; they branch on `result.success`.
+5. Components `import type` DTOs from `server/`. Call mutations with `useAction` (`hooks/use-action.ts`), which tracks pending (through the follow-up refresh) and error state and refreshes server data on success. Use `useDebouncedSearch` for search-as-you-type. Prefer loading data in the page (e.g. a `?year=` param) over fetching in effects.
 
 ## Data access
 

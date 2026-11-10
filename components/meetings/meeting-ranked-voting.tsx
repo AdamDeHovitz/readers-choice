@@ -20,6 +20,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { saveRankedVotes } from "@/app/actions/meeting-voting";
+import { useAction } from "@/hooks/use-action";
 import { Alert } from "@/components/ui/alert";
 import {
   BookDragOverlay,
@@ -48,9 +49,16 @@ export function MeetingRankedVoting({
   const initialRankedIds = sortedInitial.map((r) => r.bookOptionId);
 
   const [rankedIds, setRankedIds] = useState<string[]>(initialRankedIds);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  // Local state already reflects the ballot, so no page refresh is needed.
+  const {
+    run: save,
+    pending: isSaving,
+    error,
+  } = useAction(saveRankedVotes, {
+    refresh: false,
+    onSuccess: () => setLastSaved(new Date()),
+  });
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const rankedBooks = rankedIds
@@ -71,24 +79,11 @@ export function MeetingRankedVoting({
     })
   );
 
-  async function saveRankings(newRankedIds: string[]) {
-    setIsSaving(true);
-    setError(null);
-
-    const rankings = newRankedIds.map((id, index) => ({
-      bookOptionId: id,
-      rank: index + 1,
-    }));
-
-    const result = await saveRankedVotes(meetingId, rankings);
-
-    if (!result.success) {
-      setError(result.error);
-    } else {
-      setLastSaved(new Date());
-    }
-
-    setIsSaving(false);
+  function saveRankings(newRankedIds: string[]) {
+    save(
+      meetingId,
+      newRankedIds.map((id, index) => ({ bookOptionId: id, rank: index + 1 }))
+    );
   }
 
   function handleDragStart(event: DragStartEvent) {
@@ -147,13 +142,13 @@ export function MeetingRankedVoting({
     // Both in ranked - reorder
     if (rankedIds.includes(activeIdStr) && rankedIds.includes(overIdStr)) {
       if (activeIdStr !== overIdStr) {
-        setRankedIds((items) => {
-          const oldIndex = items.indexOf(activeIdStr);
-          const newIndex = items.indexOf(overIdStr);
-          const newOrder = arrayMove(items, oldIndex, newIndex);
-          saveRankings(newOrder);
-          return newOrder;
-        });
+        const newOrder = arrayMove(
+          rankedIds,
+          rankedIds.indexOf(activeIdStr),
+          rankedIds.indexOf(overIdStr)
+        );
+        setRankedIds(newOrder);
+        saveRankings(newOrder);
       } else {
         // Position may have changed during drag over, save current state
         saveRankings(rankedIds);

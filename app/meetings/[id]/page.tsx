@@ -13,7 +13,11 @@ import { getMeetingPhase } from "@/lib/meeting-schedule";
 import { getMyLibraries } from "@/server/libraries";
 import { getMeetingDetails } from "@/server/meetings";
 import { getViewer } from "@/server/viewer";
-import { getUserRankedVotes, getUserVotingPreference } from "@/server/voting";
+import {
+  calculateMeetingResults,
+  getUserRankedVotes,
+  getUserVotingPreference,
+} from "@/server/voting";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MeetingPage({
@@ -48,12 +52,17 @@ export default async function MeetingPage({
   const nominationsOpen = phase === "nominating";
   const votingOpen = phase === "voting";
 
-  // Fetch user's voting preference, ranked votes, and libraries in parallel
-  const [userVotingMethod, userRankedVotes, libraries] = await Promise.all([
-    getUserVotingPreference(viewer, id),
-    getUserRankedVotes(viewer, id),
-    votingOpen ? getMyLibraries(viewer) : [],
-  ]);
+  // Fetch the user's ballot, libraries and (once closed) results in parallel
+  const [userVotingMethod, userRankedVotes, libraries, votingResults] =
+    await Promise.all([
+      getUserVotingPreference(viewer, id),
+      getUserRankedVotes(viewer, id),
+      votingOpen ? getMyLibraries(viewer) : [],
+      // Once voting closes, show results until an admin finalizes.
+      phase === "awaiting_finalization"
+        ? calculateMeetingResults(viewer.db, id, viewer.userId)
+        : null,
+    ]);
 
   // Library availability streams in per book, so slow lookups never hold up
   // the ballot. With no libraries chosen, each book offers to set them up.
@@ -242,6 +251,7 @@ export default async function MeetingPage({
                     isVotingOpen={votingOpen}
                     userVotingMethod={userVotingMethod}
                     userRankedVotes={userRankedVotes}
+                    votingResults={votingResults}
                     availability={availability}
                   />
                 </CardContent>
