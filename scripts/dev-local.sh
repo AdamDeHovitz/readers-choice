@@ -27,5 +27,5 @@ export SUPABASE_SERVICE_ROLE_KEY="$LOCAL_SERVICE_ROLE_KEY"
 export AUTH_SECRET="local-dev-auth-secret-not-for-production"
 export AUTH_URL="http://localhost:$PORT"
 
-echo "Readers' Choice on http://localhost:$PORT -> local Supabase $LOCAL_API_URL (Studio: $LOCAL_STUDIO_URL)"
+echo "Readers' Choice on http://localhost:$PORT -> local Supabase $LOCAL_API_URL (Studio: ${LOCAL_STUDIO_URL:-not running})"
 exec npx next dev --turbopack --port "$PORT"

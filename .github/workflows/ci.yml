@@ -74,10 +74,17 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      - run: npx supabase start
+      # Supabase starts in the background while the browser installs. Studio
+      # and postgres-meta aren't used in CI; skipping them saves image pulls.
+      - name: Start Supabase (background)
+        run: scripts/ci-background.sh start supabase npx supabase start -x studio,postgres-meta
+      # Headless tests only need the headless shell, and the runner image
+      # already has the system libraries it needs, so no --with-deps.
+      - run: npx playwright install --only-shell chromium
+      - name: Wait for Supabase
+        run: scripts/ci-background.sh wait supabase
       - name: Database types match migrations
         run: npm run db:types:check
-      - run: npx playwright install --with-deps chromium
       - run: npx playwright test --reporter=list,html,json
         env:
           PLAYWRIGHT_HTML_OPEN: never
