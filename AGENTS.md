@@ -7,6 +7,12 @@ Mobile-first book club app (clubs, meetings, nominations, approval + ranked-choi
 - Before committing: `npm run lint && npx tsc --noEmit && npm run test:run`, and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
 - Local app and database: the `verify-locally` skill. Schema changes: the `database-migrations` skill.
 
+## Verifying work
+
+- Every PR carries `verifications/<pr-number>.md`: what you checked, how, what you saw, and what you didn't check. Read `verifications/README.md` before verifying. The Verification check fails on a ready PR without a complete file.
+- Write down only what you observed. A gap you admit is useful; a check you claim but didn't run is not.
+- A PR is ready for review only when it's marked ready and CI is green. Don't tell the user it's ready before then.
+
 ## Architecture
 
 `app/` (pages, `"use server"` actions) → `server/` (all data access, `server-only`) → `lib/` (pure logic). ESLint enforces the direction. Pages read through `getViewer()` and `server/` queries. Actions only validate, authorize, call `server/`, and revalidate. Each one wraps its body in `runAction` and returns `ActionResult<T>`. Throw `UserError` for messages users should see. Details and an "adding a feature" walkthrough: `docs/architecture.md`.
