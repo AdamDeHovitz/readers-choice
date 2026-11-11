@@ -2,8 +2,14 @@
 
 import { useState } from "react";
 import { toggleThemeUpvote, deleteTheme } from "@/app/actions/themes";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
-import { ArrowUpIcon, CheckCircle2Icon, Trash2Icon } from "lucide-react";
+import {
+  ArrowUpIcon,
+  CheckCircle2Icon,
+  SparklesIcon,
+  Trash2Icon,
+} from "lucide-react";
 import Image from "next/image";
 import type { ClubTheme } from "@/server/themes";
 import { useAction } from "@/hooks/use-action";
@@ -74,11 +80,11 @@ export function ThemesList({
 
   if (themes.length === 0) {
     return (
-      <div className="py-12 text-center">
-        <p className="text-dark-600">
-          No themes suggested yet. Be the first to suggest one!
-        </p>
-      </div>
+      <EmptyState
+        icon={<SparklesIcon />}
+        title="No themes yet"
+        description="Suggest the first one. Members upvote the themes they'd like to read next."
+      />
     );
   }
 
@@ -88,33 +94,40 @@ export function ThemesList({
   return (
     <div className="space-y-4">
       {/* Filter Tabs */}
-      <div className="border-gold-600/20 flex gap-2 border-b pb-2">
+      <div
+        role="group"
+        aria-label="Filter themes"
+        className="bg-sage-100 inline-flex gap-1 rounded-xl p-1"
+      >
         <button
           onClick={() => setFilter("all")}
-          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+          aria-pressed={filter === "all"}
+          className={`font-inria h-9 rounded-lg px-3 text-sm font-bold transition-colors ${
             filter === "all"
-              ? "bg-gold-600 text-dark-900"
-              : "text-dark-600 hover:bg-cream-200"
+              ? "bg-sage-600 text-dark-900 shadow-sm"
+              : "text-sage-800 hover:bg-sage-200"
           }`}
         >
           All ({themes.length})
         </button>
         <button
           onClick={() => setFilter("unused")}
-          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+          aria-pressed={filter === "unused"}
+          className={`font-inria h-9 rounded-lg px-3 text-sm font-bold transition-colors ${
             filter === "unused"
-              ? "bg-gold-600 text-dark-900"
-              : "text-dark-600 hover:bg-cream-200"
+              ? "bg-sage-600 text-dark-900 shadow-sm"
+              : "text-sage-800 hover:bg-sage-200"
           }`}
         >
           Unused ({unusedCount})
         </button>
         <button
           onClick={() => setFilter("used")}
-          className={`font-inria rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+          aria-pressed={filter === "used"}
+          className={`font-inria h-9 rounded-lg px-3 text-sm font-bold transition-colors ${
             filter === "used"
-              ? "bg-gold-600 text-dark-900"
-              : "text-dark-600 hover:bg-cream-200"
+              ? "bg-sage-600 text-dark-900 shadow-sm"
+              : "text-sage-800 hover:bg-sage-200"
           }`}
         >
           Used ({usedCount})
@@ -133,7 +146,7 @@ export function ThemesList({
           {sortedThemes.map((theme) => (
             <div
               key={theme.id}
-              className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3 transition-shadow hover:shadow-sm"
+              className="border-border bg-card flex items-center gap-3 rounded-2xl border p-3 shadow-xs"
             >
               {/* Upvote section */}
               <div className="flex min-w-[44px] flex-col items-center gap-0.5">
@@ -142,9 +155,15 @@ export function ThemesList({
                   size="icon-sm"
                   onClick={() => handleUpvote(theme.id)}
                   disabled={isUpvoting(theme.id)}
-                  className="h-7 w-7"
+                  className="size-10 rounded-full"
+                  aria-label={
+                    theme.userHasUpvoted
+                      ? `Remove upvote from ${theme.name}`
+                      : `Upvote ${theme.name}`
+                  }
+                  aria-pressed={theme.userHasUpvoted}
                 >
-                  <ArrowUpIcon className="h-3.5 w-3.5" />
+                  <ArrowUpIcon className="size-4" />
                 </Button>
                 <span className="font-inria text-dark-600 text-xs font-medium">
                   {theme.upvoteCount}
@@ -185,10 +204,11 @@ export function ThemesList({
                         size="icon-sm"
                         onClick={() => handleDelete(theme.id, theme.name)}
                         disabled={isDeleting(theme.id)}
-                        className="h-7 w-7 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        className="size-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        aria-label={`Delete ${theme.name}`}
                         title="Delete theme"
                       >
-                        <Trash2Icon className="h-3.5 w-3.5" />
+                        <Trash2Icon className="size-4" />
                       </Button>
                     )}
                 </div>
@@ -206,10 +226,10 @@ export function ThemesList({
                     />
                   ) : theme.submittedBy ? (
                     <div
-                      className="bg-gold-200 flex h-4 w-4 items-center justify-center rounded-full"
+                      className="bg-sage-200 flex h-4 w-4 items-center justify-center rounded-full"
                       title={`Suggested by ${theme.submittedBy.name}`}
                     >
-                      <span className="font-inria text-gold-700 text-[8px] font-bold">
+                      <span className="font-inria text-sage-700 text-[8px] font-bold">
                         {theme.submittedBy.name.charAt(0).toUpperCase()}
                       </span>
                     </div>

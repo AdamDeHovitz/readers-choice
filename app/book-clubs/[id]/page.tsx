@@ -1,15 +1,18 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { LockIcon } from "lucide-react";
 import {
-  getClubStatus,
   pickFeaturedMeeting,
   pickUpcomingMeeting,
 } from "@/lib/meeting-schedule";
 import { getBookClubDetails } from "@/server/clubs";
 import { getBookClubMeetings } from "@/server/meetings";
 import { getViewer } from "@/server/viewer";
-import { BookClubNav } from "@/components/navigation/book-club-nav";
-import { HeroSection } from "@/components/book-clubs/hero-section";
 import { BookDisplay } from "@/components/book-clubs/book-display";
-import { redirect } from "next/navigation";
+import { UpNextCard } from "@/components/book-clubs/up-next-card";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 
 export default async function BookClubPage({
   params,
@@ -31,40 +34,21 @@ export default async function BookClubPage({
   // invite link from a club admin.
   if (!viewer || !bookClub.currentUserIsMember) {
     return (
-      <div className="bg-cream-100 min-h-screen">
-        <header className="bg-cream-100 border-gold-600/20 border-b">
-          <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-            <h1 className="font-voga text-dark-900 text-4xl tracking-wider uppercase">
-              {bookClub.name}
-            </h1>
-            {bookClub.description && (
-              <p className="text-dark-600 font-inria mt-2">
-                {bookClub.description}
-              </p>
-            )}
-          </div>
-        </header>
-
-        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="border-gold-600/20 rounded-lg border bg-white p-8 text-center">
-            <h2 className="font-inria text-dark-900 mb-4 text-2xl font-semibold">
-              Invite required
-            </h2>
-            <p className="text-dark-600 font-inria mb-6">
-              {bookClub.name} is invite-only. Ask a club admin for an invite
-              link to join and see meetings, vote on books, and participate in
-              discussions.
-            </p>
-            {!viewer && (
-              <a href="/login" className="inline-block">
-                <button className="bg-rust-600 text-cream-100 border-dark-900 font-inria hover:bg-rust-700 rounded-lg border-2 px-6 py-3 font-medium transition-colors">
-                  Sign In
-                </button>
-              </a>
-            )}
-          </div>
-        </main>
-      </div>
+      <>
+        <PageHeader title={bookClub.name} description={bookClub.description} />
+        <EmptyState
+          icon={<LockIcon />}
+          title="Invite required"
+          description={`${bookClub.name} is invite-only. Ask a club admin for an invite link to join and see meetings, vote on books, and take part.`}
+          action={
+            !viewer && (
+              <Button asChild>
+                <Link href="/login">Sign in</Link>
+              </Button>
+            )
+          }
+        />
+      </>
     );
   }
 
@@ -76,28 +60,12 @@ export default async function BookClubPage({
   );
 
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <BookClubNav
-        bookClubId={id}
-        bookClubName={bookClub.name}
-        userName={viewer.name}
-      />
-
-      <HeroSection
-        bookClubId={id}
-        bookClubName={bookClub.name}
-        state={getClubStatus(upcomingMeeting, now)}
-        meetingId={upcomingMeeting?.id}
-        meetingDate={upcomingMeeting?.meetingDate}
-        themeName={upcomingMeeting?.theme?.name}
-        nominationDeadline={upcomingMeeting?.nominationDeadline ?? undefined}
-        votingDeadline={upcomingMeeting?.votingDeadline ?? undefined}
-      />
-
-      <BookDisplay
-        meeting={featured?.meeting ?? null}
-        label={featured?.label ?? "Current Book"}
-      />
+    <div className="space-y-8">
+      <h1 className="sr-only">{bookClub.name}</h1>
+      <UpNextCard bookClubId={id} meeting={upcomingMeeting} />
+      {featured && (
+        <BookDisplay meeting={featured.meeting} label={featured.label} />
+      )}
     </div>
   );
 }

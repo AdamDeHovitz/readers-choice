@@ -21,4 +21,4 @@ Mobile-first book club app (clubs, meetings, nominations, approval + ranked-choi
 
 ## UI
 
-Server Components by default. Read `DESIGN_GUIDE.md` before UI work. Show errors with `components/ui/alert.tsx`.
+Mobile-first. Server Components by default. Read `DESIGN_GUIDE.md` before UI work. Layouts render the app shell (top bar and tabs), so pages render only their content, starting with `PageHeader`. Show errors with `components/ui/alert.tsx`.

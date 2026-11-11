@@ -34,12 +34,12 @@ export function FinalizedVotingResults({ meetingId }: { meetingId: string }) {
   }
 
   return (
-    <div className="border-gold-600/20 border-t pt-4">
+    <div className="border-border border-t pt-4">
       <button
         type="button"
         onClick={toggle}
         aria-expanded={isOpen}
-        className="text-gold-700 hover:text-gold-800 flex items-center gap-2 text-sm font-medium"
+        className="text-sage-700 hover:text-sage-800 flex items-center gap-2 text-sm font-medium"
       >
         <ChevronRight
           className={`h-4 w-4 transition-transform ${isOpen ? "rotate-90" : ""}`}

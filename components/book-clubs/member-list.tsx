@@ -4,6 +4,7 @@ import { toggleMemberAdmin, removeMember } from "@/app/actions/book-clubs";
 import { useState } from "react";
 import { useAction } from "@/hooks/use-action";
 import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import type { ClubMember } from "@/server/clubs";
 
@@ -56,16 +57,13 @@ export function MemberList({
   }
 
   return (
-    <div className="space-y-3">
+    <ul className="bg-card border-border divide-border divide-y overflow-hidden rounded-2xl border shadow-xs">
       {members.map((member) => {
         const isSelf = member.id === currentUserId;
         const isActioning = busy && actioningMemberId === member.id;
 
         return (
-          <div
-            key={member.id}
-            className="hover:bg-cream-100 flex items-start gap-3 rounded-lg p-3"
-          >
+          <li key={member.id} className="flex items-start gap-3 p-3 sm:p-4">
             <div className="flex-shrink-0">
               {member.avatarUrl ? (
                 <Image
@@ -76,7 +74,7 @@ export function MemberList({
                   className="h-10 w-10 rounded-full"
                 />
               ) : (
-                <div className="bg-cream-200 text-dark-600 font-inria flex h-10 w-10 items-center justify-center rounded-full font-medium">
+                <div className="bg-sage-200 text-sage-800 font-inria flex h-10 w-10 items-center justify-center rounded-full font-medium">
                   {member.name.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -84,36 +82,31 @@ export function MemberList({
 
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <p className="font-inria text-dark-900 truncate text-sm font-medium">
+                <p className="font-inria text-foreground truncate font-bold">
                   {member.name}
                   {isSelf && (
                     <span className="text-dark-500 font-normal"> (You)</span>
                   )}
                 </p>
-                {member.isAdmin && (
-                  <span className="bg-cream-200 text-dark-600 rounded-full px-2 py-0.5 text-xs">
-                    Admin
-                  </span>
-                )}
+                {member.isAdmin && <Badge>Admin</Badge>}
               </div>
               {member.email && (
                 <p className="text-dark-500 truncate text-xs">{member.email}</p>
               )}
 
               {currentUserIsAdmin && (
-                <div className="mt-2 flex gap-2">
+                <div className="mt-1 -ml-2 flex gap-1">
                   <button
                     onClick={() => handleToggleAdmin(member)}
                     disabled={isActioning}
-                    className="text-dark-600 hover:text-dark-900 text-xs disabled:cursor-not-allowed disabled:opacity-50"
+                    className="text-muted-foreground hover:bg-muted hover:text-foreground h-9 rounded-lg px-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {member.isAdmin ? "Remove admin" : "Make admin"}
                   </button>
-                  <span className="text-gold-300 text-xs">•</span>
                   <button
                     onClick={() => handleRemoveMember(member)}
                     disabled={isActioning}
-                    className="text-xs text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-9 rounded-lg px-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {isSelf ? "Leave club" : "Remove"}
                   </button>
@@ -121,20 +114,20 @@ export function MemberList({
               )}
 
               {!currentUserIsAdmin && isSelf && (
-                <div className="mt-2">
+                <div className="mt-1 -ml-2">
                   <button
                     onClick={() => handleRemoveMember(member)}
                     disabled={isActioning}
-                    className="text-xs text-red-600 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="h-9 rounded-lg px-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Leave club
                   </button>
                 </div>
               )}
             </div>
-          </div>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

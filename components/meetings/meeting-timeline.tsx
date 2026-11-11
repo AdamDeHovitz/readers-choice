@@ -1,126 +1,121 @@
 import Link from "next/link";
+import { CalendarDaysIcon, ChevronRightIcon } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Section } from "@/components/ui/page-header";
+import { cn } from "@/lib/utils";
 import type { MeetingSummary } from "@/server/meetings";
+import { MeetingStatusBadge } from "./meeting-status-badge";
 
-interface MeetingTimelineProps {
+/** The club's meetings, split into upcoming (soonest first) and past. */
+export function MeetingTimeline({
+  meetings,
+  now = new Date(),
+}: {
   meetings: MeetingSummary[];
-}
-
-export function MeetingTimeline({ meetings }: MeetingTimelineProps) {
+  now?: Date;
+}) {
   if (meetings.length === 0) {
     return (
-      <p className="text-dark-500 py-8 text-center italic">
-        No meetings scheduled yet
-      </p>
+      <EmptyState
+        icon={<CalendarDaysIcon />}
+        title="No meetings yet"
+        description="Scheduled meetings will show up here."
+      />
     );
   }
 
+  const time = (m: MeetingSummary) => new Date(m.meetingDate).getTime();
+  const upcoming = meetings
+    .filter((m) => time(m) >= now.getTime())
+    .sort((a, b) => time(a) - time(b));
+  const past = meetings
+    .filter((m) => time(m) < now.getTime())
+    .sort((a, b) => time(b) - time(a));
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
+      {upcoming.length > 0 && (
+        <Section title="Upcoming">
+          <MeetingList meetings={upcoming} highlight />
+        </Section>
+      )}
+      {past.length > 0 && (
+        <Section title="Past">
+          <MeetingList meetings={past} />
+        </Section>
+      )}
+    </div>
+  );
+}
+
+function MeetingList({
+  meetings,
+  highlight = false,
+}: {
+  meetings: MeetingSummary[];
+  highlight?: boolean;
+}) {
+  return (
+    <ul className="bg-card border-border divide-border divide-y overflow-hidden rounded-2xl border shadow-xs">
       {meetings.map((meeting) => {
-        const meetingDate = new Date(meeting.meetingDate);
-        const now = new Date();
-        const isPast = meetingDate < now;
-        const isUpcoming = !isPast && !meeting.isFinalized;
-
-        // Determine phase for upcoming meetings
-        const nominationDeadline = meeting.nominationDeadline
-          ? new Date(meeting.nominationDeadline)
-          : null;
-        const isNominating =
-          isUpcoming && (!nominationDeadline || nominationDeadline > now);
-        const isVoting =
-          isUpcoming && nominationDeadline && nominationDeadline <= now;
-
+        const date = new Date(meeting.meetingDate);
+        const book = meeting.selectedBook;
         return (
-          <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
-            <Card className="cursor-pointer transition-shadow hover:shadow-md">
-              <CardContent className="p-4">
-                <div className="flex gap-4">
-                  {/* Date Badge */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`flex h-16 w-16 flex-col items-center justify-center rounded-lg ${
-                        isUpcoming
-                          ? "bg-gold-600 text-dark-900"
-                          : isPast && meeting.isFinalized
-                            ? "bg-rust-600 text-cream-100"
-                            : "bg-cream-200 text-dark-900"
-                      }`}
-                    >
-                      <div className="font-inria text-xs font-medium uppercase">
-                        {meetingDate.toLocaleDateString("en-US", {
-                          month: "short",
-                        })}
-                      </div>
-                      <div className="font-inria text-2xl font-bold">
-                        {meetingDate.getDate()}
-                      </div>
-                    </div>
-                  </div>
+          <li key={meeting.id}>
+            <Link
+              href={`/meetings/${meeting.id}`}
+              className="hover:bg-muted/50 active:bg-muted flex items-center gap-3 p-3 sm:p-4"
+            >
+              <div
+                className={cn(
+                  "flex size-14 shrink-0 flex-col items-center justify-center rounded-xl",
+                  highlight
+                    ? "bg-sage-200 text-sage-800"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
+                <span className="text-[11px] font-bold uppercase">
+                  {date.toLocaleDateString("en-US", { month: "short" })}
+                </span>
+                <span className="text-foreground text-xl leading-none font-bold">
+                  {date.getDate()}
+                </span>
+              </div>
 
-                  {/* Meeting Info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <h3 className="font-inria text-dark-900 font-medium">
-                          {meeting.theme
-                            ? meeting.theme.name
-                            : meetingDate.toLocaleDateString("en-US", {
-                                month: "long",
-                                year: "numeric",
-                              })}
-                        </h3>
-                      </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate font-bold">
+                  {meeting.theme?.name ??
+                    date.toLocaleDateString("en-US", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                </p>
+                {book ? (
+                  <p className="text-muted-foreground truncate text-sm">
+                    {book.title}{" "}
+                    <span className="text-dark-500">by {book.author}</span>
+                  </p>
+                ) : (
+                  <MeetingStatusBadge meeting={meeting} className="mt-1" />
+                )}
+              </div>
 
-                      {/* Status Badge */}
-                      <div className="flex-shrink-0">
-                        {meeting.isFinalized ? (
-                          <span className="bg-rust-600 text-cream-100 font-inria rounded-full px-2 py-1 text-xs font-medium">
-                            Finalized
-                          </span>
-                        ) : isNominating ? (
-                          <span className="bg-gold-100 text-dark-900 font-inria rounded-full px-2 py-1 text-xs font-medium">
-                            Nominations Open
-                          </span>
-                        ) : isVoting ? (
-                          <span className="bg-gold-600 text-dark-900 font-inria rounded-full px-2 py-1 text-xs font-medium">
-                            Voting Open
-                          </span>
-                        ) : isPast ? (
-                          <span className="bg-cream-200 text-dark-600 font-inria rounded-full px-2 py-1 text-xs font-medium">
-                            Past
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {/* Selected Book */}
-                    {meeting.selectedBook && (
-                      <div className="bg-cream-100 mt-3 flex items-center gap-3 rounded-lg p-2">
-                        <BookCover
-                          coverUrl={meeting.selectedBook.coverUrl}
-                          title={meeting.selectedBook.title}
-                          size="xs"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-inria text-dark-900 truncate text-sm font-medium">
-                            {meeting.selectedBook.title}
-                          </p>
-                          <p className="text-dark-600 truncate text-xs">
-                            by {meeting.selectedBook.author}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+              {book && (
+                <BookCover
+                  coverUrl={book.coverUrl}
+                  title={book.title}
+                  size="xs"
+                />
+              )}
+              <ChevronRightIcon
+                className="text-dark-500 size-5 shrink-0"
+                aria-hidden
+              />
+            </Link>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }

@@ -1,358 +1,110 @@
 # Readers' Choice Design Guide
 
-This guide defines the visual design system for the Readers' Choice book club application, ensuring consistency across all components and pages.
+Readers' Choice is mobile-first: design for a 360–430px phone, then let layouts widen. It should feel like an installed app (it ships a web manifest, so people can add it to their home screen) and like a well-made book: warm cream paper, a sage binding, rust ink, serif type.
 
-## Design Philosophy
+## App shell
 
-The design evokes a warm, literary aesthetic with earthy tones reminiscent of vintage books and cozy reading spaces. The color palette and typography choices create an inviting, sophisticated atmosphere that encourages community engagement.
+Every page sits in `AppShell` (`components/shell/app-shell.tsx`), rendered by a **layout**, never by the page:
 
----
+| Layout                           | Shell                                                                  |
+| -------------------------------- | ---------------------------------------------------------------------- |
+| `app/(main)/layout.tsx`          | App tabs: My clubs, Browse, Settings                                   |
+| `app/book-clubs/[id]/layout.tsx` | Club tabs: Home, Schedule, Rankings, Themes, Members; back to My clubs |
+| `app/meetings/[id]/layout.tsx`   | The meeting's club tabs, Schedule active; back to Schedule             |
 
-## Color Palette
+- Phones get a bottom tab bar; from `md` the same tabs sit in the top bar (`components/shell/nav-tabs.tsx`). Add a destination there, in one list, not in a page.
+- Keep tab sets at five or fewer. Group related views under one tab with a `SegmentedNav` (as Rankings does for "My ranking" / "Club ranking").
+- Each segment has a `loading.tsx` showing `PageSkeleton`, so the shell stays put while data loads.
+- The shell pads for the notch and home indicator (`pt-safe`, `pb-safe`, `env(safe-area-inset-*)`). Anything fixed to a screen edge must do the same.
 
-### Primary Colors
+### Colour
 
-#### Rust (Terracotta)
+Colour carries the brand, not just the actions. Use it in a few bold places, and keep the rest calm so actions stand out:
 
-- **Hex**: `#994636`
-- **Tailwind**: `rust`
-- **Usage**: Primary buttons, important headings, emphasis text, active states
-- **Variants**:
-  - `rust-50`: Lightest tint for backgrounds
-  - `rust-100`: Light tint for hover states
-  - `rust-600`: Base color `#994636`
-  - `rust-700`: Darker for hover/active states
-  - `rust-800`: Darkest for pressed states
+- **Top bar**: sage-600 with dark text on every screen (`AppShell`). The browser `theme-color` matches it.
+- **Bottom tab bar**: stays light, so the active tab (rust) is obvious.
+- **One bold block per page at most**: e.g. the club home's rust "Up next" card (cream text, cream button) and the rust panel behind the featured book's description.
+- **Switches** (`SegmentedNav`, filters): sage-100 track, sage-600 selected item.
+- **Club tiles**: each club gets a fixed colour from its id (`book-club-card.tsx`), so clubs are easy to tell apart.
+- On a rust or sage surface, the button turns cream (`bg-cream-50 text-rust-700`) rather than rust.
 
-#### Gold
+## Page anatomy
 
-- **Hex**: `#917730`
-- **Tailwind**: `gold`
-- **Usage**: Accent elements, navigation bars, status badges, highlights
-- **Variants**:
-  - `gold-50`: Lightest tint for backgrounds
-  - `gold-100`: Light tint for subtle accents
-  - `gold-600`: Base color `#917730`
-  - `gold-700`: Darker for hover states
-  - `gold-800`: Darkest for active states
+```tsx
+<>
+  <PageHeader
+    title="Schedule"
+    description="4 meetings"
+    actions={<Button>…</Button>}
+  />
+  <Section title="Upcoming">…</Section>
+  <Section title="Past">…</Section>
+</>
+```
 
-#### Cream
+- `PageHeader` (`components/ui/page-header.tsx`) renders the page's only `h1`, an optional `eyebrow` (a status badge), a description and the primary actions. Actions go full width under the title on phones.
+- `Section` renders an `h2` group. Use sections, not cards, to structure a page.
+- **Never nest cards.** A card is one object (a book, a club) or one grouped list. On phones nested borders eat a third of the width.
+- Lists of similar rows (meetings, members) are one card with `divide-y` rows, iOS-style. Rows that navigate end in a `ChevronRightIcon`.
+- Empty lists use `EmptyState`: icon, title, one sentence, optional action.
 
-- **Hex**: `#efecde`
-- **Tailwind**: `cream`
-- **Usage**: Page backgrounds, card backgrounds, light surfaces
-- **Variants**:
-  - `cream-50`: Lightest variant
-  - `cream-100`: Base color `#efecde`
-  - `cream-200`: Slightly darker for borders/contrast
+## Tokens
 
-#### Dark
+Defined in `app/globals.css`. Prefer the semantic tokens; reach for a palette step only for accents.
 
-- **Hex**: `#1d1a05`
-- **Tailwind**: `dark`
-- **Usage**: Primary text, navigation text, bold headings
-- **Variants**:
-  - `dark-500`: Medium opacity for secondary text
-  - `dark-600`: Higher opacity for body text
-  - `dark-900`: Full color `#1d1a05` for headings
+| Semantic                     | Value                | Use                                 |
+| ---------------------------- | -------------------- | ----------------------------------- |
+| `background`                 | cream-100 `#efecde`  | Page                                |
+| `card`                       | cream-50 `#fdfcf7`   | Cards, inputs, sheets' content      |
+| `foreground`                 | dark-900 `#1d1a05`   | Primary text                        |
+| `muted` / `muted-foreground` | cream-200 / dark-600 | Quiet fills, secondary text         |
+| `primary`                    | rust-600 `#994636`   | The one main action, active tab     |
+| `accent`                     | sage-600 `#949f7f`   | Highlights, "needs you now" states  |
+| `border`                     | dark-900 at 12%      | Card and divider lines              |
+| `destructive`                | `#b42318`            | Errors and destructive actions only |
 
-### Functional Colors
+Palettes: `rust-50…800`, `sage-50…800`, `cream-50…200`, `dark-500…900`.
 
-#### Success/Complete
+### Status
 
-- Use **Rust** (#994636) for completed states, finalized meetings, selected items
-- Replaces previous green usage
+Meeting phases always render through `MeetingStatusBadge`, which asks `getMeetingPhase` (`lib/meeting-schedule.ts`). Never re-derive a phase in a component.
 
-#### Active/Voting
-
-- Use **Gold** (#917730) for active states, voting open, upcoming events
-- Replaces previous blue usage
-
-#### Error/Destructive
-
-- Use the `destructive` variant of `components/ui/alert.tsx` for error messages
-- Reserve red for errors, destructive actions, and critical warnings
-
----
+| Phase            | Badge variant    | Meaning                |
+| ---------------- | ---------------- | ---------------------- |
+| Nominations open | `active` (sage)  | The reader can act now |
+| Voting open      | `active` (sage)  | The reader can act now |
+| Voting closed    | `default`        | Waiting on an admin    |
+| Finalized        | `primary` (rust) | Settled                |
 
 ## Typography
 
-### Font Families
-
-#### Voga (Headlines)
-
-- **Usage**: Main page titles (h1, h2), hero headings, logo text
-- **Style**: Always CAPITALIZED
-- **Weight**: Regular (400)
-- **Tailwind**: `font-voga`
-- **Example**: "BOOK CLUB", "GLOBAL RANKINGS"
-
-#### Inria Serif (Subheadings)
-
-- **Usage**: Section headings (h3, h4), card titles, dialog titles
-- **Weight**: Bold (700)
-- **Tailwind**: `font-inria`
-- **Example**: "Statistics", "Submissions", "Schedule"
-
-#### Inria Serif (Body)
-
-- **Usage**: Body text, descriptions, labels, buttons
-- **Weight**: Regular (400)
-- **Tailwind**: `font-inria`
-- **Example**: Paragraph text, form labels, button text
-
-### Typography Scale
-
-#### Headings
-
-- **H1 (Hero)**: `text-5xl font-voga uppercase` - Main page titles
-- **H2 (Page Title)**: `text-3xl font-voga uppercase` - Section titles
-- **H3 (Card Title)**: `text-xl font-inria font-bold` - Card/section headings
-- **H4 (Subsection)**: `text-lg font-inria font-bold` - Smaller headings
-
-#### Body Text
-
-- **Large**: `text-base font-inria` - Important descriptions
-- **Regular**: `text-sm font-inria` - Standard body text
-- **Small**: `text-xs font-inria` - Meta information, timestamps
-
-#### Special Cases
-
-- **Button Text**: `text-sm font-inria font-medium`
-- **Badge Text**: `text-xs font-inria font-medium uppercase`
-- **Navigation**: `text-base font-inria font-bold`
-
----
-
-## Component Styles
-
-### Buttons
-
-#### Primary Button (Call-to-Action)
-
-- **Background**: `bg-rust-600`
-- **Text**: `text-cream-100`
-- **Hover**: `hover:bg-rust-700`
-- **Border**: `border-2 border-dark-900` with rounded corners
-- **Typography**: `font-inria font-medium`
-- **Example**: "Nominate a Book", "Vote for a Book", "Join Book Club"
-
-#### Secondary Button (Accent)
-
-- **Background**: `bg-gold-600`
-- **Text**: `text-dark-900`
-- **Hover**: `hover:bg-gold-700`
-- **Border**: `border-2 border-dark-900`
-- **Typography**: `font-inria font-medium`
-
-#### Outline Button
-
-- **Background**: `bg-transparent`
-- **Border**: `border-2 border-rust-600`
-- **Text**: `text-rust-600`
-- **Hover**: `bg-rust-50`
-
-#### Ghost Button (Minimal)
-
-- **Background**: `bg-transparent`
-- **Text**: `text-dark-600`
-- **Hover**: `bg-cream-200`
-
-### Cards
-
-#### Default Card
-
-- **Background**: `bg-white`
-- **Border**: `border border-gold-600/20`
-- **Rounded**: `rounded-lg`
-- **Shadow**: `shadow-sm`
-- **Padding**: `p-6`
-
-#### Highlighted Card (Active/Selected)
-
-- **Background**: `bg-cream-100`
-- **Border**: `border-2 border-gold-600`
-
-### Navigation
-
-#### Top Navigation Bar
-
-- **Background**: `bg-gold-600`
-- **Text**: `text-dark-900 font-inria font-bold`
-- **Border**: None or subtle `border-b border-gold-700`
-- **Height**: `h-16`
-
-#### Navigation Links
-
-- **Color**: `text-dark-900`
-- **Hover**: `text-dark-600`
-- **Active**: `text-rust-600 font-bold`
-
-### Badges
-
-#### Status Badge (Active/Voting Open)
-
-- **Background**: `bg-gold-600`
-- **Text**: `text-dark-900 text-xs font-medium uppercase`
-- **Padding**: `px-2 py-1`
-- **Rounded**: `rounded-full`
-
-#### Status Badge (Complete/Finalized)
-
-- **Background**: `bg-rust-600`
-- **Text**: `text-cream-100 text-xs font-medium uppercase`
-- **Padding**: `px-2 py-1`
-- **Rounded**: `rounded-full`
-
-#### Admin Badge
-
-- **Background**: `bg-gold-100`
-- **Text**: `text-gold-700 text-xs font-medium uppercase`
-- **Padding**: `px-2 py-1`
-- **Rounded**: `rounded-full`
-
-### Form Elements
-
-#### Input Fields
-
-- **Background**: `bg-white`
-- **Border**: `border border-dark-900/20`
-- **Focus**: `focus:border-rust-600 focus:ring-rust-600`
-- **Text**: `text-dark-900 font-inria`
-- **Placeholder**: `placeholder:text-dark-500`
-
-#### Labels
-
-- **Text**: `text-dark-900 font-inria font-medium text-sm`
-- **Margin**: `mb-2`
-
-### Dialogs & Modals
-
-#### Overlay
-
-- **Background**: `bg-dark-900/50`
-
-#### Dialog Container
-
-- **Background**: `bg-cream-100`
-- **Border**: `border-2 border-gold-600`
-- **Rounded**: `rounded-lg`
-- **Shadow**: `shadow-xl`
-
-#### Dialog Title
-
-- **Typography**: `text-2xl font-inria font-bold text-dark-900`
-
-#### Dialog Description
-
-- **Typography**: `text-sm font-inria text-dark-600`
-
----
-
-## Layout Guidelines
-
-### Page Background
-
-- **Main Background**: `bg-cream-100`
-- **Alternative**: `bg-cream-50` for subtle variation
-
-### Spacing Scale
-
-- **Section Spacing**: `space-y-8` between major sections
-- **Card Spacing**: `space-y-4` between cards
-- **Element Spacing**: `gap-4` for flex/grid layouts
-- **Content Padding**: `p-6` for cards, `p-4` for smaller containers
-
-### Borders
-
-- **Default**: `border border-gold-600/20`
-- **Emphasized**: `border-2 border-gold-600`
-- **Subtle**: `border border-dark-900/10`
-
-### Shadows
-
-- **Subtle**: `shadow-sm`
-- **Card Hover**: `shadow-md`
-- **Dialog**: `shadow-xl`
-
----
-
-## Iconography
-
-### Icon Colors
-
-- **Default**: `text-dark-600`
-- **Active/Emphasis**: `text-rust-600`
-- **Accent**: `text-gold-600`
-
-### Icon Sizes
-
-- **Small**: `h-4 w-4`
-- **Medium**: `h-5 w-5`
-- **Large**: `h-6 w-6`
-
----
-
-## Usage Examples
-
-### Page Title
-
-```tsx
-<h1 className="font-voga text-dark-900 text-5xl uppercase">BOOK CLUB</h1>
-```
-
-### Section Heading
-
-```tsx
-<h3 className="font-inria text-dark-900 text-xl font-bold">Statistics</h3>
-```
-
-### Primary Button
-
-```tsx
-<button className="bg-rust-600 text-cream-100 border-dark-900 font-inria hover:bg-rust-700 rounded-lg border-2 px-6 py-3 font-medium">
-  Nominate a Book
-</button>
-```
-
-### Status Badge
-
-```tsx
-<span className="bg-gold-600 text-dark-900 rounded-full px-2 py-1 text-xs font-medium uppercase">
-  Voting Open
-</span>
-```
-
-### Card
-
-```tsx
-<div className="border-gold-600/20 rounded-lg border bg-white p-6 shadow-sm">
-  <h3 className="font-inria text-dark-900 mb-2 text-xl font-bold">
-    Book Title
-  </h3>
-  <p className="font-inria text-dark-600 text-sm">
-    Description text goes here...
-  </p>
-</div>
-```
-
----
-
-## Accessibility
-
-### Color Contrast
-
-- Ensure text on cream backgrounds meets WCAG AA standards
-- Primary text (#1d1a05) on cream (#efecde) provides excellent contrast
-- Button text (cream) on rust/gold backgrounds must be tested
-
-### Focus States
-
-- All interactive elements must have visible focus indicators
-- Use `focus:ring-2 focus:ring-rust-600` for consistent focus styling
-
-### Typography
-
-- Minimum font size: 12px (text-xs)
-- Body text: 14px (text-sm) for optimal readability
-- Line height: 1.5 for body text, 1.2 for headings
+- **Display**: Playfair Display, `font-display`. Page titles, club names, book titles in feature spots. Sentence or title case; no forced uppercase.
+- **Body**: Inria Serif, `font-inria` (the body default). Bold (700) for headings, labels and buttons; regular for text.
+
+| Role            | Classes                                       |
+| --------------- | --------------------------------------------- |
+| Page title (h1) | `font-display text-3xl sm:text-4xl`           |
+| Section (h2)    | `text-xl font-bold`                           |
+| Card title      | `text-lg font-bold`                           |
+| Body            | `text-base` / `text-sm text-muted-foreground` |
+| Meta            | `text-xs text-dark-500`                       |
+| Eyebrow         | `text-xs font-bold uppercase tracking-wide`   |
+
+Inputs use 16px text on phones so iOS Safari doesn't zoom on focus.
+
+## Components
+
+- **Button** (`components/ui/button.tsx`): `default` (rust, one per view), `outline`, `secondary` (sage), `ghost`, `destructive`, `link`. Default height is 44px on phones (touch target), 40px from `sm`. Put an icon before the label for create/edit actions (`<PlusIcon aria-hidden />`).
+- **Dialog** (`components/ui/dialog.tsx`): a bottom sheet with a grab handle on phones, a centered dialog from `sm`. Don't override its position or width on phones; `sm:max-w-*` is fine.
+- **Badge** (`components/ui/badge.tsx`): `default`, `active`, `primary`, `outline`.
+- **SegmentedNav**: link-based switches (years, views) that keep state in the URL.
+- **Alert**: every error message (`variant="destructive"`).
+- **BookCover**: without a cover image, every size shows the same rust "cloth" cover: the title from `sm` up, a book glyph at `xs`.
+
+## Interaction and accessibility
+
+- Touch targets at least 44×44px on phones. Small icon buttons get `aria-label`.
+- Toggles expose state with `aria-pressed` (vote, upvote, filters); current nav items with `aria-current="page"`.
+- Focus is visible everywhere (global `:focus-visible` ring in `--ring`).
+- Motion is short (≤220ms) and disabled under `prefers-reduced-motion`.
+- Pages must not scroll sideways at 360px. Long rows `truncate`; chip rows scroll inside themselves.

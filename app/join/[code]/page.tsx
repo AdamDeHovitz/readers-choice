@@ -3,7 +3,6 @@ import { isMember } from "@/server/authz";
 import { createAdminClient } from "@/server/db";
 import { getInviteDetails } from "@/server/invites";
 import { getViewer } from "@/server/viewer";
-import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { JoinBookClubButton } from "@/components/book-clubs/join-book-club-button";
 import Link from "next/link";
@@ -22,33 +21,29 @@ export default async function JoinPage({
   // If link is invalid, show error
   if (!inviteDetails) {
     return (
-      <div className="bg-cream-100 flex min-h-screen items-center justify-center px-4">
+      <main className="pt-safe pb-safe flex min-h-dvh items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-red-700">Invalid Invite Link</CardTitle>
+            <CardTitle>
+              <h1>Invalid invite link</h1>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-dark-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               This invite link is invalid, expired, or has been deactivated.
             </p>
             {viewer ? (
-              <Link
-                href="/dashboard"
-                className="text-gold-700 hover:text-dark-900 font-inria font-medium"
-              >
+              <Link href="/dashboard" className="text-primary font-bold">
                 Go to Dashboard →
               </Link>
             ) : (
-              <Link
-                href="/"
-                className="text-gold-700 hover:text-dark-900 font-inria font-medium"
-              >
+              <Link href="/" className="text-primary font-bold">
                 Go to Home →
               </Link>
             )}
           </CardContent>
         </Card>
-      </div>
+      </main>
     );
   }
 
@@ -63,58 +58,39 @@ export default async function JoinPage({
   }
 
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <nav className="border-gold-600/20 border-b bg-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link
-              href="/dashboard"
-              className="font-inria text-dark-900 hover:text-gold-700 text-xl font-bold transition-colors"
-            >
-              Readers&apos; Choice
-            </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-dark-600 text-sm">{viewer.name}</span>
-              <SignOutButton />
-            </div>
-          </div>
+    <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col justify-center px-4 py-10">
+      <div className="bg-card border-border space-y-6 rounded-3xl border p-6 shadow-sm sm:p-8">
+        <div className="space-y-2">
+          <p className="text-primary text-sm font-bold tracking-widest uppercase">
+            You&apos;re invited
+          </p>
+          <h1 className="font-display text-foreground text-3xl leading-tight">
+            Join {inviteDetails.bookClubName}
+          </h1>
+          {inviteDetails.bookClubDescription && (
+            <p className="text-muted-foreground">
+              {inviteDetails.bookClubDescription}
+            </p>
+          )}
         </div>
-      </nav>
 
-      <main className="mx-auto max-w-2xl px-4 py-12 sm:px-6 lg:px-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-inria text-dark-900 text-2xl font-bold">
-              Join {inviteDetails.bookClubName}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {inviteDetails.bookClubDescription && (
-              <div>
-                <h3 className="font-inria text-dark-900 mb-2 font-medium">
-                  About
-                </h3>
-                <p className="text-dark-600">
-                  {inviteDetails.bookClubDescription}
-                </p>
-              </div>
-            )}
+        <p className="text-dark-700 text-sm">
+          Become a member to nominate books, vote on what the club reads next,
+          and rank your favorites.
+        </p>
 
-            <div className="bg-gold-50 border-gold-600 rounded-lg border p-4">
-              <p className="text-dark-900 text-sm">
-                You&apos;ve been invited to join this book club. Click the
-                button below to become a member and start participating in
-                discussions and votes.
-              </p>
-            </div>
+        <JoinBookClubButton
+          code={code}
+          bookClubName={inviteDetails.bookClubName}
+        />
 
-            <JoinBookClubButton
-              code={code}
-              bookClubName={inviteDetails.bookClubName}
-            />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+        <p className="text-muted-foreground text-center text-xs">
+          Signed in as {viewer.name}.{" "}
+          <Link href="/dashboard" className="text-primary font-bold">
+            Not now
+          </Link>
+        </p>
+      </div>
+    </main>
   );
 }

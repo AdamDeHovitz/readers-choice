@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,9 +56,12 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
       }}
     >
       <DialogTrigger asChild>
-        <Button>Suggest Theme</Button>
+        <Button>
+          <PlusIcon aria-hidden />
+          Suggest a theme
+        </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto pb-[calc(1.5rem+env(safe-area-inset-bottom))] sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Suggest a Theme</DialogTitle>
           <DialogDescription>

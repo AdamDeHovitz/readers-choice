@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { UserError } from "@/lib/user-error";
 import { createAdminClient, type Db } from "./db";
 import { throwIfDbError } from "./errors";
@@ -58,9 +59,10 @@ export interface BookClubDetails {
 
 /**
  * A club and its members. Public (the club page shows non-members an invite
- * prompt), so member emails are only included for members.
+ * prompt), so member emails are only included for members. Cached per
+ * request, so the club layout and its pages share one lookup.
  */
-export async function getBookClubDetails(
+export const getBookClubDetails = cache(async function getBookClubDetails(
   viewer: Viewer | null,
   bookClubId: string
 ): Promise<BookClubDetails | null> {
@@ -106,7 +108,7 @@ export async function getBookClubDetails(
     currentUserIsAdmin: self?.is_admin === true,
     currentUserIsMember: !!self,
   };
-}
+});
 
 export interface BrowsableBookClub {
   id: string;

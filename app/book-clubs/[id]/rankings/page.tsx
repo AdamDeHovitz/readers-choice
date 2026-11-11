@@ -1,10 +1,14 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { TrophyIcon } from "lucide-react";
 import { getBookClubDetails } from "@/server/clubs";
 import { getBookClubYears, getYearBooks } from "@/server/rankings";
 import { getViewer } from "@/server/viewer";
-import { BookClubNav } from "@/components/navigation/book-club-nav";
 import { RankingsContainer } from "@/components/rankings/rankings-container";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RankingsHeader } from "@/components/rankings/rankings-header";
+import { EmptyState } from "@/components/ui/empty-state";
+
+export const metadata: Metadata = { title: "My ranking" };
 
 export default async function RankingsPage({
   params,
@@ -31,52 +35,33 @@ export default async function RankingsPage({
     redirect("/dashboard");
   }
 
-  if (years.length === 0) {
-    return (
-      <div className="bg-cream-100 min-h-screen">
-        <BookClubNav
-          bookClubId={bookClubId}
-          bookClubName={bookClub.name}
-          userName={viewer.name}
-        />
-
-        <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>No Books to Rank Yet</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-dark-600">
-                This book club doesn&apos;t have any finalized meetings yet.
-                Check back once some meetings have been completed!
-              </p>
-            </CardContent>
-          </Card>
-        </main>
-      </div>
-    );
-  }
-
   // ?year= picks a year (default: the most recent).
   const year = years.find((y) => String(y) === yearParam) ?? years[0];
-  const books = await getYearBooks(viewer, bookClubId, year);
+  const books =
+    year === undefined ? [] : await getYearBooks(viewer, bookClubId, year);
 
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <BookClubNav
+    <>
+      <RankingsHeader
         bookClubId={bookClubId}
-        bookClubName={bookClub.name}
-        userName={viewer.name}
+        view="mine"
+        years={years}
+        year={year ?? new Date().getFullYear()}
+        description={
+          year === undefined
+            ? "Rank the books your club has read."
+            : `Drag to rank the books from ${year}. Mark any you didn't read.`
+        }
       />
-
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <RankingsContainer
-          bookClubId={bookClubId}
-          years={years}
-          year={year}
-          books={books}
+      {year === undefined ? (
+        <EmptyState
+          icon={<TrophyIcon />}
+          title="No books to rank yet"
+          description="Books show up here once your club finalizes its first meeting."
         />
-      </main>
-    </div>
+      ) : (
+        <RankingsContainer bookClubId={bookClubId} year={year} books={books} />
+      )}
+    </>
   );
 }

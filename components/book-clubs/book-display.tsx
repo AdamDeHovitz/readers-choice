@@ -1,133 +1,77 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { UsersIcon } from "lucide-react";
+import { ChevronRightIcon } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
+import { BookMeta } from "@/components/books/book-meta";
+import { Section } from "@/components/ui/page-header";
 import { sanitizeDescription } from "@/lib/sanitize-description";
 import type { MeetingSummary } from "@/server/meetings";
 
 interface BookDisplayProps {
   /** The featured meeting; its selected book is shown. */
-  meeting: MeetingSummary | null;
-  label: "Current Book" | "Previous Book" | "Upcoming";
+  meeting: MeetingSummary;
+  label: "Upcoming" | "Previous Book";
 }
 
+/** The club's featured book: the next one to read, or the last one read. */
 export function BookDisplay({ meeting, label }: BookDisplayProps) {
-  const book = meeting?.selectedBook;
-  if (!book) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Card className="bg-cream-100 border-gold-600/20">
-          <CardContent className="p-8 text-center">
-            <p className="text-dark-600 font-inria">
-              No book to display yet.{" "}
-              {label === "Upcoming" &&
-                "Waiting for the next meeting to be scheduled."}
-              {label === "Previous Book" && "No previous meetings yet."}
-              {label === "Current Book" && "No current book selected."}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  const book = meeting.selectedBook;
+  if (!book) return null;
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const date = new Date(meeting.meetingDate).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-6">
-        <h2 className="font-voga text-dark-900 text-center text-4xl tracking-wider uppercase">
-          {label}
-        </h2>
-        {meeting?.theme && (
-          <p className="text-dark-700 font-inria mt-2 text-center text-xl">
-            {formatDate(meeting.meetingDate)} - {meeting.theme.name}
-          </p>
-        )}
-      </div>
-
-      <Card className="border-gold-600/20 bg-white shadow-lg">
-        <CardContent className="p-4 sm:p-6">
-          {/* Centered Book Cover and Info */}
-          <div className="mx-auto flex max-w-2xl flex-col items-center">
-            {/* Book Cover and Details Side by Side */}
-            <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
-              {/* Book Cover */}
-              <div className="mx-auto flex-shrink-0 sm:mx-0">
-                <BookCover
-                  coverUrl={book.coverUrl}
-                  title={book.title}
-                  size="lg"
-                />
-              </div>
-
-              {/* Book Details */}
-              <div className="flex-1 space-y-2 text-center sm:text-left">
-                <div>
-                  <h3 className="font-inria text-dark-900 text-2xl font-semibold sm:text-3xl">
-                    {book.title}
-                  </h3>
-                  <p className="text-dark-700 font-inria mt-1 text-base sm:text-lg">
-                    By {book.author}
-                  </p>
-                </div>
-
-                {/* Page Count and Published Year */}
-                {(book.pageCount || book.publishedYear) && (
-                  <div className="text-dark-600 font-inria flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm sm:justify-start sm:text-base">
-                    {book.pageCount && <span>{book.pageCount} pages</span>}
-                    {book.publishedYear && (
-                      <span>Published in {book.publishedYear}</span>
-                    )}
-                  </div>
-                )}
-
-                {/* Meeting Link */}
-                {meeting && (
-                  <Link
-                    href={`/meetings/${meeting.id}`}
-                    className="text-rust-700 hover:text-rust-800 font-inria inline-flex items-center gap-2 font-medium"
-                  >
-                    <UsersIcon className="h-4 w-4" />
-                    View meeting →
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Book Description - Full Width Below */}
-            {book.description && (
-              <div className="bg-rust-600 mt-4 w-full rounded-lg p-4 sm:p-5">
-                <p
-                  className="text-cream-100 font-inria text-sm leading-relaxed sm:text-base"
-                  dangerouslySetInnerHTML={{
-                    __html: sanitizeDescription(book.description),
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Host's Message - Full Width Below */}
-            {meeting?.details && (
-              <div className="bg-cream-100 border-gold-600/20 mt-3 w-full rounded-lg border p-3 sm:p-4">
-                <p className="font-inria text-dark-900 mb-1 text-sm font-medium">
-                  Host&apos;s Message:
-                </p>
-                <p className="text-dark-700 font-inria text-sm whitespace-pre-wrap">
-                  {meeting.details}
-                </p>
-              </div>
-            )}
+    <Section
+      title={label === "Upcoming" ? "Reading now" : "Last read"}
+      description={[date, meeting.theme?.name].filter(Boolean).join(" · ")}
+    >
+      <article className="bg-card border-border overflow-hidden rounded-2xl border shadow-xs">
+        <div className="flex gap-4 p-4 sm:gap-6 sm:p-6">
+          <div className="shrink-0">
+            <BookCover coverUrl={book.coverUrl} title={book.title} size="md" />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-foreground text-xl leading-tight sm:text-2xl">
+              {book.title}
+            </h3>
+            <p className="text-muted-foreground mt-1">by {book.author}</p>
+            <BookMeta
+              pageCount={book.pageCount}
+              publishedYear={book.publishedYear}
+              className="text-dark-500 mt-2 text-sm"
+            />
+          </div>
+        </div>
+
+        {book.description && (
+          <div
+            className="bg-rust-600 text-cream-50 mx-4 mb-4 rounded-xl p-4 text-sm leading-relaxed sm:mx-6 sm:mb-6 sm:p-5"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeDescription(book.description),
+            }}
+          />
+        )}
+
+        {meeting.details && (
+          <blockquote className="bg-muted/60 mx-4 mb-4 rounded-xl p-3 text-sm sm:mx-6 sm:mb-6">
+            <p className="text-foreground mb-1 font-bold">From the host</p>
+            <p className="text-dark-700 whitespace-pre-wrap">
+              {meeting.details}
+            </p>
+          </blockquote>
+        )}
+
+        <Link
+          href={`/meetings/${meeting.id}`}
+          className="border-border text-primary hover:bg-muted/50 flex items-center justify-between border-t px-4 py-3.5 text-sm font-bold sm:px-6"
+        >
+          View meeting
+          <ChevronRightIcon className="size-4" aria-hidden />
+        </Link>
+      </article>
+    </Section>
   );
 }

@@ -1,10 +1,12 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getBookClubDetails } from "@/server/clubs";
 import { getGlobalRankings, getYearsWithRankings } from "@/server/rankings";
 import { getViewer } from "@/server/viewer";
-import { BookClubNav } from "@/components/navigation/book-club-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GlobalRankingsList } from "@/components/rankings/global-rankings-list";
+import { RankingsHeader } from "@/components/rankings/rankings-header";
+
+export const metadata: Metadata = { title: "Club ranking" };
 
 export default async function GlobalRankingsPage({
   params,
@@ -42,34 +44,19 @@ export default async function GlobalRankingsPage({
   const globalRankings = await getGlobalRankings(viewer, id, selectedYear);
 
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <BookClubNav
+    <>
+      <RankingsHeader
         bookClubId={id}
-        bookClubName={bookClub.name}
-        userName={viewer.name}
+        view="club"
+        years={availableYears}
+        year={selectedYear}
+        description="Everyone's rankings combined. Tap a book to see how each member ranked it."
       />
-
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-inria text-dark-900 text-2xl font-bold">
-              Global Rankings
-            </CardTitle>
-            <p className="text-dark-600 mt-2 text-sm">
-              Rankings based on all members&apos; votes using Borda Count
-              scoring. Books ranked higher by members earn more points.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <GlobalRankingsList
-              bookClubId={id}
-              rankings={globalRankings}
-              availableYears={availableYears}
-              selectedYear={selectedYear}
-            />
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+      <GlobalRankingsList
+        bookClubId={id}
+        rankings={globalRankings}
+        selectedYear={selectedYear}
+      />
+    </>
   );
 }

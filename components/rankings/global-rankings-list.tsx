@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { TrophyIcon, UsersIcon } from "lucide-react";
 import {
   Dialog,
@@ -10,6 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { BookCover } from "@/components/books/book-cover";
+import { EmptyState } from "@/components/ui/empty-state";
 import { getIndividualBookRankings } from "@/app/actions/rankings";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { GlobalRankingBook, IndividualRanking } from "@/server/rankings";
@@ -17,14 +18,12 @@ import type { GlobalRankingBook, IndividualRanking } from "@/server/rankings";
 interface GlobalRankingsListProps {
   bookClubId: string;
   rankings: GlobalRankingBook[];
-  availableYears: number[];
   selectedYear: number;
 }
 
 export function GlobalRankingsList({
   bookClubId,
   rankings,
-  availableYears,
   selectedYear: currentYear,
 }: GlobalRankingsListProps) {
   const [selectedBook, setSelectedBook] = useState<GlobalRankingBook | null>(
@@ -57,7 +56,7 @@ export function GlobalRankingsList({
 
   // Medal colors for top 3
   const getMedalColor = (rank: number) => {
-    if (rank === 1) return "text-gold-600";
+    if (rank === 1) return "text-sage-600";
     if (rank === 2) return "text-dark-500";
     if (rank === 3) return "text-rust-500";
     return "text-dark-600";
@@ -72,67 +71,37 @@ export function GlobalRankingsList({
 
   return (
     <div className="space-y-6">
-      {/* Year Selector */}
-      {availableYears.length > 1 && (
-        <div className="flex flex-wrap gap-2">
-          {availableYears.map((year) => (
-            <Link
-              key={year}
-              href={`/book-clubs/${bookClubId}/global-rankings?year=${year}`}
-              aria-current={year === currentYear ? "page" : undefined}
-              className={`font-inria rounded-lg px-4 py-2 font-medium transition-colors ${
-                year === currentYear
-                  ? "bg-gold-600 text-white"
-                  : "bg-cream-200 text-dark-600 hover:bg-cream-200"
-              }`}
-            >
-              {year}
-            </Link>
-          ))}
-        </div>
-      )}
-
       {/* Rankings List */}
       {rankings.length === 0 ? (
-        <div className="py-12 text-center">
-          <TrophyIcon className="text-gold-300 mx-auto mb-4 h-12 w-12" />
-          <p className="text-dark-500">
-            No rankings yet for {currentYear}. Members need to rank their
-            favorite books first!
-          </p>
-        </div>
+        <EmptyState
+          icon={<TrophyIcon />}
+          title={`No rankings yet for ${currentYear}`}
+          description="The club ranking appears once members rank their favorite books."
+        />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {rankings.map((book, index) => {
             const rank = index + 1;
             return (
               <button
                 key={book.id}
                 onClick={() => handleBookClick(book)}
-                className="border-gold-600/20 bg-cream-100 hover:bg-cream-200 hover:border-gold-600/40 flex w-full cursor-pointer gap-4 rounded-lg border p-4 text-left transition-all"
+                className="border-border bg-card hover:border-dark-900/25 active:bg-muted flex w-full cursor-pointer items-center gap-3 rounded-2xl border p-3 text-left shadow-xs transition-colors sm:gap-4 sm:p-4"
               >
                 {/* Rank */}
                 <div
-                  className={`font-inria flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold ${getMedalColor(rank)}`}
+                  className={`font-inria flex size-10 shrink-0 items-center justify-center rounded-full text-lg font-bold ${getMedalColor(rank)}`}
                 >
                   {getRankDisplay(rank)}
                 </div>
 
                 {/* Book Cover */}
                 <div className="flex-shrink-0">
-                  {book.coverUrl ? (
-                    <Image
-                      src={book.coverUrl}
-                      alt={book.title}
-                      width={80}
-                      height={120}
-                      className="rounded object-cover shadow-sm"
-                    />
-                  ) : (
-                    <div className="bg-cream-200 flex h-30 w-20 items-center justify-center rounded">
-                      <span className="text-dark-500 text-xs">No cover</span>
-                    </div>
-                  )}
+                  <BookCover
+                    coverUrl={book.coverUrl}
+                    title={book.title}
+                    size="sm"
+                  />
                 </div>
 
                 {/* Book Info */}
@@ -146,7 +115,7 @@ export function GlobalRankingsList({
 
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
                     <div className="flex items-center gap-1.5 text-sm whitespace-nowrap">
-                      <TrophyIcon className="text-gold-700 h-4 w-4 flex-shrink-0" />
+                      <TrophyIcon className="text-sage-700 h-4 w-4 flex-shrink-0" />
                       <span className="font-inria text-dark-900 font-semibold">
                         {book.totalPoints}
                       </span>
@@ -173,8 +142,8 @@ export function GlobalRankingsList({
       )}
 
       {/* Explanation */}
-      <div className="bg-gold-50 border-gold-600 rounded-lg border p-4">
-        <h4 className="font-inria text-dark-900 mb-2 font-medium">
+      <div className="bg-muted/60 rounded-2xl p-4">
+        <h4 className="font-inria text-foreground mb-1 font-bold">
           How it works
         </h4>
         <p className="text-dark-900 text-sm">
@@ -188,13 +157,13 @@ export function GlobalRankingsList({
 
       {/* Individual Rankings Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle className="font-inria text-dark-900">
               Individual Rankings
             </DialogTitle>
             {selectedBook && (
-              <div className="border-gold-600/20 mt-3 flex gap-3 border-b pb-3">
+              <div className="border-border mt-3 flex gap-3 border-b pb-3">
                 {selectedBook.coverUrl && (
                   <Image
                     src={selectedBook.coverUrl}
@@ -228,11 +197,11 @@ export function GlobalRankingsList({
                 {individualRankings.map((ranking) => (
                   <div
                     key={ranking.userId}
-                    className="bg-cream-100 border-gold-600/20 flex items-center gap-3 rounded-lg border p-3"
+                    className="bg-cream-100 border-border flex items-center gap-3 rounded-lg border p-3"
                   >
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={ranking.userImage || undefined} />
-                      <AvatarFallback className="bg-gold-200 text-dark-900 font-medium">
+                      <AvatarFallback className="bg-sage-200 text-dark-900 font-medium">
                         {ranking.userName.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>

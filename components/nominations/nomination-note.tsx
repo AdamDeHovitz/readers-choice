@@ -24,7 +24,7 @@ export function NominationNote({
   }
 
   return (
-    <figure className={cn("border-gold-600/40 border-l-2 pl-3", className)}>
+    <figure className={cn("border-sage-600/40 border-l-2 pl-3", className)}>
       <blockquote
         className={cn(
           "font-inria text-dark-900 whitespace-pre-wrap italic",

@@ -14,7 +14,7 @@ export function AdminFinalizeSection({
   onFinalize,
 }: AdminFinalizeSectionProps) {
   return (
-    <div className="border-gold-600/20 mt-4 border-t pt-4">
+    <div className="border-border mt-4 border-t pt-4">
       <p className="text-dark-600 mb-2 text-sm">
         Admin: Select winning book to finalize
       </p>

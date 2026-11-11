@@ -1,11 +1,15 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 import { getMyLibraries } from "@/server/libraries";
 import { getViewer } from "@/server/viewer";
-import { AppNav } from "@/components/navigation/app-nav";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { LibraryPicker } from "@/components/libraries/library-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
+
+export const metadata: Metadata = { title: "Settings" };
 
 /** Only same-site paths, so ?returnTo can't send people off-site. */
 function safeReturnTo(value: string | string[] | undefined): string | null {
@@ -29,29 +33,25 @@ export default async function SettingsPage({
   const returnTo = safeReturnTo(params.returnTo);
 
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <AppNav userName={viewer.name} />
+    <>
+      {returnTo && (
+        <Link
+          href={returnTo}
+          className="text-muted-foreground hover:text-foreground -mt-2 mb-3 inline-flex h-10 items-center gap-1 text-sm font-bold"
+        >
+          <ArrowLeftIcon className="size-4" aria-hidden />
+          Back
+        </Link>
+      )}
+      <PageHeader title="Settings" />
 
-      <main className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
-        {returnTo && (
-          <Link
-            href={returnTo}
-            className="font-inria text-dark-600 hover:text-dark-900 mb-4 inline-flex items-center gap-1 text-sm"
-          >
-            <ArrowLeftIcon className="size-4" aria-hidden />
-            Back
-          </Link>
-        )}
-        <h1 className="font-voga text-dark-900 mb-6 text-3xl uppercase">
-          Settings
-        </h1>
-
+      <div className="space-y-4">
         <Card id="libraries">
           <CardHeader>
-            <CardTitle className="font-inria text-dark-900 text-xl font-bold">
-              Libraries
+            <CardTitle>
+              <h2>Libraries</h2>
             </CardTitle>
-            <p className="font-inria text-dark-600 text-sm">
+            <p className="text-muted-foreground text-sm">
               While voting, each book shows how long the wait is for the ebook
               and audiobook on Libby at your libraries. Works with any library
               that uses Libby. No library card needed.
@@ -61,7 +61,21 @@ export default async function SettingsPage({
             <LibraryPicker initialLibraries={libraries} />
           </CardContent>
         </Card>
-      </main>
-    </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <h2>Account</h2>
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">
+              Signed in as {viewer.name}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <SignOutButton />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }

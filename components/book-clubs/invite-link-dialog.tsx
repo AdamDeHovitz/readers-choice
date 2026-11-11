@@ -81,8 +81,8 @@ export function InviteLinkDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline">
-          <UserPlusIcon className="mr-2 h-4 w-4" />
-          Invite Members
+          <UserPlusIcon aria-hidden />
+          Invite members
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
@@ -128,7 +128,7 @@ export function InviteLinkDialog({
                 )}
               </div>
 
-              <div className="bg-gold-50 border-gold-600 rounded-lg border p-3">
+              <div className="bg-sage-50 border-sage-600 rounded-lg border p-3">
                 <p className="text-dark-900 text-sm">
                   This link never expires and can be used multiple times. You
                   can deactivate it at any time.

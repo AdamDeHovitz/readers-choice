@@ -1,31 +1,31 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-inria font-medium font-inria transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-rust-600 focus-visible:ring-offset-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-inria font-bold transition-colors select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98]",
   {
     variants: {
       variant: {
-        default: "bg-rust-600 text-cream-100 border-2 border-dark-900 hover:bg-rust-700 shadow-sm",
+        default:
+          "bg-primary text-primary-foreground hover:bg-rust-700 shadow-sm",
         destructive:
-          "bg-destructive text-white border-2 border-dark-900 hover:bg-destructive/90 shadow-sm",
-        outline:
-          "border-2 border-rust-600 bg-transparent text-rust-600 hover:bg-rust-50",
-        secondary:
-          "bg-gold-600 text-dark-900 border-2 border-dark-900 hover:bg-gold-700 shadow-sm",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm",
+        outline: "border border-border bg-card text-foreground hover:bg-muted",
+        secondary: "bg-sage-200 text-dark-900 hover:bg-sage-300",
         ghost:
-          "bg-transparent text-dark-600 hover:bg-cream-200",
-        link: "text-rust-600 underline-offset-4 hover:underline",
+          "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
       },
+      // Mobile sizes meet the 44px touch-target guideline; desktop tightens.
       size: {
-        default: "h-10 px-5 py-2.5 has-[>svg]:px-4",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5 text-xs",
-        lg: "h-12 rounded-lg px-8 has-[>svg]:px-6 text-base",
-        icon: "size-10",
-        "icon-sm": "size-8",
+        default: "h-11 px-5 sm:h-10 has-[>svg]:px-4",
+        sm: "h-9 rounded-lg gap-1.5 px-3 has-[>svg]:px-2.5",
+        lg: "h-12 px-7 has-[>svg]:px-6 text-base",
+        icon: "size-11 sm:size-10",
+        "icon-sm": "size-9",
         "icon-lg": "size-12",
       },
     },
@@ -34,7 +34,7 @@ const buttonVariants = cva(
       size: "default",
     },
   }
-)
+);
 
 function Button({
   className,
@@ -44,9 +44,9 @@ function Button({
   ...props
 }: React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
+    asChild?: boolean;
   }) {
-  const Comp = asChild ? Slot : "button"
+  const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
@@ -54,7 +54,7 @@ function Button({
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
-  )
+  );
 }
 
-export { Button, buttonVariants }
+export { Button, buttonVariants };

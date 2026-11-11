@@ -53,17 +53,19 @@ INSERT INTO theme_votes (theme_id, user_id) VALUES
   ('66666666-0000-4000-8000-000000000003', '11111111-0000-4000-8000-000000000001');
 
 -- Books ----------------------------------------------------------------------
-INSERT INTO books (id, title, author, description, page_count, published_year, external_id, external_source) VALUES
-  ('33333333-0000-4000-8000-000000000001', 'Piranesi', 'Susanna Clarke', 'A man lives in a house of endless halls and tides.', 272, 2020, 'seed-1', 'seed'),
-  ('33333333-0000-4000-8000-000000000002', 'The Remains of the Day', 'Kazuo Ishiguro', 'A butler reflects on decades of service.', 258, 1989, 'seed-2', 'seed'),
-  ('33333333-0000-4000-8000-000000000003', 'Pale Fire', 'Vladimir Nabokov', 'A poem, and a commentary that is not quite about it.', 315, 1962, 'seed-3', 'seed'),
-  ('33333333-0000-4000-8000-000000000004', 'Station Eleven', 'Emily St. John Mandel', 'A travelling theatre troupe after the collapse.', 333, 2014, 'seed-4', 'seed'),
-  ('33333333-0000-4000-8000-000000000005', 'Klara and the Sun', 'Kazuo Ishiguro', 'An Artificial Friend observes the family she serves.', 303, 2021, 'seed-5', 'seed'),
-  ('33333333-0000-4000-8000-000000000006', 'The Overstory', 'Richard Powers', 'Nine lives drawn together by trees.', 502, 2018, 'seed-6', 'seed'),
-  ('33333333-0000-4000-8000-000000000007', 'Braiding Sweetgrass', 'Robin Wall Kimmerer', 'Indigenous wisdom, science, and plants.', 391, 2013, 'seed-7', 'seed'),
-  ('33333333-0000-4000-8000-000000000008', 'The Orchid Thief', 'Susan Orlean', 'A reporter follows a man obsessed with rare orchids.', 284, 1998, 'seed-8', 'seed'),
-  ('33333333-0000-4000-8000-000000000009', 'H Is for Hawk', 'Helen Macdonald', 'Grief, and training a goshawk.', 300, 2014, 'seed-9', 'seed'),
-  ('33333333-0000-4000-8000-000000000010', 'Moby-Dick', 'Herman Melville', 'One captain''s fixation on one whale.', 635, 1851, 'seed-10', 'seed');
+-- Covers come from Open Library, like real search results. H Is for Hawk has
+-- none on purpose, so the placeholder cover stays visible in local testing.
+INSERT INTO books (id, title, author, description, page_count, published_year, external_id, external_source, cover_url) VALUES
+  ('33333333-0000-4000-8000-000000000001', 'Piranesi', 'Susanna Clarke', 'A man lives in a house of endless halls and tides.', 272, 2020, 'seed-1', 'seed', 'https://covers.openlibrary.org/b/isbn/9781635575637-M.jpg'),
+  ('33333333-0000-4000-8000-000000000002', 'The Remains of the Day', 'Kazuo Ishiguro', 'A butler reflects on decades of service.', 258, 1989, 'seed-2', 'seed', 'https://covers.openlibrary.org/b/isbn/9780679731726-M.jpg'),
+  ('33333333-0000-4000-8000-000000000003', 'Pale Fire', 'Vladimir Nabokov', 'A poem, and a commentary that is not quite about it.', 315, 1962, 'seed-3', 'seed', 'https://covers.openlibrary.org/b/isbn/9780679723424-M.jpg'),
+  ('33333333-0000-4000-8000-000000000004', 'Station Eleven', 'Emily St. John Mandel', 'A travelling theatre troupe after the collapse.', 333, 2014, 'seed-4', 'seed', 'https://covers.openlibrary.org/b/isbn/9780804172448-M.jpg'),
+  ('33333333-0000-4000-8000-000000000005', 'Klara and the Sun', 'Kazuo Ishiguro', 'An Artificial Friend observes the family she serves.', 303, 2021, 'seed-5', 'seed', 'https://covers.openlibrary.org/b/isbn/9780593318171-M.jpg'),
+  ('33333333-0000-4000-8000-000000000006', 'The Overstory', 'Richard Powers', 'Nine lives drawn together by trees.', 502, 2018, 'seed-6', 'seed', 'https://covers.openlibrary.org/b/isbn/9780393635522-M.jpg'),
+  ('33333333-0000-4000-8000-000000000007', 'Braiding Sweetgrass', 'Robin Wall Kimmerer', 'Indigenous wisdom, science, and plants.', 391, 2013, 'seed-7', 'seed', 'https://covers.openlibrary.org/b/isbn/9781571313560-M.jpg'),
+  ('33333333-0000-4000-8000-000000000008', 'The Orchid Thief', 'Susan Orlean', 'A reporter follows a man obsessed with rare orchids.', 284, 1998, 'seed-8', 'seed', 'https://covers.openlibrary.org/b/isbn/9780449003718-M.jpg'),
+  ('33333333-0000-4000-8000-000000000009', 'H Is for Hawk', 'Helen Macdonald', 'Grief, and training a goshawk.', 300, 2014, 'seed-9', 'seed', NULL),
+  ('33333333-0000-4000-8000-000000000010', 'Moby-Dick', 'Herman Melville', 'One captain''s fixation on one whale.', 635, 1851, 'seed-10', 'seed', 'https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg');
 
 -- Meetings -------------------------------------------------------------------
 INSERT INTO meetings (id, book_club_id, meeting_date, nomination_deadline, voting_deadline, theme_id, is_finalized, finalized_at, finalized_by, selected_book_id, details) VALUES

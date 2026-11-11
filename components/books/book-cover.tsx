@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { BookOpenIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type BookCoverSize = "xs" | "sm" | "md" | "lg";
@@ -7,9 +8,9 @@ interface BookCoverSizeConfig {
   width: number;
   height: number;
   frame: string;
-  icon: string;
-  image: string;
-  placeholder: string;
+  shadow: string;
+  /** Title text on the placeholder cover; null when too small to read. */
+  title: string | null;
 }
 
 const SIZE_CONFIG: Record<BookCoverSize, BookCoverSizeConfig> = {
@@ -17,33 +18,29 @@ const SIZE_CONFIG: Record<BookCoverSize, BookCoverSizeConfig> = {
     width: 32,
     height: 48,
     frame: "h-12 w-8 rounded",
-    icon: "h-4 w-4",
-    image: "shadow-sm",
-    placeholder: "",
+    shadow: "shadow-sm",
+    title: null,
   },
   sm: {
     width: 64,
     height: 96,
-    frame: "h-24 w-16 rounded",
-    icon: "h-8 w-8",
-    image: "shadow-sm",
-    placeholder: "",
+    frame: "h-24 w-16 rounded p-1.5",
+    shadow: "shadow-sm",
+    title: "text-[10px] line-clamp-4",
   },
   md: {
     width: 80,
     height: 120,
-    frame: "h-30 w-20 rounded",
-    icon: "h-10 w-10",
-    image: "shadow-md",
-    placeholder: "",
+    frame: "h-30 w-20 rounded p-2.5",
+    shadow: "shadow-md",
+    title: "text-xs line-clamp-5",
   },
   lg: {
     width: 160,
     height: 240,
-    frame: "h-60 w-40 rounded-lg",
-    icon: "h-16 w-16",
-    image: "shadow-md",
-    placeholder: "shadow-md",
+    frame: "h-60 w-40 rounded-lg p-4",
+    shadow: "shadow-md",
+    title: "text-xl line-clamp-5",
   },
 };
 
@@ -53,7 +50,10 @@ interface BookCoverProps {
   size: BookCoverSize;
 }
 
-/** Book cover image with a book-icon placeholder when no cover is available. */
+/**
+ * Book cover image. Without one, every size shows the same rust "cloth"
+ * cover: the title where it fits, a book glyph at `xs`.
+ */
 export function BookCover({ coverUrl, title, size }: BookCoverProps) {
   const config = SIZE_CONFIG[size];
 
@@ -64,33 +64,35 @@ export function BookCover({ coverUrl, title, size }: BookCoverProps) {
         alt={title}
         width={config.width}
         height={config.height}
-        className={cn(config.frame, "object-cover", config.image)}
+        className={cn(config.frame, "object-cover p-0", config.shadow)}
       />
     );
   }
 
   return (
     <div
+      role="img"
+      aria-label={title}
       className={cn(
         config.frame,
-        "bg-cream-200 flex items-center justify-center",
-        config.placeholder
+        config.shadow,
+        "from-rust-600 to-rust-800 text-cream-50 flex shrink-0 flex-col overflow-hidden bg-gradient-to-br",
+        config.title ? "justify-between" : "items-center justify-center"
       )}
     >
-      <svg
-        className={cn(config.icon, "text-dark-500")}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
+      {config.title ? (
+        <>
+          <span
+            aria-hidden
+            className={cn("font-display leading-tight", config.title)}
+          >
+            {title}
+          </span>
+          <span aria-hidden className="bg-cream-50/40 h-px w-1/2" />
+        </>
+      ) : (
+        <BookOpenIcon className="size-4 opacity-80" aria-hidden />
+      )}
     </div>
   );
 }

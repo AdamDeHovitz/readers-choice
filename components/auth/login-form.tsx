@@ -15,36 +15,42 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
   const [mode, setMode] = useState<AuthMode>("google");
 
   return (
-    <div className="from-cream-50 to-cream-100 flex min-h-screen items-center justify-center bg-gradient-to-br p-4">
+    <div className="pt-safe pb-safe flex min-h-dvh items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="space-y-6 rounded-2xl bg-white p-8 shadow-xl">
+        <div className="bg-card border-border space-y-6 rounded-3xl border p-6 shadow-sm sm:p-8">
           <div className="space-y-2 text-center">
-            <h1 className="font-inria text-dark-900 text-3xl font-bold">
+            <h1 className="font-display text-foreground text-4xl">
               Readers&apos; Choice
             </h1>
-            <p className="text-dark-600">
-              Your joyful book club community awaits
+            <p className="text-muted-foreground">
+              Sign in to see your book clubs
             </p>
           </div>
 
           {mode !== "register" && (
-            <div className="border-dark-200 flex border-b">
+            <div
+              role="group"
+              aria-label="Sign-in method"
+              className="bg-sage-100 flex gap-1 rounded-xl p-1"
+            >
               <button
+                aria-pressed={mode === "google"}
                 onClick={() => setMode("google")}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                className={`h-10 flex-1 rounded-lg text-sm font-bold transition-colors ${
                   mode === "google"
-                    ? "text-gold-600 border-gold-600 border-b-2"
-                    : "text-dark-500 hover:text-dark-700"
+                    ? "bg-sage-600 text-dark-900 shadow-sm"
+                    : "text-sage-800 hover:bg-sage-200"
                 }`}
               >
                 Google
               </button>
               <button
+                aria-pressed={mode === "credentials"}
                 onClick={() => setMode("credentials")}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                className={`h-10 flex-1 rounded-lg text-sm font-bold transition-colors ${
                   mode === "credentials"
-                    ? "text-gold-600 border-gold-600 border-b-2"
-                    : "text-dark-500 hover:text-dark-700"
+                    ? "bg-sage-600 text-dark-900 shadow-sm"
+                    : "text-sage-800 hover:bg-sage-200"
                 }`}
               >
                 Email & Password
@@ -52,7 +58,7 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
             </div>
           )}
 
-          <div className="pt-4">
+          <div>
             {mode === "google" && (
               <>
                 <SignInButton callbackUrl={callbackUrl} />

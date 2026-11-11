@@ -86,20 +86,3 @@ export function pickUpcomingMeeting<
       .sort((a, b) => time(a) - time(b))[0] ?? null
   );
 }
-
-/** What a club is doing right now, as shown on its home page. */
-export type ClubStatus = "nominating" | "voting" | "inactive";
-
-/**
- * A club with no upcoming meeting is inactive. Otherwise it's nominating or
- * voting; once voting closes it shows as voting until an admin finalizes.
- */
-export function getClubStatus(
-  upcoming: MeetingSchedule | null,
-  now: Date = new Date()
-): ClubStatus {
-  if (!upcoming) return "inactive";
-  return getMeetingPhase(upcoming, now) === "nominating"
-    ? "nominating"
-    : "voting";
-}

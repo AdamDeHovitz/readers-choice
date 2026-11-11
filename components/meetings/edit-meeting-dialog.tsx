@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PencilIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fromDateTimeInput, toDateTimeInput } from "@/lib/datetime-input";
 import { useAction } from "@/hooks/use-action";
@@ -167,10 +168,11 @@ export function EditMeetingDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Edit Meeting
+          <PencilIcon aria-hidden />
+          Edit
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Edit Meeting</DialogTitle>
           <DialogDescription>

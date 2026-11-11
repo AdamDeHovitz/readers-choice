@@ -72,7 +72,7 @@ export function VotingResultsDisplay({
       )}
 
       {/* Voter breakdown */}
-      <div className="bg-cream-100 border-gold-600/20 rounded-lg border p-3">
+      <div className="bg-cream-100 border-border rounded-lg border p-3">
         <p className="text-dark-700 text-sm">
           <span className="font-semibold">{voterBreakdown.totalVoters}</span>{" "}
           members voted
@@ -91,7 +91,7 @@ export function VotingResultsDisplay({
       <div>
         <button
           onClick={() => setShowDetails(!showDetails)}
-          className="text-gold-700 hover:text-gold-800 flex items-center gap-2 text-sm font-medium"
+          className="text-sage-700 hover:text-sage-800 flex items-center gap-2 text-sm font-medium"
         >
           <svg
             className={`h-4 w-4 transition-transform ${showDetails ? "rotate-90" : ""}`}
@@ -112,7 +112,7 @@ export function VotingResultsDisplay({
         {showDetails && (
           <div className="mt-3 space-y-4">
             {/* Methodology explanation */}
-            <div className="border-gold-600/20 rounded-lg border bg-white p-4">
+            <div className="border-border bg-card rounded-lg border p-4">
               <h4 className="font-inria text-dark-900 mb-2 font-semibold">
                 Voting Method
               </h4>
@@ -143,7 +143,7 @@ export function VotingResultsDisplay({
               {rounds.map((round) => (
                 <div
                   key={round.round}
-                  className="border-gold-600/20 rounded-lg border bg-white p-3"
+                  className="border-border bg-card rounded-lg border p-3"
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <h5 className="text-dark-900 text-sm font-semibold">
@@ -171,7 +171,7 @@ export function VotingResultsDisplay({
                               : isEliminated
                                 ? "bg-red-50 text-red-700 line-through"
                                 : index === 0
-                                  ? "bg-gold-50"
+                                  ? "bg-sage-50"
                                   : ""
                           }`}
                         >

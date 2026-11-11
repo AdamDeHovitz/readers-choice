@@ -54,7 +54,7 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
         <h3 className="text-dark-900 text-sm font-bold">Your libraries</h3>
         {libraries.length > 0 ? (
           <ul
-            className="border-gold-600/20 divide-gold-600/15 mt-2 divide-y overflow-hidden rounded-lg border bg-white"
+            className="border-border divide-border bg-card mt-2 divide-y overflow-hidden rounded-lg border"
             aria-label="Your libraries"
           >
             {libraries.map((library) => (
@@ -63,7 +63,7 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
                 className="flex items-center gap-3 px-3 py-2.5"
               >
                 <LibraryIcon
-                  className="text-gold-700 size-4 shrink-0"
+                  className="text-sage-700 size-4 shrink-0"
                   aria-hidden
                 />
                 <span className="text-dark-900 flex-1 text-sm">
@@ -86,7 +86,7 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
             ))}
           </ul>
         ) : (
-          <p className="border-dark-900/15 text-dark-500 mt-2 rounded-lg border border-dashed bg-white px-3 py-4 text-center text-sm">
+          <p className="border-dark-900/15 text-dark-500 bg-card mt-2 rounded-lg border border-dashed px-3 py-4 text-center text-sm">
             No libraries yet. Search below to add one.
           </p>
         )}
@@ -114,7 +114,7 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Library name, city, or ZIP code"
               autoComplete="off"
-              className="h-10 bg-white pl-9 [&::-webkit-search-cancel-button]:appearance-none"
+              className="bg-card h-10 pl-9 [&::-webkit-search-cancel-button]:appearance-none"
             />
           </div>
           {searching && (
@@ -124,7 +124,7 @@ export function LibraryPicker({ initialLibraries }: LibraryPickerProps) {
           )}
           {!searching && visibleResults.length > 0 && (
             <ul
-              className="border-gold-600/20 divide-gold-600/15 mt-2 divide-y overflow-hidden rounded-lg border bg-white"
+              className="border-border divide-border bg-card mt-2 divide-y overflow-hidden rounded-lg border"
               aria-label="Matching libraries"
             >
               {visibleResults.map((result) => {

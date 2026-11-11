@@ -1,4 +1,6 @@
-import { BookClubNav } from "@/components/navigation/book-club-nav";
+import { CalendarDaysIcon, ClockIcon } from "lucide-react";
+import { MeetingStatusBadge } from "@/components/meetings/meeting-status-badge";
+import { PageHeader, Section } from "@/components/ui/page-header";
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { BookOptionsList } from "@/components/meetings/book-options-list";
@@ -18,7 +20,6 @@ import {
   getUserRankedVotes,
   getUserVotingPreference,
 } from "@/server/voting";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function MeetingPage({
   params,
@@ -37,7 +38,6 @@ export default async function MeetingPage({
   }
 
   const meetingDate = new Date(meeting.meetingDate);
-  const isPast = meetingDate < new Date();
 
   // Determine meeting phase
   const nominationDeadline = meeting.nominationDeadline
@@ -81,184 +81,117 @@ export default async function MeetingPage({
       )
     : undefined;
 
+  const title = meeting.theme
+    ? meeting.theme.name
+    : "Meeting " + meetingDate.toLocaleDateString();
+  const shortDate = (date: Date) =>
+    date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
   return (
-    <div className="bg-cream-100 min-h-screen">
-      <BookClubNav
-        bookClubId={meeting.bookClub.id}
-        bookClubName={meeting.bookClub.name}
-        userName={viewer.name}
-      />
-
-      <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="space-y-6">
-          {/* Meeting Header */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="mb-2 flex items-center gap-2">
-                    <CardTitle className="text-2xl">
-                      {meeting.theme
-                        ? meeting.theme.name
-                        : "Meeting " + meetingDate.toLocaleDateString()}
-                    </CardTitle>
-                    {meeting.currentUserIsAdmin && (
-                      <>
-                        <EditMeetingDialog
-                          meetingId={meeting.id}
-                          bookClubId={meeting.bookClub.id}
-                          currentDate={meeting.meetingDate}
-                          currentNominationDeadline={
-                            meeting.nominationDeadline || null
-                          }
-                          currentVotingDeadline={meeting.votingDeadline || null}
-                          currentTheme={meeting.theme?.name || null}
-                          currentDetails={meeting.details || null}
-                          currentBook={meeting.selectedBook || null}
-                        />
-                        <DeleteMeetingButton
-                          meetingId={meeting.id}
-                          bookClubId={meeting.bookClub.id}
-                          meetingName={
-                            meeting.theme
-                              ? meeting.theme.name
-                              : "Meeting " + meetingDate.toLocaleDateString()
-                          }
-                        />
-                      </>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-dark-600">
-                      {meetingDate.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                    {nominationsOpen && nominationDeadline && (
-                      <p className="text-dark-500 text-sm">
-                        Nominations close:{" "}
-                        {nominationDeadline.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                    )}
-                    {votingOpen && votingDeadline && (
-                      <p className="text-dark-500 text-sm">
-                        Voting closes:{" "}
-                        {votingDeadline.toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                    )}
-                    {meeting.details && (
-                      <div className="bg-cream-100 border-gold-600/20 mt-3 rounded-lg border p-3">
-                        <p className="text-dark-900 text-sm whitespace-pre-wrap">
-                          {meeting.details}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  {meeting.isFinalized ? (
-                    <span className="bg-rust-100 text-cream-100 font-inria rounded-full px-3 py-1 text-sm font-medium">
-                      Finalized
-                    </span>
-                  ) : nominationsOpen ? (
-                    <span className="text-dark-900 font-inria rounded-full bg-blue-100 px-3 py-1 text-sm font-medium">
-                      Nominations Open
-                    </span>
-                  ) : votingOpen ? (
-                    <span className="bg-gold-100 text-dark-900 font-inria rounded-full px-3 py-1 text-sm font-medium">
-                      Voting Open
-                    </span>
-                  ) : isPast ? (
-                    <span className="bg-cream-200 text-dark-600 font-inria rounded-full px-3 py-1 text-sm font-medium">
-                      Past
-                    </span>
-                  ) : null}
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-
-          {/* Nomination Form - Only show during nomination phase */}
-          {nominationsOpen && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-inria text-dark-900 text-xl">
-                  Nominate a Book
-                </CardTitle>
-                {nominationDeadline && (
-                  <p className="text-dark-600 mt-2 text-sm">
-                    Nominations close{" "}
-                    {nominationDeadline.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent>
-                <NominationForm
+    <div className="space-y-8">
+      <div>
+        <PageHeader
+          className="mb-0"
+          eyebrow={<MeetingStatusBadge meeting={meeting} />}
+          title={title}
+          description={
+            <>
+              <p className="flex items-center gap-2">
+                <CalendarDaysIcon className="size-4 shrink-0" aria-hidden />
+                {meetingDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+              {nominationsOpen && nominationDeadline && (
+                <p className="flex items-center gap-2">
+                  <ClockIcon className="size-4 shrink-0" aria-hidden />
+                  Nominations close {shortDate(nominationDeadline)}
+                </p>
+              )}
+              {votingOpen && votingDeadline && (
+                <p className="flex items-center gap-2">
+                  <ClockIcon className="size-4 shrink-0" aria-hidden />
+                  Voting closes {shortDate(votingDeadline)}
+                </p>
+              )}
+            </>
+          }
+          actions={
+            meeting.currentUserIsAdmin && (
+              <div className="flex gap-2">
+                <EditMeetingDialog
                   meetingId={meeting.id}
-                  existingNominations={meeting.bookOptions}
-                  currentUserId={viewer.userId}
+                  bookClubId={meeting.bookClub.id}
+                  currentDate={meeting.meetingDate}
+                  currentNominationDeadline={meeting.nominationDeadline || null}
+                  currentVotingDeadline={meeting.votingDeadline || null}
+                  currentTheme={meeting.theme?.name || null}
+                  currentDetails={meeting.details || null}
+                  currentBook={meeting.selectedBook || null}
                 />
-              </CardContent>
-            </Card>
-          )}
+                <DeleteMeetingButton
+                  meetingId={meeting.id}
+                  bookClubId={meeting.bookClub.id}
+                  meetingName={title}
+                />
+              </div>
+            )
+          }
+        />
+        {meeting.details && (
+          <blockquote className="bg-card border-border mt-4 rounded-2xl border p-4 text-sm">
+            <p className="text-foreground mb-1 font-bold">From the host</p>
+            <p className="text-dark-700 whitespace-pre-wrap">
+              {meeting.details}
+            </p>
+          </blockquote>
+        )}
+      </div>
 
-          {/* Book Options - Show during voting, after voting closes, or after finalized */}
-          {(votingOpen || !nominationsOpen || meeting.isFinalized) &&
-            meeting.bookOptions.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    {votingOpen
-                      ? "Vote for a Book"
-                      : meeting.isFinalized
-                        ? "Book Options"
-                        : "Voting Results"}
-                    {meeting.bookOptions.length > 0 && (
-                      <span className="text-dark-500 ml-2 text-base font-normal">
-                        ({meeting.bookOptions.length})
-                      </span>
-                    )}
-                  </CardTitle>
-                  {votingOpen && votingDeadline && (
-                    <p className="text-dark-600 mt-2 text-sm">
-                      Voting closes{" "}
-                      {votingDeadline.toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </p>
-                  )}
-                </CardHeader>
-                <CardContent>
-                  <BookOptionsList
-                    bookOptions={meeting.bookOptions}
-                    isFinalized={meeting.isFinalized}
-                    selectedBookId={meeting.selectedBookId}
-                    currentUserIsAdmin={meeting.currentUserIsAdmin}
-                    meetingId={meeting.id}
-                    isVotingOpen={votingOpen}
-                    userVotingMethod={userVotingMethod}
-                    userRankedVotes={userRankedVotes}
-                    votingResults={votingResults}
-                    availability={availability}
-                  />
-                </CardContent>
-              </Card>
-            )}
-        </div>
-      </main>
+      {/* Nomination Form - Only show during nomination phase */}
+      {nominationsOpen && (
+        <Section
+          title="Nominate a book"
+          description="Search for a book and add a note about why you picked it."
+        >
+          <NominationForm
+            meetingId={meeting.id}
+            existingNominations={meeting.bookOptions}
+            currentUserId={viewer.userId}
+          />
+        </Section>
+      )}
+
+      {/* Book Options - Show during voting, after voting closes, or after finalized */}
+      {(votingOpen || !nominationsOpen || meeting.isFinalized) &&
+        meeting.bookOptions.length > 0 && (
+          <Section
+            title={
+              votingOpen
+                ? "Vote for a book"
+                : meeting.isFinalized
+                  ? "Book options"
+                  : "Voting results"
+            }
+            description={`${meeting.bookOptions.length} ${meeting.bookOptions.length === 1 ? "book" : "books"}`}
+          >
+            <BookOptionsList
+              bookOptions={meeting.bookOptions}
+              isFinalized={meeting.isFinalized}
+              selectedBookId={meeting.selectedBookId}
+              currentUserIsAdmin={meeting.currentUserIsAdmin}
+              meetingId={meeting.id}
+              isVotingOpen={votingOpen}
+              userVotingMethod={userVotingMethod}
+              userRankedVotes={userRankedVotes}
+              votingResults={votingResults}
+              availability={availability}
+            />
+          </Section>
+        )}
     </div>
   );
 }

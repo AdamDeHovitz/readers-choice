@@ -1,53 +1,68 @@
-import { auth } from "@/auth";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { CalendarDaysIcon, TrophyIcon, VoteIcon } from "lucide-react";
+import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 
+const FEATURES = [
+  {
+    icon: CalendarDaysIcon,
+    title: "Plan meetings",
+    body: "Themes, dates and deadlines in one place.",
+  },
+  {
+    icon: VoteIcon,
+    title: "Vote together",
+    body: "Nominate books, then pick with approval or ranked-choice votes.",
+  },
+  {
+    icon: TrophyIcon,
+    title: "Rank your year",
+    body: "See how the club's favorites stack up.",
+  },
+];
+
 export default async function Home() {
-  const session = await auth();
+  // Signed-in readers go straight to their clubs, like an installed app.
+  if (await auth()) redirect("/dashboard");
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-8 bg-gradient-to-br from-cream-50 to-cream-100">
-      <div className="text-center space-y-6 max-w-2xl">
-        <h1 className="text-5xl font-voga uppercase text-dark-900 tracking-wide">
-          READERS&apos; CHOICE
+    <main className="pt-safe pb-safe mx-auto flex min-h-dvh max-w-md flex-col px-6">
+      <div className="flex flex-1 flex-col justify-center py-12">
+        <p className="text-primary text-sm font-bold tracking-widest uppercase">
+          Book club, sorted
+        </p>
+        <h1 className="font-display text-foreground mt-3 text-5xl leading-[1.05]">
+          Readers&apos; Choice
         </h1>
-        <p className="text-xl font-inria font-bold font-inria text-dark-900">
-          Your joyful book club community
+        <p className="text-muted-foreground mt-4 text-lg">
+          Pick your next read together, vote on it fairly, and remember the ones
+          you loved.
         </p>
-        <p className="text-base font-inria text-dark-600">
-          Create book clubs, vote on your next read, and rank your favorites
-          with friends
-        </p>
-        <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
-          {session ? (
-            <>
-              <Link href="/dashboard">
-                <Button size="lg" variant="default">
-                  My Book Clubs
-                </Button>
-              </Link>
-              <Link href="/browse">
-                <Button size="lg" variant="secondary">
-                  Browse Book Clubs
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/login">
-                <Button size="lg" variant="default">
-                  Get Started
-                </Button>
-              </Link>
-              <Link href="/browse">
-                <Button size="lg" variant="secondary">
-                  Browse Book Clubs
-                </Button>
-              </Link>
-            </>
-          )}
-        </div>
+
+        <ul className="mt-10 space-y-5">
+          {FEATURES.map((feature) => (
+            <li key={feature.title} className="flex gap-4">
+              <div className="bg-sage-200 text-sage-800 flex size-11 shrink-0 items-center justify-center rounded-xl">
+                <feature.icon className="size-5" aria-hidden />
+              </div>
+              <div>
+                <p className="text-foreground font-bold">{feature.title}</p>
+                <p className="text-muted-foreground text-sm">{feature.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+
+      <div className="space-y-3 pb-8">
+        <Button asChild size="lg" className="w-full">
+          <Link href="/login">Get started</Link>
+        </Button>
+        <Button asChild size="lg" variant="ghost" className="w-full">
+          <Link href="/browse">Browse book clubs</Link>
+        </Button>
+      </div>
+    </main>
   );
 }

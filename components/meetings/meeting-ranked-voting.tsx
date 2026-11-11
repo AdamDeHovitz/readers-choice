@@ -196,7 +196,7 @@ export function MeetingRankedVoting({
             <div className="text-dark-600 text-xs">
               {isSaving ? (
                 <span className="flex items-center gap-1">
-                  <span className="bg-gold-500 inline-block h-1.5 w-1.5 animate-pulse rounded-full"></span>
+                  <span className="bg-sage-500 inline-block h-1.5 w-1.5 animate-pulse rounded-full"></span>
                   Saving...
                 </span>
               ) : lastSaved ? (

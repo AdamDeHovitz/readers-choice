@@ -45,7 +45,7 @@ export function BookAvailabilityFallback() {
   return (
     <div
       role="status"
-      className="font-inria border-dark-900/10 flex w-full max-w-sm items-center gap-3 rounded-lg border bg-white px-3 py-2"
+      className="font-inria border-dark-900/10 bg-card flex w-full max-w-sm items-center gap-3 rounded-lg border px-3 py-2"
     >
       <LibraryIcon className="text-dark-500 size-4 shrink-0" aria-hidden />
       <span className="flex-1 space-y-1.5" aria-label="Checking your libraries">
