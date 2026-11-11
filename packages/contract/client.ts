@@ -2,7 +2,7 @@ import type { InputOf, OperationContract, OutputOf } from "./operation";
 import type { OperationResponse } from "./result";
 
 export interface OperationClientOptions {
-  /** The site's origin, e.g. "https://readers-choice.vercel.app". */
+  /** The site's origin, e.g. "https://readers-choice.dehovitz.com". */
   baseUrl: string;
   /** Extra headers per call, e.g. an Authorization header. */
   headers?: () => Record<string, string> | Promise<Record<string, string>>;

@@ -32,7 +32,7 @@ export default function PrivacyPage() {
             Readers&apos; Choice is a small app for running book clubs: planning
             meetings, nominating and voting on books, and ranking the
             year&apos;s reads. It&apos;s available on the web at
-            readers-choice.vercel.app, and soon as a mobile app. This page
+            readers-choice.dehovitz.com, and soon as a mobile app. This page
             explains what it stores about you, who can see it, and how to have
             it deleted. There are no ads, no analytics or tracking, and your
             information is never sold.
