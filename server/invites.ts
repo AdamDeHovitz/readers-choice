@@ -1,5 +1,6 @@
 import "server-only";
-import { generateInviteCode, isWellFormedInviteCode } from "@/lib/invite-code";
+import { isWellFormedInviteCode } from "@/lib/invite-code";
+import { generateInviteCode } from "./invite-code";
 import type { Db } from "./db";
 
 export interface InviteDetails {

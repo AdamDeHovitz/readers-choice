@@ -1,3 +1,4 @@
+import { builtinModules } from "node:module";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
@@ -47,12 +48,23 @@ export default defineConfig([
               message:
                 "lib/ is pure, isomorphic logic with no app dependencies.",
             },
+            {
+              // lib/ is shared with the mobile app (issue #75), which has no
+              // Node runtime. Server-only helpers belong in server/.
+              group: [...builtinModules, "node:*"],
+              message:
+                "lib/ runs in browsers and React Native too; put Node-only code in server/.",
+            },
           ],
           paths: [
             {
               name: "@supabase/supabase-js",
               message: "lib/ must not create database clients.",
               allowTypeImports: true,
+            },
+            {
+              name: "bcryptjs",
+              message: "Password hashing is server-only: server/password.ts.",
             },
           ],
         },

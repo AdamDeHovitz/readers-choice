@@ -1,5 +1,5 @@
 import "server-only";
-import { normalizeEmail } from "@/lib/password";
+import { normalizeEmail } from "@/lib/credentials";
 import type { Db } from "./db";
 
 export interface Account {
