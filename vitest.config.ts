@@ -1,39 +1,50 @@
 import { defineConfig } from "vitest/config";
-import path from "path";
 
+// One run covers every workspace: `npm run test:run` from the repo root.
 // Live-network tests (*.integration.test.ts) only run when explicitly
 // requested via `npm run test:integration`.
 const integration = process.env.VITEST_INTEGRATION === "1";
+const include = integration ? ["**/*.integration.test.ts"] : ["**/*.test.ts"];
+const exclude = [
+  "**/node_modules/**",
+  ...(integration ? [] : ["**/*.integration.test.ts"]),
+];
 
 export default defineConfig({
   test: {
-    globals: true,
-    environment: "node",
-    include: integration
-      ? ["**/*.integration.test.ts"]
-      : ["**/*.test.ts", "**/*.test.tsx"],
-    exclude: [
-      "**/node_modules/**",
-      ".next",
-      // Agent worktrees are full repo copies
-      ".claude/**",
-      ".worktrees/**",
-      ...(integration ? [] : ["**/*.integration.test.ts"]),
+    projects: [
+      "apps/web",
+      {
+        test: {
+          name: "core",
+          root: "packages/core",
+          globals: true,
+          include,
+          exclude,
+        },
+      },
+      {
+        test: {
+          name: "contract",
+          root: "packages/contract",
+          globals: true,
+          include,
+          exclude,
+        },
+      },
+      { test: { name: "scripts", root: "scripts", include: ["**/*.test.ts"] } },
     ],
     coverage: {
-      include: ["lib/**", "server/**", "app/actions/**"],
+      include: [
+        "packages/*/**",
+        "apps/web/server/**",
+        "apps/web/app/actions/**",
+      ],
       exclude: [
         "**/*.test.ts",
         "**/__fixtures__/**",
-        "server/database.types.ts",
+        "apps/web/server/database.types.ts",
       ],
-    },
-  },
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./"),
-      // Throws outside React Server Components; tests are the server here.
-      "server-only": path.resolve(__dirname, "test/empty-module.ts"),
     },
   },
 });

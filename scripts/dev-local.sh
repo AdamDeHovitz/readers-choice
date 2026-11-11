@@ -35,10 +35,12 @@ echo "Readers' Choice on http://localhost:$PORT -> local Supabase $LOCAL_API_URL
 if [[ "${1:-}" == "--prebuilt" ]]; then
   # The build inlines NEXT_PUBLIC_SUPABASE_URL, so make sure it was built
   # against this local stack and not, say, production from .env.local.
-  if ! grep -rqF "$LOCAL_API_URL" .next/server 2>/dev/null; then
+  if ! grep -rqF "$LOCAL_API_URL" apps/web/.next/server 2>/dev/null; then
     echo "Refusing to start: .next was not built with NEXT_PUBLIC_SUPABASE_URL=$LOCAL_API_URL." >&2
     exit 1
   fi
+  cd apps/web
   exec npx next start --port "$PORT"
 fi
+cd apps/web
 exec npx next dev --turbopack --port "$PORT"

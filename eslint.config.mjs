@@ -8,6 +8,8 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
+    // The Next app lives in apps/web; the shared packages sit beside it.
+    settings: { next: { rootDir: "apps/web" } },
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-unused-vars": [
@@ -20,7 +22,7 @@ export default defineConfig([
   // layers so DTO types have a single definition.
   {
     files: ["**/*.{ts,tsx}"],
-    ignores: ["server/db.ts", "app/api/keep-alive/route.ts"],
+    ignores: ["apps/web/server/db.ts", "apps/web/app/api/keep-alive/route.ts"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -37,7 +39,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["lib/**/*.{ts,tsx}"],
+    files: ["packages/core/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -45,32 +47,32 @@ export default defineConfig([
           patterns: [
             {
               group: [
-                "@/server/*",
-                "@/app/*",
-                "@/components/*",
-                "@/contract/*",
-                "@/auth",
+                "@/*",
+                "@readers-choice/web",
+                "@readers-choice/contract",
+                "@readers-choice/contract/*",
               ],
               message:
-                "lib/ is pure, isomorphic logic with no app dependencies.",
+                "packages/core is pure, isomorphic logic with no app or contract dependencies.",
             },
             {
-              // lib/ is shared with the mobile app (issue #75), which has no
-              // Node runtime. Server-only helpers belong in server/.
+              // core is shared with the mobile app (issue #75), which has no
+              // Node runtime. Server-only helpers belong in apps/web/server/.
               group: [...builtinModules, "node:*"],
               message:
-                "lib/ runs in browsers and React Native too; put Node-only code in server/.",
+                "packages/core runs in browsers and React Native too; put Node-only code in apps/web/server/.",
             },
           ],
           paths: [
             {
               name: "@supabase/supabase-js",
-              message: "lib/ must not create database clients.",
+              message: "packages/core must not create database clients.",
               allowTypeImports: true,
             },
             {
               name: "bcryptjs",
-              message: "Password hashing is server-only: server/password.ts.",
+              message:
+                "Password hashing is server-only: apps/web/server/password.ts.",
             },
           ],
         },
@@ -79,37 +81,32 @@ export default defineConfig([
   },
   {
     // Operation contracts are shared with the mobile app: schemas and types
-    // only, built from zod and lib/.
-    files: ["contract/**/*.{ts,tsx}"],
+    // only, built from zod and packages/core.
+    files: ["packages/contract/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
         {
           patterns: [
             {
-              group: [
-                "@/server/*",
-                "@/app/*",
-                "@/components/*",
-                "@/hooks/*",
-                "@/auth",
-              ],
+              group: ["@/*", "@readers-choice/web"],
               message:
-                "contract/ holds client-facing schemas and types; it may import only zod and lib/.",
+                "packages/contract holds client-facing schemas and types; it may import only zod and packages/core.",
             },
             {
               group: [...builtinModules, "node:*"],
-              message: "contract/ runs in browsers and React Native too.",
+              message:
+                "packages/contract runs in browsers and React Native too.",
             },
           ],
           paths: [
             {
               name: "@supabase/supabase-js",
-              message: "contract/ never talks to the database.",
+              message: "packages/contract never talks to the database.",
             },
             {
               name: "server-only",
-              message: "contract/ is imported by clients.",
+              message: "packages/contract is imported by clients.",
             },
           ],
         },
@@ -117,8 +114,8 @@ export default defineConfig([
     },
   },
   {
-    files: ["server/**/*.{ts,tsx}"],
-    ignores: ["server/db.ts"],
+    files: ["apps/web/server/**/*.{ts,tsx}"],
+    ignores: ["apps/web/server/db.ts"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -141,7 +138,10 @@ export default defineConfig([
     },
   },
   {
-    files: ["components/**/*.{ts,tsx}", "hooks/**/*.{ts,tsx}"],
+    files: [
+      "apps/web/components/**/*.{ts,tsx}",
+      "apps/web/hooks/**/*.{ts,tsx}",
+    ],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -166,14 +166,14 @@ export default defineConfig([
     },
   },
   globalIgnores([
-    ".next/**",
+    "**/.next/**",
     ".worktrees/**",
     "out/**",
     ".vercel/**",
-    "public/**",
+    "**/public/**",
     "coverage/**",
     "scripts/**",
     ".claude/**",
-    "next-env.d.ts",
+    "**/next-env.d.ts",
   ]),
 ]);

@@ -8,7 +8,7 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
 
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./apps/web/e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   // CI adds HTML and JSON reporters on the command line (see ci.yml).

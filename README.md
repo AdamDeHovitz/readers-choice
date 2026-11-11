@@ -123,7 +123,7 @@ npm install
 
 ### 4. Environment Variables
 
-Create a `.env.local` file in the root directory:
+Create `apps/web/.env.local` (Next.js reads env files from the app directory):
 
 ```env
 # Supabase
@@ -150,7 +150,7 @@ Visit [http://localhost:3000](http://localhost:3000) to see your app!
 ### 6. Deploy to Vercel (Optional)
 
 1. Push your code to GitHub
-2. Import your repository on [Vercel](https://vercel.com)
+2. Import your repository on [Vercel](https://vercel.com) and set the project's **Root Directory** to `apps/web`
 3. Add all environment variables from `.env.local`
 4. Update `NEXTAUTH_URL` to your Vercel deployment URL
 5. Update Google OAuth redirect URIs to include your Vercel domain

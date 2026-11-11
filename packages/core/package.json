@@ -1,0 +1,10 @@
+{
+  "name": "@readers-choice/core",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pure, isomorphic logic shared by the web and mobile apps: no Node built-ins, no app code.",
+  "type": "module",
+  "exports": {
+    "./*": "./*.ts"
+  }
+}

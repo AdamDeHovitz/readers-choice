@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Generate server/database.types.ts from the local Supabase schema.
+# Generate apps/web/server/database.types.ts from the local Supabase schema.
 #   scripts/db-types.sh          regenerate the file
 #   scripts/db-types.sh --check  fail if it's out of date (CI)
 # Needs the local stack running with every migration applied (npm run db:reset).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-TARGET=server/database.types.ts
+TARGET=apps/web/server/database.types.ts
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
