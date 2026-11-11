@@ -1,7 +1,7 @@
 "use server";
 
 import * as themes from "@/server/operations/themes";
-import { serverAction } from "./server-action";
+import { serverAction } from "@/app/_operations/server-action";
 
 export const suggestTheme = serverAction(themes.suggestTheme);
 export const toggleThemeUpvote = serverAction(themes.toggleThemeUpvote);

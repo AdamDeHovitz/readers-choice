@@ -39,6 +39,11 @@ export interface OperationOutcome<T> {
   result: ActionResult<T>;
   /** Keys the operation invalidated; empty unless it succeeded. */
   invalidated: InvalidationKey[];
+  /**
+   * Why the operation didn't run, for transports that report it (HTTP
+   * status codes). Unset when it ran, whether it succeeded or failed.
+   */
+  rejected?: "unauthenticated" | "invalid-input";
 }
 
 /**
@@ -52,13 +57,21 @@ export async function executeOperation<C extends OperationContract>(
   rawInput: unknown
 ): Promise<OperationOutcome<OutputOf<C>>> {
   if (!viewer) {
-    return { result: { success: false, error: UNAUTHORIZED }, invalidated: [] };
+    return {
+      result: { success: false, error: UNAUTHORIZED },
+      invalidated: [],
+      rejected: "unauthenticated",
+    };
   }
 
   const parsed = operation.contract.input.safeParse(rawInput);
   if (!parsed.success) {
     const error = parsed.error.issues[0]?.message ?? "Invalid input";
-    return { result: { success: false, error }, invalidated: [] };
+    return {
+      result: { success: false, error },
+      invalidated: [],
+      rejected: "invalid-input",
+    };
   }
 
   const invalidated: InvalidationKey[] = [];

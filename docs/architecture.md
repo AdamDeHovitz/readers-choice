@@ -15,7 +15,7 @@ Four layers. Each imports only from the layers below it; ESLint enforces the bou
 
 **Page (read):** `getViewer()` (session + typed client, cached per request) → a `server/<domain>.ts` query that takes the viewer, checks membership itself, and returns DTOs → render. Pages never call server actions to read.
 
-**Operation (write, or a read a client component needs):** an operation is declared once and served to every client. The web calls it as a server action; the mobile app will call the same operation over HTTP (#75).
+**Operation (write, or a read a client component needs):** an operation is declared once and served to every client. The web calls it as a server action; other clients (the mobile app, #75) call the same operation over HTTP at `POST /api/v1/<name>`.
 
 ```ts
 // contract/themes.ts: what clients see. zod schema in, output type out.
@@ -53,7 +53,8 @@ export const deleteTheme = serverAction(themes.deleteTheme);
 - `executeOperation` (`server/operation.ts`) rejects signed-out callers, parses the input with the contract's schema (the first issue's message is the error), runs the implementation, and returns `{ success: true, data } | { success: false, error }` (`ActionResult`, `contract/result.ts`).
 - Throw `UserError` (`lib/user-error.ts`) for messages users should see. Any other error is logged, and the client gets only the fallback message. `throwIfDbError` maps our Postgres functions' error codes to `UserError`s.
 - The schema guards the shape; the implementation still authorizes the viewer for the resource (`server/authz.ts`). Every operation is a public endpoint.
-- `ctx.invalidate(...)` takes keys from `contract/keys.ts`. The web maps each key to the paths to revalidate (`pathsFor` in `app/actions/server-action.ts`); mobile will use the same keys as query keys. Add a key and its paths together.
+- `ctx.invalidate(...)` takes keys from `contract/keys.ts`. Both transports revalidate the web pages behind each key (`pathsFor` in `app/_operations/revalidate.ts`), so a change made on mobile also refreshes the website. The HTTP response returns the keys for mobile to use as query keys. Add a key and its paths together.
+- Transports live in `app/_operations/`: `serverAction(op)` for the web and `handleOperationRequest` for `/api/v1`. The HTTP route takes a JSON body, refuses a foreign `Origin` (403) and non-JSON bodies (415) because browsers send the session cookie, and returns 401 when signed out, 400 for invalid input, 404 for an unknown name, and otherwise 200 with the `ActionResult` plus `invalidate`. `createOperationClient` (`contract/client.ts`) is the typed client for it.
 - `contract/index.ts` and `server/operations/index.ts` list every domain; a test fails if a contract has no implementation.
 
 Domains not yet moved to operations still write the action body inline with `runAction` (`server/action.ts`): same error handling, positional arguments, and `revalidatePath` in the action. Move a domain over when you change it.

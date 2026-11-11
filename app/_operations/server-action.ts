@@ -1,6 +1,4 @@
 import "server-only";
-import { revalidatePath } from "next/cache";
-import type { InvalidationKey } from "@/contract/keys";
 import type {
   InputOf,
   OperationContract,
@@ -9,6 +7,7 @@ import type {
 import type { ActionResult } from "@/contract/result";
 import { executeOperation, type Operation } from "@/server/operation";
 import { getViewer } from "@/server/viewer";
+import { revalidateKeys } from "./revalidate";
 
 /**
  * Expose an operation as a server action. Use it from a `"use server"` file:
@@ -24,20 +23,7 @@ export function serverAction<C extends OperationContract>(
       await getViewer(),
       input
     );
-    for (const key of invalidated) {
-      for (const path of pathsFor(key)) revalidatePath(path);
-    }
+    revalidateKeys(invalidated);
     return result;
   };
-}
-
-/** The pages that show the data behind an invalidation key. */
-function pathsFor(key: InvalidationKey): string[] {
-  const [scope, id, part] = key;
-  switch (`${scope}/${part}`) {
-    case "club/themes":
-      return [`/book-clubs/${id}/themes`];
-    default:
-      throw new Error(`No web paths for invalidation key ${key.join("/")}`);
-  }
 }

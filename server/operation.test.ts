@@ -30,6 +30,7 @@ describe("executeOperation", () => {
     expect(outcome).toEqual({
       result: { success: false, error: "Unauthorized" },
       invalidated: [],
+      rejected: "unauthenticated",
     });
     expect(run).not.toHaveBeenCalled();
   });
@@ -37,9 +38,10 @@ describe("executeOperation", () => {
   it("rejects input that fails the schema, with the schema's message", async () => {
     const run = vi.fn();
     const op = implement(contract, "Failed", run);
-    expect((await executeOperation(op, viewer, { n: "1" })).result).toEqual({
-      success: false,
-      error: "n must be a number",
+    expect(await executeOperation(op, viewer, { n: "1" })).toEqual({
+      result: { success: false, error: "n must be a number" },
+      invalidated: [],
+      rejected: "invalid-input",
     });
     for (const bad of [undefined, null, "1", [1]]) {
       const { result } = await executeOperation(op, viewer, bad);
