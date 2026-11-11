@@ -147,7 +147,7 @@ export default async function MeetingPage({
       {nominationsOpen && (
         <Section
           title="Nominate a book"
-          description="Search for a book and add a note about why you picked it."
+          description="Search for a book and optionally add a note about why you picked it."
         >
           <NominationForm
             meetingId={meeting.id}
