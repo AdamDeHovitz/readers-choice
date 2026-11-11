@@ -1,5 +1,6 @@
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/open-library";
 
@@ -48,7 +49,7 @@ export function EditMeetingBookStep({
 
       {error && <Alert variant="destructive">{error}</Alert>}
 
-      <div className="flex justify-end gap-2">
+      <DialogFooter>
         <Button
           type="button"
           variant="outline"
@@ -60,7 +61,7 @@ export function EditMeetingBookStep({
         <Button onClick={onSave} disabled={!selectedBook || isSubmitting}>
           {isSubmitting ? "Saving..." : "Save Changes"}
         </Button>
-      </div>
+      </DialogFooter>
     </div>
   );
 }

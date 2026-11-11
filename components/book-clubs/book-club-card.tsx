@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ChevronRightIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { LocalDate } from "@/components/ui/local-date";
 import { cn } from "@/lib/utils";
 
 // Each club keeps one colour (picked from its id) so clubs are easy to tell
@@ -34,13 +35,6 @@ export function BookClubCard({
   isAdmin,
   joinedAt,
 }: BookClubCardProps) {
-  const joinDate = joinedAt
-    ? new Date(joinedAt).toLocaleDateString("en-US", {
-        month: "short",
-        year: "numeric",
-      })
-    : null;
-
   return (
     <Link
       href={`/book-clubs/${id}`}
@@ -67,8 +61,10 @@ export function BookClubCard({
             {description}
           </p>
         ) : (
-          joinDate && (
-            <p className="text-muted-foreground text-sm">Joined {joinDate}</p>
+          joinedAt && (
+            <p className="text-muted-foreground text-sm">
+              Joined <LocalDate iso={joinedAt} format="shortMonthYear" />
+            </p>
           )
         )}
       </div>

@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { GripVertical } from "lucide-react";
 import Image from "next/image";
 import { Alert } from "@/components/ui/alert";
+import { LocalDate } from "@/components/ui/local-date";
 import type { YearBook } from "@/server/rankings";
 
 interface RankingInterfaceProps {
@@ -87,10 +88,7 @@ function SortableBookItem({
         </h3>
         <p className="text-dark-600 truncate text-sm">{book.author}</p>
         <p className="text-dark-500 mt-1 text-xs">
-          {new Date(book.meetingDate).toLocaleDateString("en-US", {
-            month: "short",
-            year: "numeric",
-          })}
+          <LocalDate iso={book.meetingDate} format="shortMonthYear" />
         </p>
       </div>
 
@@ -134,10 +132,7 @@ function UnreadBookItem({
         </h3>
         <p className="text-dark-600 truncate text-sm">{book.author}</p>
         <p className="text-dark-500 mt-1 text-xs">
-          {new Date(book.meetingDate).toLocaleDateString("en-US", {
-            month: "short",
-            year: "numeric",
-          })}
+          <LocalDate iso={book.meetingDate} format="shortMonthYear" />
         </p>
       </div>
 

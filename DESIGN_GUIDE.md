@@ -100,6 +100,9 @@ Inputs use 16px text on phones so iOS Safari doesn't zoom on focus.
 - **SegmentedNav**: link-based switches (years, views) that keep state in the URL.
 - **Alert**: every error message (`variant="destructive"`).
 - **BookCover**: without a cover image, every size shows the same rust "cloth" cover: the title from `sm` up, a book glyph at `xs`.
+- **DateTimeField** (`components/ui/date-time-field.tsx`): every date-and-time input. A tap-to-expand calendar plus a 15-minute time list (the phone's own wheel on mobile). Never use `<input type="datetime-local">`.
+- **LocalDate** (`components/ui/local-date.tsx`): every timestamp shown to a reader, in one of its named formats. Servers run in UTC, so formatting a date in a Server Component shows the wrong day for evening meetings.
+- Dialog buttons go in `DialogFooter`, which stacks them full width on phones.
 
 ## Interaction and accessibility
 

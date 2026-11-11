@@ -9,7 +9,8 @@ import { useAction } from "@/hooks/use-action";
 interface DeleteMeetingButtonProps {
   meetingId: string;
   bookClubId: string;
-  meetingName: string;
+  /** Named in the confirmation; "this meeting" when omitted. */
+  meetingName?: string;
 }
 
 export function DeleteMeetingButton({
@@ -26,7 +27,7 @@ export function DeleteMeetingButton({
   async function handleDelete() {
     if (
       !confirm(
-        `Are you sure you want to delete "${meetingName}"? This action cannot be undone.`
+        `Are you sure you want to delete ${meetingName ? `"${meetingName}"` : "this meeting"}? This action cannot be undone.`
       )
     ) {
       return;
