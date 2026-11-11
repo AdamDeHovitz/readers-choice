@@ -8,6 +8,9 @@ Four layers in two kinds of workspace. Each layer imports only from the layers b
 | `apps/web/server/` (`server-only`)               | Every query and write, DTO types, rules that need data, and operation implementations (`server/operations/`) | Import actions or UI                                                             |
 | `packages/contract` (`@readers-choice/contract`) | Operation contracts: names, zod input schemas, output types, invalidation keys                               | Import anything but zod and `packages/core`                                      |
 | `packages/core` (`@readers-choice/core`)         | Pure, isomorphic, unit-tested logic and external API clients                                                 | Import app code or `packages/contract`, create DB clients, or use Node built-ins |
+| `packages/tokens` (`@readers-choice/tokens`)     | Design tokens (palette, semantic colors, typefaces). `apps/web/app/globals.css` mirrors them; a test checks  | Import anything                                                                  |
+
+`apps/mobile` (Expo) sits beside `apps/web` at the top: it may import the packages, never the website's code, the database or Node built-ins, and reaches data only through `/api/v1` (see Mobile sign-in below and `apps/mobile/README.md`).
 
 The packages are shared with the mobile app (#75), which has no Node runtime, so ESLint bans Node built-ins (`crypto`, `fs`, …) and `bcryptjs` there. Node-only helpers such as `apps/web/server/password.ts` and `apps/web/server/invite-code.ts` live in the web app. The packages ship TypeScript source (`exports` in each `package.json`); Next compiles them through `transpilePackages`.
 

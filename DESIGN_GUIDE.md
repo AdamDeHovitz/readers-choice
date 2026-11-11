@@ -50,7 +50,7 @@ Colour carries the brand, not just the actions. Use it in a few bold places, and
 
 ## Tokens
 
-Defined in `apps/web/app/globals.css`. Prefer the semantic tokens; reach for a palette step only for accents.
+Defined once in `packages/tokens` (`@readers-choice/tokens`), which the mobile app imports. The web mirrors them as CSS variables in `apps/web/app/globals.css` for Tailwind, and `apps/web/app/globals.test.ts` fails if the two differ, so change both together. Prefer the semantic tokens; reach for a palette step only for accents.
 
 | Semantic                     | Value                | Use                                 |
 | ---------------------------- | -------------------- | ----------------------------------- |

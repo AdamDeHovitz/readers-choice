@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Book club app",
   "private": true,
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -13,7 +16,7 @@
     "build": "npm run build -w @readers-choice/web",
     "start": "npm run start -w @readers-choice/web",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p apps/web && tsc --noEmit -p packages/core && tsc --noEmit -p packages/contract",
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p apps/web && tsc --noEmit -p apps/mobile && tsc --noEmit -p packages/core && tsc --noEmit -p packages/contract && tsc --noEmit -p packages/tokens",
     "format": "prettier --write .",
     "test": "vitest",
     "test:run": "vitest run",
@@ -43,7 +46,9 @@
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.1",
+    "eslint-config-expo": "^58.0.4",
     "eslint-config-next": "^16.0.7",
+    "eslint-import-resolver-typescript": "^3.10.1",
     "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "supabase": "^2.120.0",

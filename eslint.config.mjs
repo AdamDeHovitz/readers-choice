@@ -2,11 +2,46 @@ import { builtinModules } from "node:module";
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import expo from "eslint-config-expo/flat.js";
+
+const WEB = ["apps/web/**", "packages/**", "*.{ts,mjs}"];
+const MOBILE = ["apps/mobile/**"];
+
+/**
+ * Limit a shared preset to some workspaces. Next's and Expo's presets both
+ * register the react and import plugins, which ESLint won't load twice for
+ * one file, so each app gets exactly one of them. A nested `files` array
+ * means "matches all of these".
+ */
+const scopeTo = (bases, configs) =>
+  configs.map((config) => {
+    const keys = Object.keys(config);
+    if (keys.length === 1 && keys[0] === "ignores") return config;
+    return {
+      ...config,
+      files: bases.flatMap((base) =>
+        (config.files ?? ["**/*"]).map((pattern) => [
+          base,
+          ...(Array.isArray(pattern) ? pattern : [pattern]),
+        ])
+      ),
+    };
+  });
 
 export default defineConfig([
-  // Next's recommended rules: React, hooks, a11y, Next and TypeScript.
-  ...nextVitals,
-  ...nextTs,
+  // Next's recommended rules (React, hooks, a11y, Next, TypeScript) for the
+  // website and the shared packages; Expo's for the mobile app.
+  ...scopeTo(WEB, [...nextVitals, ...nextTs]),
+  ...scopeTo(MOBILE, expo),
+  {
+    // Resolve the mobile app's "@/" alias (apps/mobile/tsconfig.json).
+    files: ["apps/mobile/**/*.{ts,tsx}"],
+    settings: {
+      "import/resolver": {
+        typescript: { project: "apps/mobile/tsconfig.json" },
+      },
+    },
+  },
   {
     // The Next app lives in apps/web; the shared packages sit beside it.
     settings: { next: { rootDir: "apps/web" } },
@@ -39,7 +74,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["packages/core/**/*.{ts,tsx}"],
+    files: ["packages/core/**/*.{ts,tsx}", "packages/tokens/**/*.{ts,tsx}"],
     rules: {
       "@typescript-eslint/no-restricted-imports": [
         "error",
@@ -53,7 +88,7 @@ export default defineConfig([
                 "@readers-choice/contract/*",
               ],
               message:
-                "packages/core is pure, isomorphic logic with no app or contract dependencies.",
+                "packages/core and packages/tokens are pure, isomorphic code with no app or contract dependencies.",
             },
             {
               // core is shared with the mobile app (issue #75), which has no
@@ -152,6 +187,47 @@ export default defineConfig([
     },
   },
   {
+    // The mobile app is a client of /api/v1: it shares packages/contract,
+    // packages/core and packages/tokens, never the website's code, the
+    // database, or Node built-ins (there's no Node runtime on a phone).
+    files: ["apps/mobile/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@readers-choice/web",
+                "@readers-choice/web/*",
+                "next",
+                "next/*",
+                "next-auth",
+                "next-auth/*",
+              ],
+              message:
+                "The mobile app calls the website over /api/v1; share code through packages/ instead.",
+            },
+            {
+              group: [...builtinModules, "node:*"],
+              message: "There's no Node runtime on a phone.",
+            },
+          ],
+          paths: [
+            {
+              name: "@supabase/supabase-js",
+              message: "The mobile app never talks to the database.",
+            },
+            {
+              name: "server-only",
+              message: "The mobile app has no server code.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["apps/web/server/**/*.{ts,tsx}"],
     ignores: ["apps/web/server/db.ts"],
     rules: {
@@ -205,6 +281,11 @@ export default defineConfig([
   },
   globalIgnores([
     "**/.next/**",
+    // Expo build output and generated native projects.
+    "**/dist/**",
+    "**/.expo/**",
+    "apps/mobile/ios/**",
+    "apps/mobile/android/**",
     ".worktrees/**",
     "out/**",
     ".vercel/**",
