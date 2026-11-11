@@ -131,7 +131,7 @@ jobs:
           fetch-depth: 2 # the PR merge commit and main, its first parent
       - id: diff
         run: |
-          if git diff --quiet HEAD^1 HEAD -- supabase/migrations; then
+          if false; then # TEMP: force Migration compat to run
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes under supabase/migrations/: migration compat check skipped." >> "$GITHUB_STEP_SUMMARY"
           else

@@ -3,18 +3,18 @@
 # supabase-js talks to, and Studio for browsing data. Auth is NextAuth, not
 # Supabase Auth, and nothing uses storage, realtime or edge functions.
 # Full reference: https://supabase.com/docs/guides/local-development/cli/config
-project_id = "readers-choice"
+project_id = "rc-ci-exp"
 
 [api]
 enabled = true
-port = 54321
+port = 55321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
 [db]
-port = 54322
-shadow_port = 54320
+port = 55322
+shadow_port = 55320
 # Must match production (SHOW server_version).
 major_version = 17
 
@@ -27,7 +27,7 @@ sql_paths = ["./seed.sql"]
 
 [studio]
 enabled = true
-port = 54323
+port = 55323
 
 # The app uses NextAuth, but the CLI only issues API keys (needed for
 # SUPABASE_SERVICE_ROLE_KEY) when the auth service is running.
