@@ -1,18 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Inria_Serif, Playfair_Display } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const inriaSerif = Inria_Serif({
-  weight: ["400", "700"],
-  subsets: ["latin"],
+// Self-hosted (latin subset, from @fontsource; OFL licenses beside the
+// files), so builds never fetch from Google Fonts. next/font/google failed
+// Vercel builds whenever Google served a font URL Turbopack can't parse.
+const inriaSerif = localFont({
+  src: [
+    { path: "./fonts/inria-serif-latin-400-normal.woff2", weight: "400" },
+    { path: "./fonts/inria-serif-latin-700-normal.woff2", weight: "700" },
+  ],
   variable: "--font-inria-serif",
   display: "swap",
 });
 
 // Display face for page titles (`font-display`).
-const playfairDisplay = Playfair_Display({
-  weight: ["400", "700"],
-  subsets: ["latin"],
+const playfairDisplay = localFont({
+  src: [
+    { path: "./fonts/playfair-display-latin-400-normal.woff2", weight: "400" },
+    { path: "./fonts/playfair-display-latin-700-normal.woff2", weight: "700" },
+  ],
   variable: "--font-playfair",
   display: "swap",
 });
