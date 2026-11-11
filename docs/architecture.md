@@ -66,6 +66,15 @@ export const deleteTheme = serverAction(themes.deleteTheme);
 
 Domains not yet moved to operations still write the action body inline with `runAction` (`apps/web/server/action.ts`): same error handling, positional arguments, and `revalidatePath` in the action. Move a domain over when you change it. ESLint only allows `runAction` in the files listed in `eslint.config.mjs`; remove a file's line once it's migrated, and never add one.
 
+## Mobile sign-in
+
+The web signs in with NextAuth (session cookie). The mobile app signs in at `POST /api/v1/auth/{password,google,refresh,sign-out}` (`apps/web/app/_operations/auth-http.ts`; request schemas and the `Session` shape in `packages/contract/auth.ts`) and calls operations with `Authorization: Bearer <accessToken>`.
+
+- `getRequestViewer` (`apps/web/server/viewer.ts`) resolves `/api/v1` callers: a bearer token if one is sent (a bad one is never "rescued" by a cookie), else the cookie. Operations don't know or care which.
+- Access tokens are 15-minute HS256 JWTs signed with `AUTH_SECRET` (audience `readers-choice-mobile`), not checked against the database, so revocation takes effect within 15 minutes. Refresh tokens are random, stored only as SHA-256 hashes in `mobile_sessions`, replaced on every refresh, and dead after 90 days without one (`apps/web/server/mobile-sessions.ts`). Replaying a replaced token revokes the session, except within 60 seconds, which covers the app's own concurrent refreshes.
+- Google: the app sends the ID token from native Google Sign-In. `verifyGoogleIdToken` checks it against Google's keys and the client IDs in `GOOGLE_MOBILE_CLIENT_IDS`, and the account is linked exactly as on the web (`upsertGoogleAccount`).
+- Password sign-in is rate-limited per IP and per email, and gives one message for every failure. Sign in with Apple comes before the App Store launch, not before TestFlight (#75).
+
 ## Adding a feature
 
 1. Schema change? Follow the database-migrations skill, then `npm run db:types`.

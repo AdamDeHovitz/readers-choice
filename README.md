@@ -135,6 +135,10 @@ AUTH_SECRET=your_random_secret_string  # Generate with: openssl rand -base64 32
 AUTH_GOOGLE_ID=your_google_oauth_client_id
 AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 
+# Mobile app Google sign-in: the app's OAuth client IDs, comma-separated
+# (optional; without it, Google sign-in from the app is refused)
+GOOGLE_MOBILE_CLIENT_IDS=
+
 # App URL (for OAuth callbacks)
 NEXTAUTH_URL=http://localhost:3000  # Change to your production URL when deploying
 ```

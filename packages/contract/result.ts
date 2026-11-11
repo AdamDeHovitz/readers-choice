@@ -11,6 +11,9 @@ import type { InvalidationKey } from "./keys";
  * - `unavailable`: the client couldn't reach the server. Try again.
  * - `bad_request`: the transport rejected the request itself (unknown
  *   operation, wrong origin or content type): a client bug.
+ * - `rate_limited`: too many attempts (sign-in). Wait, then try again.
+ *
+ * Clients must treat an unknown code like `internal`: new codes may be added.
  */
 export type ErrorCode =
   | "unauthenticated"
@@ -18,7 +21,8 @@ export type ErrorCode =
   | "refused"
   | "internal"
   | "unavailable"
-  | "bad_request";
+  | "bad_request"
+  | "rate_limited";
 
 /** What every operation returns to a client, on the web and on mobile. */
 export type ActionResult<T = void> =

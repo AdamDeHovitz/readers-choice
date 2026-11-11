@@ -486,6 +486,51 @@ export type Database = {
           },
         ];
       };
+      mobile_sessions: {
+        Row: {
+          created_at: string;
+          device_name: string | null;
+          id: string;
+          last_used_at: string;
+          previous_token_hash: string | null;
+          refresh_token_hash: string;
+          revoked_at: string | null;
+          rotated_at: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          device_name?: string | null;
+          id?: string;
+          last_used_at?: string;
+          previous_token_hash?: string | null;
+          refresh_token_hash: string;
+          revoked_at?: string | null;
+          rotated_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          device_name?: string | null;
+          id?: string;
+          last_used_at?: string;
+          previous_token_hash?: string | null;
+          refresh_token_hash?: string;
+          revoked_at?: string | null;
+          rotated_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "mobile_sessions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       personal_rankings: {
         Row: {
           book_club_id: string | null;
