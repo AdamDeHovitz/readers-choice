@@ -40,11 +40,12 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api/auth (auth API routes)
+     * - api/calendar (calendar feeds, authorized by the token in the URL)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, icon, apple-icon, manifest.webmanifest (app metadata,
      *   which browsers and home screens fetch without a session)
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)",
+    "/((?!api/auth|api/calendar|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)",
   ],
 };
