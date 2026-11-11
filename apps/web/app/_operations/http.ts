@@ -22,6 +22,7 @@ const STATUS: Record<ErrorCode, number> = {
   internal: 500,
   unavailable: 503,
   bad_request: 400,
+  rate_limited: 429,
 };
 
 /**
