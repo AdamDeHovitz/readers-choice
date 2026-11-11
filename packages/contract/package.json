@@ -1,0 +1,15 @@
+{
+  "name": "@readers-choice/contract",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Operation contracts (name, input schema, output type, invalidation keys) shared by every client.",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*.ts"
+  },
+  "dependencies": {
+    "@readers-choice/core": "*",
+    "zod": "^4.6.7"
+  }
+}

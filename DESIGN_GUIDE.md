@@ -4,15 +4,15 @@ Readers' Choice is mobile-first: design for a 360–430px phone, then let layout
 
 ## App shell
 
-Every page sits in `AppShell` (`components/shell/app-shell.tsx`), rendered by a **layout**, never by the page:
+Every page sits in `AppShell` (`apps/web/components/shell/app-shell.tsx`), rendered by a **layout**, never by the page:
 
 | Layout                           | Shell                                                                  |
 | -------------------------------- | ---------------------------------------------------------------------- |
 | `app/(main)/layout.tsx`          | App tabs: My clubs, Browse, Settings                                   |
-| `app/book-clubs/[id]/layout.tsx` | Club tabs: Home, Schedule, Rankings, Themes, Members; back to My clubs |
-| `app/meetings/[id]/layout.tsx`   | The meeting's club tabs, Schedule active; back to Schedule             |
+| `apps/web/app/book-clubs/[id]/layout.tsx` | Club tabs: Home, Schedule, Rankings, Themes, Members; back to My clubs |
+| `apps/web/app/meetings/[id]/layout.tsx`   | The meeting's club tabs, Schedule active; back to Schedule             |
 
-- Phones get a bottom tab bar; from `md` the same tabs sit in the top bar (`components/shell/nav-tabs.tsx`). Add a destination there, in one list, not in a page.
+- Phones get a bottom tab bar; from `md` the same tabs sit in the top bar (`apps/web/components/shell/nav-tabs.tsx`). Add a destination there, in one list, not in a page.
 - Keep tab sets at five or fewer. Group related views under one tab with a `SegmentedNav` (as Rankings does for "My ranking" / "Club ranking").
 - Each segment has a `loading.tsx` showing `PageSkeleton`, so the shell stays put while data loads.
 - The shell pads for the notch and home indicator (`pt-safe`, `pb-safe`, `env(safe-area-inset-*)`). Anything fixed to a screen edge must do the same.
@@ -42,7 +42,7 @@ Colour carries the brand, not just the actions. Use it in a few bold places, and
 </>
 ```
 
-- `PageHeader` (`components/ui/page-header.tsx`) renders the page's only `h1`, an optional `eyebrow` (a status badge), a description and the primary actions. Actions go full width under the title on phones.
+- `PageHeader` (`apps/web/components/ui/page-header.tsx`) renders the page's only `h1`, an optional `eyebrow` (a status badge), a description and the primary actions. Actions go full width under the title on phones.
 - `Section` renders an `h2` group. Use sections, not cards, to structure a page.
 - **Never nest cards.** A card is one object (a book, a club) or one grouped list. On phones nested borders eat a third of the width.
 - Lists of similar rows (meetings, members) are one card with `divide-y` rows, iOS-style. Rows that navigate end in a `ChevronRightIcon`.
@@ -50,7 +50,7 @@ Colour carries the brand, not just the actions. Use it in a few bold places, and
 
 ## Tokens
 
-Defined in `app/globals.css`. Prefer the semantic tokens; reach for a palette step only for accents.
+Defined in `apps/web/app/globals.css`. Prefer the semantic tokens; reach for a palette step only for accents.
 
 | Semantic                     | Value                | Use                                 |
 | ---------------------------- | -------------------- | ----------------------------------- |
@@ -67,7 +67,7 @@ Palettes: `rust-50…800`, `sage-50…800`, `cream-50…200`, `dark-500…900`.
 
 ### Status
 
-Meeting phases always render through `MeetingStatusBadge`, which asks `getMeetingPhase` (`lib/meeting-schedule.ts`). Never re-derive a phase in a component.
+Meeting phases always render through `MeetingStatusBadge`, which asks `getMeetingPhase` (`packages/core/meeting-schedule.ts`). Never re-derive a phase in a component.
 
 | Phase            | Badge variant    | Meaning                |
 | ---------------- | ---------------- | ---------------------- |
@@ -94,14 +94,14 @@ Inputs use 16px text on phones so iOS Safari doesn't zoom on focus.
 
 ## Components
 
-- **Button** (`components/ui/button.tsx`): `default` (rust, one per view), `outline`, `secondary` (sage), `ghost`, `destructive`, `link`. Default height is 44px on phones (touch target), 40px from `sm`. Put an icon before the label for create/edit actions (`<PlusIcon aria-hidden />`).
-- **Dialog** (`components/ui/dialog.tsx`): a bottom sheet with a grab handle on phones, a centered dialog from `sm`. Don't override its position or width on phones; `sm:max-w-*` is fine.
-- **Badge** (`components/ui/badge.tsx`): `default`, `active`, `primary`, `outline`.
+- **Button** (`apps/web/components/ui/button.tsx`): `default` (rust, one per view), `outline`, `secondary` (sage), `ghost`, `destructive`, `link`. Default height is 44px on phones (touch target), 40px from `sm`. Put an icon before the label for create/edit actions (`<PlusIcon aria-hidden />`).
+- **Dialog** (`apps/web/components/ui/dialog.tsx`): a bottom sheet with a grab handle on phones, a centered dialog from `sm`. Don't override its position or width on phones; `sm:max-w-*` is fine.
+- **Badge** (`apps/web/components/ui/badge.tsx`): `default`, `active`, `primary`, `outline`.
 - **SegmentedNav**: link-based switches (years, views) that keep state in the URL.
 - **Alert**: every error message (`variant="destructive"`).
 - **BookCover**: without a cover image, every size shows the same rust "cloth" cover: the title from `sm` up, a book glyph at `xs`.
-- **DateTimeField** (`components/ui/date-time-field.tsx`): every date-and-time input. A tap-to-expand calendar plus a 15-minute time list (the phone's own wheel on mobile). Never use `<input type="datetime-local">`.
-- **LocalDate** (`components/ui/local-date.tsx`): every timestamp shown to a reader, in one of its named formats. Servers run in UTC, so formatting a date in a Server Component shows the wrong day for evening meetings.
+- **DateTimeField** (`apps/web/components/ui/date-time-field.tsx`): every date-and-time input. A tap-to-expand calendar plus a 15-minute time list (the phone's own wheel on mobile). Never use `<input type="datetime-local">`.
+- **LocalDate** (`apps/web/components/ui/local-date.tsx`): every timestamp shown to a reader, in one of its named formats. Servers run in UTC, so formatting a date in a Server Component shows the wrong day for evening meetings.
 - Dialog buttons go in `DialogFooter`, which stacks them full width on phones.
 
 ## Interaction and accessibility

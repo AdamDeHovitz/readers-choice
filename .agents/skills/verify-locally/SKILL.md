@@ -26,11 +26,11 @@ Use email/password (Google sign-in doesn't work locally). Every password is `pas
 | `bob@example.test`, `carol@example.test` | Seed Club members                      |
 | `dave@example.test`                      | Other Club admin, not in Seed Club     |
 
-`e2e/seed.ts` has the meeting IDs, one meeting per phase: finalized, voting closed, voting open, nominating. Seed Club's invite link is `/join/seedInviteCode00000000`.
+`apps/web/e2e/seed.ts` has the meeting IDs, one meeting per phase: finalized, voting closed, voting open, nominating. Seed Club's invite link is `/join/seedInviteCode00000000`.
 
 ## 3. Drive the flow
 
-- Use Playwright with accessibility snapshots rather than screenshots. Prefer the Playwright MCP tools. If they're unavailable, write a short script with the `playwright` package; `e2e/seed.ts` has a `logIn` helper to copy.
+- Use Playwright with accessibility snapshots rather than screenshots. Prefer the Playwright MCP tools. If they're unavailable, write a short script with the `playwright` package; `apps/web/e2e/seed.ts` has a `logIn` helper to copy.
 - Check every mutation in the database, not just the UI:
 
   ```bash
@@ -47,7 +47,7 @@ Use email/password (Google sign-in doesn't work locally). Every password is `pas
 npm run db:reset && npm run test:e2e   # mobile viewport; specs only read seed data
 ```
 
-Reset first if you mutated data: e.g. joining Seed Club as dave breaks the non-member spec. Add a spec to `e2e/` when a flow is worth guarding.
+Reset first if you mutated data: e.g. joining Seed Club as dave breaks the non-member spec. Add a spec to `apps/web/e2e/` when a flow is worth guarding.
 
 ## 5. Record it
 

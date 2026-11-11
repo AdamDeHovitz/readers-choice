@@ -15,7 +15,7 @@ Standards and recipes: verifications/README.md.
 <!--
 Automated checks you ran, the exact command, and the result. For example:
 - `npm run lint`: clean
-- `npx tsc --noEmit`: clean
+- `npm run typecheck`: clean
 - `npm run test:run`: 212 passed
 - `npm run build` (dummy env): succeeded
 - `npm run test:e2e`: 9 passed

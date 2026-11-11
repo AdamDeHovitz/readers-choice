@@ -42,7 +42,7 @@ Weak and strong versions of the same entry:
 
 > ❌ Not verified: some edge cases.
 >
-> ✅ Not verified: a tie between two books in the final round. The seed has no tied meeting, and the tie-break is covered only by `lib/voting-algorithm.test.ts`.
+> ✅ Not verified: a tie between two books in the final round. The seed has no tied meeting, and the tie-break is covered only by `packages/core/voting-algorithm.test.ts`.
 
 ## Recipes by change type
 
@@ -51,9 +51,9 @@ Use the ones that apply. Mechanics (starting the stack, when to reset it, seed u
 | Change | Verify by |
 | --- | --- |
 | UI (page, component, copy) | `npm run dev:local`, then drive it with Playwright at a mobile viewport. Record what the accessibility snapshot shows, the states the change touches (empty, loading, error), and which seed user and meeting you used. |
-| Server action | Drive it through the UI as an allowed user, and confirm the write with `db:sql`. Then show that a user who must be refused (non-member `dave`, or non-admin `bob` for admin actions) can't do it. A page that hides the button is not enough, because the action is a public endpoint: cover its authorization in a unit test, as `app/actions/book-clubs.test.ts` does. |
+| Server action | Drive it through the UI as an allowed user, and confirm the write with `db:sql`. Then show that a user who must be refused (non-member `dave`, or non-admin `bob` for admin actions) can't do it. A page that hides the button is not enough, because the action is a public endpoint: cover its authorization in a unit test, as `apps/web/app/actions/book-clubs.test.ts` does. |
 | Migration or Postgres function | `npm run db:reset` succeeds. Query the new schema or call the function with `db:sql`, including a call that should be rejected. Confirm the currently deployed code still works on the new schema: CI's Migration compat job does this, and so does running main's e2e specs locally. Note what the production `apply_migration` step will do. |
-| Voting, ranking, or tallying logic | Unit tests in `lib/*.test.ts` for the algorithm, plus one end-to-end ballot through the UI on the voting-open meeting, and the results view on the finalized meeting. |
+| Voting, ranking, or tallying logic | Unit tests in `packages/core/*.test.ts` for the algorithm, plus one end-to-end ballot through the UI on the voting-open meeting, and the results view on the finalized meeting. |
 | External API (OverDrive, Open Library, Google Books) | Exercise the live path once, and the failure path: block or mock the call and show the fallback appears instead of an error. `npm run test:integration` covers Open Library. |
 | CI or scripts | Run the script locally on a passing input and on a failing one, and link the CI run that exercised the change. |
 | Docs only | Say so. Check that the commands and paths you documented exist and run. |

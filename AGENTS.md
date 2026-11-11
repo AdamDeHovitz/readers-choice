@@ -11,7 +11,7 @@ You own this codebase. There is no other team: you wrote most of it, you will ma
 
 ## Commands
 
-- Before committing: `npm run lint && npx tsc --noEmit && npm run test:run`, and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
+- Run everything from the repo root (npm workspaces). Before committing: `npm run lint && npm run typecheck && npm run test:run`, and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
 - Local app and database: the `verify-locally` skill. Schema changes: the `database-migrations` skill.
 
 ## Verifying work
@@ -22,16 +22,18 @@ You own this codebase. There is no other team: you wrote most of it, you will ma
 
 ## Architecture
 
-`app/` (pages, `"use server"` actions) → `server/` (all data access, `server-only`) → `contract/` (operation schemas and types, shared with mobile) → `lib/` (pure logic). ESLint enforces the direction. Pages read through `getViewer()` and `server/` queries. Writes are operations: a contract in `contract/`, an implementation in `server/operations/` that authorizes, calls `server/` and invalidates keys, and a one-line `serverAction(...)` in `app/actions/`. Domains not yet migrated use `runAction`; move them when you touch them (#75). Throw `UserError` for messages users should see. Details and an "adding a feature" walkthrough: `docs/architecture.md`.
+Monorepo: `apps/web` (the Next.js site, which also serves `/api/v1` for mobile), `packages/contract` and `packages/core` (shared with the mobile app, so no Node built-ins), and `supabase/` and `scripts/` at the root. Inside `apps/web`, `@/` means `apps/web/`; shared code is imported as `@readers-choice/core/...` and `@readers-choice/contract/...`.
+
+`apps/web/app/` (pages, `"use server"` actions) → `apps/web/server/` (all data access, `server-only`) → `packages/contract/` (operation schemas and types, shared with mobile) → `packages/core/` (pure logic). ESLint enforces the direction. Pages read through `getViewer()` and `apps/web/server/` queries. Writes are operations: a contract in `packages/contract/`, an implementation in `apps/web/server/operations/` that authorizes, calls `apps/web/server/` and invalidates keys, and a one-line `serverAction(...)` in `apps/web/app/actions/`. Domains not yet migrated use `runAction`; move them when you touch them (#75). Throw `UserError` for messages users should see. Details and an "adding a feature" walkthrough: `docs/architecture.md`.
 
 ## Don't break production
 
-- Every exported `"use server"` function is a public endpoint, and the service-role key bypasses RLS. Authorize every action with `requireMember`/`requireAdmin` (`server/authz.ts`).
+- Every exported `"use server"` function is a public endpoint, and the service-role key bypasses RLS. Authorize every action with `requireMember`/`requireAdmin` (`apps/web/server/authz.ts`).
 - The Supabase MCP tools point at **production**. Use `npm run db:sql` for local data, and apply migrations only when asked.
 - Migrations go live before the code that uses them, so they must work with the deployed code.
 - Merging to `main` deploys to production. CI and staging previews: `docs/ci-and-previews.md`.
-- Render book descriptions as HTML only via `sanitizeDescription`. OverDrive/Libby lookups (`lib/libraries/overdrive.ts`) use undocumented endpoints: fail soft and never send patron data.
+- Render book descriptions as HTML only via `sanitizeDescription`. OverDrive/Libby lookups (`packages/core/libraries/overdrive.ts`) use undocumented endpoints: fail soft and never send patron data.
 
 ## UI
 
-Mobile-first. Server Components by default. Read `DESIGN_GUIDE.md` before UI work. Layouts render the app shell (top bar and tabs), so pages render only their content, starting with `PageHeader`. Show errors with `components/ui/alert.tsx`.
+Mobile-first. Server Components by default. Read `DESIGN_GUIDE.md` before UI work. Layouts render the app shell (top bar and tabs), so pages render only their content, starting with `PageHeader`. Show errors with `apps/web/components/ui/alert.tsx`.
