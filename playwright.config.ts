@@ -10,7 +10,7 @@ export default defineConfig({
   // CI adds HTML and JSON reporters on the command line (see ci.yml).
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3100",
+    baseURL: "http://localhost:3000",
     // A final screenshot of every test is cheap evidence; full traces only
     // when something fails.
     screenshot: "on",
@@ -23,7 +23,7 @@ export default defineConfig({
     command: process.env.E2E_PREBUILT
       ? "scripts/dev-local.sh --prebuilt"
       : "npm run dev:local",
-    url: "http://localhost:3100/login",
+    url: "http://localhost:3000/login",
     reuseExistingServer: true,
     timeout: 180_000,
   },
