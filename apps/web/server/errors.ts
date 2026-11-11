@@ -37,9 +37,9 @@ export const UNAUTHORIZED = "Unauthorized";
 /**
  * Run `body` and turn its outcome into an ActionResult.
  *
- * - `UserError`: fails with its (user-facing) message.
- * - Anything else: logged, and fails with `fallbackError` so database or
- *   network internals never reach the client.
+ * - `UserError`: fails with its (user-facing) message, code `refused`.
+ * - Anything else: logged, and fails with `fallbackError` (code `internal`)
+ *   so database or network internals never reach the client.
  */
 export async function settle<T>(
   fallbackError: string,
@@ -49,9 +49,9 @@ export async function settle<T>(
     return { success: true, data: await body() };
   } catch (error) {
     if (error instanceof UserError) {
-      return { success: false, error: error.message };
+      return { success: false, error: error.message, code: "refused" };
     }
     console.error(`${fallbackError}:`, error);
-    return { success: false, error: fallbackError };
+    return { success: false, error: fallbackError, code: "internal" };
   }
 }

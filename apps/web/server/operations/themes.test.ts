@@ -31,7 +31,11 @@ describe("suggestTheme", () => {
       bookClubId: CLUB,
       name: "   ",
     });
-    expect(result).toEqual({ success: false, error: "Theme name is required" });
+    expect(result).toEqual({
+      success: false,
+      error: "Theme name is required",
+      code: "invalid_input",
+    });
     expect(calls).toHaveLength(0);
   });
 
@@ -44,6 +48,7 @@ describe("suggestTheme", () => {
     expect(result).toEqual({
       success: false,
       error: "You must be a member to suggest themes",
+      code: "refused",
     });
     expect(remaining()).toBe(0);
   });
@@ -79,6 +84,7 @@ describe("toggleThemeUpvote", () => {
     expect(result).toEqual({
       success: false,
       error: "You must be a member to vote on themes",
+      code: "refused",
     });
     expect(calls.some((c) => c[0].startsWith('from("theme_votes")'))).toBe(
       false
@@ -95,6 +101,7 @@ describe("deleteTheme", () => {
     expect((await remove(viewer)).result).toEqual({
       success: false,
       error: "You can only delete themes you submitted or be an admin",
+      code: "refused",
     });
     expect(calls).toHaveLength(2);
   });
@@ -104,6 +111,7 @@ describe("deleteTheme", () => {
     expect((await remove(viewer)).result).toEqual({
       success: false,
       error: "You must be a member to delete themes",
+      code: "refused",
     });
   });
 
@@ -127,6 +135,7 @@ describe("deleteTheme", () => {
     expect((await remove(viewer)).result).toEqual({
       success: false,
       error: "Cannot delete theme that has been used in meetings",
+      code: "refused",
     });
   });
 
@@ -138,7 +147,7 @@ describe("deleteTheme", () => {
           themeId: "1 OR 1=1",
         })
       ).result
-    ).toEqual({ success: false, error: "Invalid id" });
+    ).toEqual({ success: false, error: "Invalid id", code: "invalid_input" });
     expect(calls).toHaveLength(0);
   });
 });
@@ -155,6 +164,7 @@ describe("getThemeSuggestions", () => {
     ).toEqual({
       success: false,
       error: "You must be a member of this book club",
+      code: "refused",
     });
   });
 });

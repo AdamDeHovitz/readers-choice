@@ -7,10 +7,11 @@ import { fakeDb } from "@/test/fake-db";
 import { executeOperation, implement } from "./operation";
 import type { Viewer } from "./viewer";
 
-const contract = defineContract<{ doubled: number }>()({
+const contract = defineContract({
   name: "test.double",
   kind: "mutation",
   input: z.object({ n: z.number({ error: "n must be a number" }) }),
+  output: z.object({ doubled: z.number() }),
 });
 
 const viewer: Viewer = { userId: "user-1", name: "Reader", db: fakeDb([]).db };
@@ -28,9 +29,12 @@ describe("executeOperation", () => {
       { n: 1 }
     );
     expect(outcome).toEqual({
-      result: { success: false, error: "Unauthorized" },
+      result: {
+        success: false,
+        error: "Unauthorized",
+        code: "unauthenticated",
+      },
       invalidated: [],
-      rejected: "unauthenticated",
     });
     expect(run).not.toHaveBeenCalled();
   });
@@ -39,13 +43,16 @@ describe("executeOperation", () => {
     const run = vi.fn();
     const op = implement(contract, "Failed", run);
     expect(await executeOperation(op, viewer, { n: "1" })).toEqual({
-      result: { success: false, error: "n must be a number" },
+      result: {
+        success: false,
+        error: "n must be a number",
+        code: "invalid_input",
+      },
       invalidated: [],
-      rejected: "invalid-input",
     });
     for (const bad of [undefined, null, "1", [1]]) {
       const { result } = await executeOperation(op, viewer, bad);
-      expect(result).toMatchObject({ success: false });
+      expect(result).toMatchObject({ success: false, code: "invalid_input" });
     }
     expect(run).not.toHaveBeenCalled();
   });
@@ -70,7 +77,11 @@ describe("executeOperation", () => {
       throw new UserError("Only admins can do that");
     });
     expect(await executeOperation(op, viewer, { n: 1 })).toEqual({
-      result: { success: false, error: "Only admins can do that" },
+      result: {
+        success: false,
+        error: "Only admins can do that",
+        code: "refused",
+      },
       invalidated: [],
     });
   });
@@ -82,6 +93,33 @@ describe("executeOperation", () => {
     expect((await executeOperation(op, viewer, { n: 1 })).result).toEqual({
       success: false,
       error: "Failed to double",
+      code: "internal",
     });
+  });
+
+  it("strips fields the output schema doesn't declare", async () => {
+    const op = implement(contract, "Failed", async () => ({
+      doubled: 2,
+      passwordHash: "secret",
+    }));
+    expect((await executeOperation(op, viewer, { n: 1 })).result).toEqual({
+      success: true,
+      data: { doubled: 2 },
+    });
+  });
+
+  it("fails with the fallback when the output breaks the contract, keeping invalidations", async () => {
+    const op = implement(contract, "Failed to double", async (ctx) => {
+      ctx.invalidate(keys.clubThemes("club-1"));
+      return { doubled: "two" } as unknown as { doubled: number };
+    });
+    expect(await executeOperation(op, viewer, { n: 1 })).toEqual({
+      result: { success: false, error: "Failed to double", code: "internal" },
+      invalidated: [["club", "club-1", "themes"]],
+    });
+    expect(console.error).toHaveBeenCalledWith(
+      "test.double returned output that doesn't match its contract:",
+      expect.any(Array)
+    );
   });
 });

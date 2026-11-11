@@ -41,6 +41,7 @@ describe.each([
     expect(await action("club")).toEqual({
       success: false,
       error: "Unauthorized",
+      code: "unauthenticated",
     });
     expect(calls).toHaveLength(0);
   });
@@ -50,6 +51,7 @@ describe.each([
     expect(await action("club")).toEqual({
       success: false,
       error: "Only members can subscribe to the club calendar",
+      code: "refused",
     });
     expect(calls).toHaveLength(1);
     expect(calls[0][0]).toBe('from("members")');

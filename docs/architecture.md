@@ -20,11 +20,12 @@ Paths below without a prefix are inside `apps/web`, where `@/` imports resolve.
 **Operation (write, or a read a client component needs):** an operation is declared once and served to every client. The web calls it as a server action; other clients (the mobile app, #75) call the same operation over HTTP at `POST /api/v1/<name>`.
 
 ```ts
-// packages/contract/themes.ts: what clients see. zod schema in, output type out.
-export const deleteTheme = defineContract()({
+// packages/contract/themes.ts: what clients see. zod schemas in and out.
+export const deleteTheme = defineContract({
   name: "themes.delete",
   kind: "mutation",
   input: z.object({ themeId: rowId }),
+  output: z.void(),
 });
 
 // server/operations/themes.ts: authorize, call server/, say what's stale.
@@ -52,14 +53,16 @@ export const deleteTheme = implement(
 export const deleteTheme = serverAction(themes.deleteTheme);
 ```
 
-- `executeOperation` (`apps/web/server/operation.ts`) rejects signed-out callers, parses the input with the contract's schema (the first issue's message is the error), runs the implementation, and returns `{ success: true, data } | { success: false, error }` (`ActionResult`, `packages/contract/result.ts`).
+- `executeOperation` (`apps/web/server/operation.ts`) rejects signed-out callers, parses the input with the contract's schema (the first issue's message is the error), runs the implementation, parses its return value with the output schema, and returns `{ success: true, data } | { success: false, error, code }` (`ActionResult`, `packages/contract/result.ts`). Output parsing strips undeclared fields, so a DTO never leaks a column the contract doesn't name. An output that doesn't match is a bug: it's logged and the client gets the fallback error.
+- `code` is for clients to branch on; `error` is for people. The codes: `unauthenticated`, `invalid_input`, `refused` (a `UserError`), `internal` (anything else), plus `unavailable` and `bad_request` from the client and transport. Don't match on message text.
 - Throw `UserError` (`packages/core/user-error.ts`) for messages users should see. Any other error is logged, and the client gets only the fallback message. `throwIfDbError` maps our Postgres functions' error codes to `UserError`s.
 - The schema guards the shape; the implementation still authorizes the viewer for the resource (`apps/web/server/authz.ts`). Every operation is a public endpoint.
 - `ctx.invalidate(...)` takes keys from `packages/contract/keys.ts`. Both transports revalidate the web pages behind each key (`pathsFor` in `apps/web/app/_operations/revalidate.ts`), so a change made on mobile also refreshes the website. The HTTP response returns the keys for mobile to use as query keys. Add a key and its paths together.
-- Transports live in `apps/web/app/_operations/`: `serverAction(op)` for the web and `handleOperationRequest` for `/api/v1`. The HTTP route takes a JSON body, refuses a foreign `Origin` (403) and non-JSON bodies (415) because browsers send the session cookie, and returns 401 when signed out, 400 for invalid input, 404 for an unknown name, and otherwise 200 with the `ActionResult` plus `invalidate`. `createOperationClient` (`packages/contract/client.ts`) is the typed client for it.
+- Transports live in `apps/web/app/_operations/`: `serverAction(op)` for the web and `handleOperationRequest` for `/api/v1`. The HTTP route takes a JSON body, refuses a foreign `Origin` (403) and non-JSON bodies (415) because browsers send the session cookie, and returns the `ActionResult` plus `invalidate`. The status follows the code: 200 on success or `refused`, 401 `unauthenticated`, 400 `invalid_input`, 500 `internal`, and 404 for an unknown name. `createOperationClient` (`packages/contract/client.ts`) is the typed client for it.
 - `packages/contract/index.ts` and `apps/web/server/operations/index.ts` list every domain; a test fails if a contract has no implementation.
+- `packages/contract/contracts.snapshot.json` is the public API as JSON Schema, checked by `packages/contract/snapshot.test.ts`. A diff there is an API change, and installed mobile apps keep calling the old shape: adding an operation, an optional input field or an output field is safe; renaming or removing anything, or tightening an input, needs a new operation name. Update it with `npx vitest run -u packages/contract`.
 
-Domains not yet moved to operations still write the action body inline with `runAction` (`apps/web/server/action.ts`): same error handling, positional arguments, and `revalidatePath` in the action. Move a domain over when you change it.
+Domains not yet moved to operations still write the action body inline with `runAction` (`apps/web/server/action.ts`): same error handling, positional arguments, and `revalidatePath` in the action. Move a domain over when you change it. ESLint only allows `runAction` in the files listed in `eslint.config.mjs`; remove a file's line once it's migrated, and never add one.
 
 ## Adding a feature
 

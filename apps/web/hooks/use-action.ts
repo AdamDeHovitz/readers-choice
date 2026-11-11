@@ -39,7 +39,11 @@ export function useAction<Args extends unknown[], T>(
             result = await action(...args);
           } catch (cause) {
             console.error(cause);
-            result = { success: false, error: NETWORK_ERROR };
+            result = {
+              success: false,
+              error: NETWORK_ERROR,
+              code: "unavailable",
+            };
           }
 
           if (result.success) {

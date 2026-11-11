@@ -18,6 +18,8 @@ export async function runAction<T>(
   body: (viewer: Viewer) => Promise<T>
 ): Promise<ActionResult<T>> {
   const viewer = await getViewer();
-  if (!viewer) return { success: false, error: UNAUTHORIZED };
+  if (!viewer) {
+    return { success: false, error: UNAUTHORIZED, code: "unauthenticated" };
+  }
   return settle(fallbackError, () => body(viewer));
 }
