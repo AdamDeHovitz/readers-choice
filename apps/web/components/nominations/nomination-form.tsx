@@ -17,7 +17,6 @@ import { EditableNominationNote } from "./editable-nomination-note";
 interface NominationFormProps {
   meetingId: string;
   existingNominations: MeetingBookOption[];
-  currentUserId: string;
 }
 
 /**
@@ -28,7 +27,6 @@ interface NominationFormProps {
 export function NominationForm({
   meetingId,
   existingNominations,
-  currentUserId,
 }: NominationFormProps) {
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     null
@@ -128,17 +126,13 @@ export function NominationForm({
                   author={nomination.book.author}
                   coverUrl={nomination.book.coverUrl || undefined}
                 >
-                  {nomination.addedBy === currentUserId ? (
+                  {nomination.isViewerNomination ? (
                     <EditableNominationNote
                       bookOptionId={nomination.id}
                       note={nomination.nominationNote}
-                      nominatorName={nomination.nominatorName}
                     />
                   ) : (
-                    <NominationNote
-                      note={nomination.nominationNote}
-                      nominatorName={nomination.nominatorName}
-                    />
+                    <NominationNote note={nomination.nominationNote} />
                   )}
                 </BookCard>
               </li>

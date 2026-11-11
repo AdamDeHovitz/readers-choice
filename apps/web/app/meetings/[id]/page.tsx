@@ -152,7 +152,6 @@ export default async function MeetingPage({
           <NominationForm
             meetingId={meeting.id}
             existingNominations={meeting.bookOptions}
-            currentUserId={viewer.userId}
           />
         </Section>
       )}

@@ -56,7 +56,6 @@ function BookDetails({
       />
       <NominationNote
         note={bookOption.nominationNote}
-        nominatorName={bookOption.nominatorName}
         compact
         className="mt-1"
       />
