@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { SignInButton } from "@/components/auth/sign-in-button";
 import { CredentialsForm } from "@/components/auth/credentials-form";
@@ -82,6 +83,11 @@ export function LoginForm({ callbackUrl }: LoginFormProps) {
             )}
           </div>
         </div>
+        <p className="mt-4 text-center text-sm">
+          <Link href="/privacy" className="text-muted-foreground underline">
+            Privacy policy
+          </Link>
+        </p>
       </div>
     </div>
   );
