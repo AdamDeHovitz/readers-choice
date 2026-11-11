@@ -114,6 +114,44 @@ export default defineConfig([
     },
   },
   {
+    // New actions are operations (docs/architecture.md), so the mobile app
+    // can call them too (#75). The ignore list holds the domains still on
+    // runAction: it only shrinks. Migrate a file, then delete its line.
+    files: ["apps/web/app/actions/**/*.ts"],
+    ignores: [
+      "**/*.test.ts",
+      "apps/web/app/actions/book-clubs.ts",
+      "apps/web/app/actions/books.ts",
+      "apps/web/app/actions/calendar.ts",
+      "apps/web/app/actions/invites.ts",
+      "apps/web/app/actions/libraries.ts",
+      "apps/web/app/actions/meeting-voting.ts",
+      "apps/web/app/actions/meetings.ts",
+      "apps/web/app/actions/nominations.ts",
+      "apps/web/app/actions/rankings.ts",
+    ],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/server/action",
+              importNames: ["runAction"],
+              message:
+                "Define an operation instead (packages/contract + apps/web/server/operations) and export serverAction(op).",
+            },
+            {
+              name: "@supabase/supabase-js",
+              message: "Use createAdminClient/Db from @/server/db.",
+              allowTypeImports: true,
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["apps/web/server/**/*.{ts,tsx}"],
     ignores: ["apps/web/server/db.ts"],
     rules: {

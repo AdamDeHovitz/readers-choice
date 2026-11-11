@@ -40,7 +40,12 @@ export function createOperationClient({
         );
         return (await response.json()) as OperationResponse<OutputOf<C>>;
       } catch {
-        return { success: false, error: UNREACHABLE, invalidate: [] };
+        return {
+          success: false,
+          error: UNREACHABLE,
+          code: "unavailable",
+          invalidate: [],
+        };
       }
     },
   };

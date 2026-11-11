@@ -50,6 +50,7 @@ describe("super-admin club deletion", () => {
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: false,
       error: "Unauthorized",
+      code: "unauthenticated",
     });
     expect(from).not.toHaveBeenCalled();
     expect(rpc).not.toHaveBeenCalled();
@@ -63,6 +64,7 @@ describe("super-admin club deletion", () => {
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: false,
       error: "Only super admins can delete book clubs",
+      code: "refused",
     });
     expect(from).toHaveBeenCalledWith("users");
     expect(eq).toHaveBeenCalledWith("id", session.user.id);
@@ -86,6 +88,7 @@ describe("super-admin club deletion", () => {
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: false,
       error: "Failed to delete book club",
+      code: "internal",
     });
     expect(rpc).not.toHaveBeenCalled();
   });
@@ -127,6 +130,7 @@ describe("super-admin club deletion", () => {
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: false,
       error: message,
+      code: "refused",
     });
     expect(revalidatePath).not.toHaveBeenCalled();
   });
@@ -142,6 +146,7 @@ describe("super-admin club deletion", () => {
     expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
       success: false,
       error: "Failed to delete book club",
+      code: "internal",
     });
   });
 });

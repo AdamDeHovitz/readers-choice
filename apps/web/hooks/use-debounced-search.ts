@@ -38,7 +38,11 @@ export function useDebouncedSearch<T>(
       try {
         result = await search(trimmed);
       } catch {
-        result = { success: false, error: "Search is unavailable right now." };
+        result = {
+          success: false,
+          error: "Search is unavailable right now.",
+          code: "unavailable",
+        };
       }
       if (cancelled) return;
       setSettled({

@@ -1,6 +1,7 @@
 import "server-only";
 import type { InvalidationKey } from "@readers-choice/contract/keys";
 import type {
+  ImplementationOutputOf,
   OperationContract,
   OutputOf,
   ParsedInputOf,
@@ -22,9 +23,13 @@ export interface Operation<C extends OperationContract = OperationContract> {
   fallbackError: string;
   /**
    * Authorize the viewer (server/authz.ts), then call server/ for the work.
-   * `input` has already passed the contract's schema.
+   * `input` has already passed the contract's schema; the return value is
+   * parsed with the output schema before it reaches the client.
    */
-  run(ctx: OperationContext, input: ParsedInputOf<C>): Promise<OutputOf<C>>;
+  run(
+    ctx: OperationContext,
+    input: ParsedInputOf<C>
+  ): Promise<ImplementationOutputOf<C>>;
 }
 
 export function implement<C extends OperationContract>(
@@ -39,17 +44,16 @@ export interface OperationOutcome<T> {
   result: ActionResult<T>;
   /** Keys the operation invalidated; empty unless it succeeded. */
   invalidated: InvalidationKey[];
-  /**
-   * Why the operation didn't run, for transports that report it (HTTP
-   * status codes). Unset when it ran, whether it succeeded or failed.
-   */
-  rejected?: "unauthenticated" | "invalid-input";
 }
 
 /**
  * Run an operation for a viewer, whatever transport the call came in on.
+ *
  * The input is untrusted: it's parsed with the contract's schema first, and
- * the first problem is returned as the error.
+ * the first problem is returned as the error. The output is parsed with the
+ * contract's output schema, so clients only ever see declared fields. An
+ * output that doesn't match is a server bug: it's logged and the client gets
+ * the fallback error (the operation's writes have already happened).
  */
 export async function executeOperation<C extends OperationContract>(
   operation: Operation<C>,
@@ -58,19 +62,18 @@ export async function executeOperation<C extends OperationContract>(
 ): Promise<OperationOutcome<OutputOf<C>>> {
   if (!viewer) {
     return {
-      result: { success: false, error: UNAUTHORIZED },
+      result: { success: false, error: UNAUTHORIZED, code: "unauthenticated" },
       invalidated: [],
-      rejected: "unauthenticated",
     };
   }
 
-  const parsed = operation.contract.input.safeParse(rawInput);
+  const { contract, fallbackError } = operation;
+  const parsed = contract.input.safeParse(rawInput);
   if (!parsed.success) {
     const error = parsed.error.issues[0]?.message ?? "Invalid input";
     return {
-      result: { success: false, error },
+      result: { success: false, error, code: "invalid_input" },
       invalidated: [],
-      rejected: "invalid-input",
     };
   }
 
@@ -79,8 +82,25 @@ export async function executeOperation<C extends OperationContract>(
     ...viewer,
     invalidate: (...keys) => invalidated.push(...keys),
   };
-  const result = await settle(operation.fallbackError, () =>
+  const result = await settle(fallbackError, () =>
     operation.run(context, parsed.data as ParsedInputOf<C>)
   );
-  return { result, invalidated: result.success ? invalidated : [] };
+  if (!result.success) return { result, invalidated: [] };
+
+  const output = contract.output.safeParse(result.data);
+  if (!output.success) {
+    console.error(
+      `${contract.name} returned output that doesn't match its contract:`,
+      output.error.issues
+    );
+    // The writes happened, so stale data is still stale.
+    return {
+      result: { success: false, error: fallbackError, code: "internal" },
+      invalidated,
+    };
+  }
+  return {
+    result: { success: true, data: output.data as OutputOf<C> },
+    invalidated,
+  };
 }

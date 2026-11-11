@@ -34,6 +34,7 @@ describe("runAction", () => {
     expect(await runAction("Failed", body)).toEqual({
       success: false,
       error: "Unauthorized",
+      code: "unauthenticated",
     });
     expect(body).not.toHaveBeenCalled();
   });
@@ -68,7 +69,11 @@ describe("runAction", () => {
       throw new UserError("Not a member");
     });
 
-    expect(result).toEqual({ success: false, error: "Not a member" });
+    expect(result).toEqual({
+      success: false,
+      error: "Not a member",
+      code: "refused",
+    });
   });
 
   it("hides unexpected errors behind the fallback message", async () => {
@@ -78,7 +83,11 @@ describe("runAction", () => {
       throw { message: 'relation "members" does not exist', code: "42P01" };
     });
 
-    expect(result).toEqual({ success: false, error: "Failed to save" });
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to save",
+      code: "internal",
+    });
     expect(console.error).toHaveBeenCalled();
   });
 });

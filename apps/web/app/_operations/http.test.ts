@@ -46,6 +46,7 @@ describe("handleOperationRequest", () => {
       body: {
         success: false,
         error: "Unknown operation: themes.nope",
+        code: "bad_request",
         invalidate: [],
       },
     });
@@ -107,7 +108,12 @@ describe("handleOperationRequest", () => {
       )
     ).toEqual({
       status: 400,
-      body: { success: false, error: "Invalid id", invalidate: [] },
+      body: {
+        success: false,
+        error: "Invalid id",
+        code: "invalid_input",
+        invalidate: [],
+      },
     });
   });
 
@@ -119,7 +125,12 @@ describe("handleOperationRequest", () => {
       )
     ).toEqual({
       status: 401,
-      body: { success: false, error: "Unauthorized", invalidate: [] },
+      body: {
+        success: false,
+        error: "Unauthorized",
+        code: "unauthenticated",
+        invalidate: [],
+      },
     });
   });
 
@@ -143,10 +154,24 @@ describe("handleOperationRequest", () => {
       body: {
         success: false,
         error: "You must be a member to delete themes",
+        code: "refused",
         invalidate: [],
       },
     });
     expect(revalidatePath).not.toHaveBeenCalled();
+  });
+
+  it("500s an unexpected server error, without the cause", async () => {
+    const { viewer } = viewerWith([
+      { data: null, error: { message: "connection reset by 10.0.0.1" } },
+    ]);
+    const { status, body } = await send(
+      post("themes.delete", JSON.stringify({ themeId: THEME })),
+      viewer
+    );
+    expect(status).toBe(500);
+    expect(body).toMatchObject({ success: false, code: "internal" });
+    expect(JSON.stringify(body)).not.toContain("10.0.0.1");
   });
 
   it("returns the invalidated keys and revalidates the web pages", async () => {
@@ -215,6 +240,7 @@ describe("createOperationClient", () => {
     ).toEqual({
       success: false,
       error: "Something went wrong. Please try again.",
+      code: "unavailable",
       invalidate: [],
     });
   });
