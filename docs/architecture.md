@@ -17,6 +17,8 @@ Paths below without a prefix are inside `apps/web`, where `@/` imports resolve.
 
 **Page (read):** `getViewer()` (session + typed client, cached per request) → a `server/<domain>.ts` query that takes the viewer, checks membership itself, and returns DTOs → render. Pages never call server actions to read.
 
+**Screen read model (a page the mobile app also shows):** a `query` operation returns everything the screen needs, already authorized, including per-item permissions computed with the same rule the matching write enforces (`canDelete` from `themeDeletionBlocker` in `packages/core/themes.ts`). The page loads it with `loadPageData(op, input, { onRefused })` (`apps/web/app/_operations/page-data.ts`), and mobile calls the same operation over `/api/v1`, so both clients show the same data and permissions. The output schema is the screen's DTO; components import its type from `@readers-choice/contract/<domain>`. Domain contract modules export only contracts at runtime (types are fine), because the registry and the snapshot treat every runtime export as an operation. Pilot: the Themes page (`themes.list`). Move other screens over as their domains become operations.
+
 **Operation (write, or a read a client component needs):** an operation is declared once and served to every client. The web calls it as a server action; other clients (the mobile app, #75) call the same operation over HTTP at `POST /api/v1/<name>`.
 
 ```ts

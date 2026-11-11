@@ -11,22 +11,16 @@ import {
   Trash2Icon,
 } from "lucide-react";
 import Image from "next/image";
-import type { ClubTheme } from "@/server/themes";
+import type { ClubTheme } from "@readers-choice/contract/themes";
 import { useAction } from "@/hooks/use-action";
 
 interface ThemesListProps {
   themes: ClubTheme[];
-  currentUserId: string;
-  isAdmin: boolean;
 }
 
 type FilterType = "all" | "used" | "unused";
 
-export function ThemesList({
-  themes,
-  currentUserId,
-  isAdmin,
-}: ThemesListProps) {
+export function ThemesList({ themes }: ThemesListProps) {
   const upvote = useAction(toggleThemeUpvote);
   const remove = useAction(deleteTheme);
   // Which theme the in-flight request is for, to disable its button.
@@ -197,20 +191,19 @@ export function ThemesList({
                     </div>
                   )}
                   {/* Show delete button if user is the submitter or an admin, and theme is unused */}
-                  {(theme.submittedBy?.id === currentUserId || isAdmin) &&
-                    theme.timesUsed === 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleDelete(theme.id, theme.name)}
-                        disabled={isDeleting(theme.id)}
-                        className="size-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                        aria-label={`Delete ${theme.name}`}
-                        title="Delete theme"
-                      >
-                        <Trash2Icon className="size-4" />
-                      </Button>
-                    )}
+                  {theme.canDelete && theme.timesUsed === 0 && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => handleDelete(theme.id, theme.name)}
+                      disabled={isDeleting(theme.id)}
+                      className="size-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      aria-label={`Delete ${theme.name}`}
+                      title="Delete theme"
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  )}
                 </div>
 
                 {/* Submitter icon only */}
