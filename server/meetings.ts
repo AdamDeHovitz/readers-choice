@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import type { MeetingSchedule } from "@/lib/meeting-schedule";
 import { UserError } from "@/lib/user-error";
 import { getMembership, isMember } from "./authz";
@@ -154,8 +155,11 @@ export interface MeetingDetails extends MeetingSchedule {
   currentUserIsAdmin: boolean;
 }
 
-/** A meeting with its options and votes; null unless the viewer is a member. */
-export async function getMeetingDetails(
+/**
+ * A meeting with its options and votes; null unless the viewer is a member.
+ * Cached per request, so the meeting layout and page share one lookup.
+ */
+export const getMeetingDetails = cache(async function getMeetingDetails(
   { db, userId }: Viewer,
   meetingId: string
 ): Promise<MeetingDetails | null> {
@@ -219,7 +223,7 @@ export async function getMeetingDetails(
     })),
     currentUserIsAdmin: membership.isAdmin,
   };
-}
+});
 
 /** Stored meeting fields; timestamps are ISO strings. */
 export interface MeetingInput {

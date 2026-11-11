@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 const alertVariants = cva("w-full rounded-lg border p-3 font-inria text-sm", {
   variants: {
     variant: {
-      default: "border-gold-600/20 bg-cream-100 text-dark-900",
+      default: "border-border bg-cream-100 text-dark-900",
       destructive: "border-destructive/30 bg-destructive/5 text-destructive",
     },
   },

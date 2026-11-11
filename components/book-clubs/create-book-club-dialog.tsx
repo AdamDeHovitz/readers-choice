@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,7 +44,10 @@ export function CreateBookClubDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg">Create Book Club</Button>
+        <Button>
+          <PlusIcon aria-hidden />
+          New club
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <form action={handleSubmit}>

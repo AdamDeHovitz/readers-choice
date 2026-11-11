@@ -1,15 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle2Icon } from "lucide-react";
 import { BookSearch } from "@/components/books/book-search";
 import { BookCard } from "@/components/books/book-card";
+import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { nominateBook } from "@/app/actions/nominations";
 import { useAction } from "@/hooks/use-action";
-import { useRouter } from "next/navigation";
 import type { BookSearchResult } from "@/lib/open-library";
-import { CheckCircle2 } from "lucide-react";
-import { Alert } from "@/components/ui/alert";
 import type { MeetingBookOption } from "@/server/meetings";
 import { NominationNote } from "./nomination-note";
 import { NominationNoteField } from "./nomination-note-field";
@@ -21,163 +20,130 @@ interface NominationFormProps {
   currentUserId: string;
 }
 
+/**
+ * Search, tap a book, optionally add a note, nominate. The note and button
+ * appear right under the picked book; the new nomination then shows in the
+ * list below, where its note stays editable.
+ */
 export function NominationForm({
   meetingId,
   existingNominations,
   currentUserId,
 }: NominationFormProps) {
-  const router = useRouter();
   const [selectedBook, setSelectedBook] = useState<BookSearchResult | null>(
     null
   );
   const [note, setNote] = useState("");
-  const [success, setSuccess] = useState(false);
+  const [justNominated, setJustNominated] = useState<string | null>(null);
+  // Bumped after each nomination to remount the search with an empty box.
+  const [searchKey, setSearchKey] = useState(0);
   const {
     run: nominate,
     pending: isSubmitting,
-    error: submitError,
+    error,
     reset,
-  } = useAction(nominateBook, {
-    refresh: false,
-    onSuccess: () => {
-      setSuccess(true);
-      setSelectedBook(null);
-      setNote("");
-      // Show the confirmation briefly, then the updated nominations.
-      setTimeout(() => {
-        router.refresh();
-        setSuccess(false);
-      }, 2000);
-    },
-  });
+  } = useAction(nominateBook);
 
-  // Another work with the same title and author counts as the same book.
-  const alreadyNominated =
-    selectedBook !== null &&
-    existingNominations.some(
-      (nom) =>
-        nom.book.title.toLowerCase() === selectedBook.title.toLowerCase() &&
-        nom.book.author.toLowerCase() === selectedBook.author.toLowerCase()
-    );
-  const error = alreadyNominated
-    ? "This book has already been nominated for this meeting."
-    : submitError;
-
-  function handleNominate() {
-    if (!selectedBook || alreadyNominated) return;
-    nominate(meetingId, selectedBook, note);
+  async function submit(book: BookSearchResult) {
+    const result = await nominate(meetingId, book, note);
+    if (!result.success) return;
+    setJustNominated(book.title);
+    setSelectedBook(null);
+    setNote("");
+    setSearchKey((key) => key + 1);
   }
 
-  if (success) {
-    return (
-      <div className="py-8 text-center">
-        <CheckCircle2 className="text-rust-600 mx-auto mb-4 h-16 w-16" />
-        <h3 className="text-dark-900 mb-2 text-xl font-bold">
-          Book Nominated!
-        </h3>
-        <p className="text-dark-600">
-          Your nomination has been submitted successfully.
-        </p>
-      </div>
-    );
+  // Another work with the same title and author counts as the same book.
+  function alreadyNominated(book: BookSearchResult) {
+    return existingNominations.some(
+      (nom) =>
+        nom.book.title.toLowerCase() === book.title.toLowerCase() &&
+        nom.book.author.toLowerCase() === book.author.toLowerCase()
+    )
+      ? "Already nominated"
+      : null;
+  }
+
+  function selectBook(book: BookSearchResult | null) {
+    setSelectedBook(book);
+    setJustNominated(null);
+    reset();
   }
 
   return (
     <div className="space-y-6">
-      {/* Book Search */}
-      <div>
-        <h3 className="text-dark-900 mb-3 text-lg font-semibold">
-          {existingNominations.length > 0
-            ? "Nominate Another Book"
-            : "Search and Nominate"}
-        </h3>
-        <BookSearch
-          onSelectBook={setSelectedBook}
-          selectedBookId={selectedBook?.id}
-        />
-      </div>
-
-      {/* Already Nominated Books */}
-      {existingNominations.length > 0 && (
-        <div>
-          <h3 className="text-dark-900 mb-3 text-lg font-semibold">
-            Already Nominated
-          </h3>
-          <div className="space-y-2">
-            {existingNominations.map((nomination) => (
-              <BookCard
-                key={nomination.id}
-                title={nomination.book.title}
-                author={nomination.book.author}
-                coverUrl={nomination.book.coverUrl || undefined}
-              >
-                {nomination.addedBy === currentUserId ? (
-                  <EditableNominationNote
-                    bookOptionId={nomination.id}
-                    note={nomination.nominationNote}
-                    nominatorName={nomination.nominatorName}
-                  />
-                ) : (
-                  <NominationNote
-                    note={nomination.nominationNote}
-                    nominatorName={nomination.nominatorName}
-                  />
-                )}
-              </BookCard>
-            ))}
-          </div>
-        </div>
+      {justNominated && (
+        <Alert className="flex items-center gap-2" aria-live="polite">
+          <CheckCircle2Icon className="text-rust-600 size-4 shrink-0" />
+          <span>
+            You nominated <strong>{justNominated}</strong>. Nominate another, or
+            edit your note below.
+          </span>
+        </Alert>
       )}
 
-      {/* Selected Book Preview */}
-      {selectedBook && (
-        <div className="border-gold-200 border-t pt-6">
-          <h3 className="text-dark-900 mb-3 text-lg font-semibold">
-            Selected Book
-          </h3>
-          <BookCard
-            title={selectedBook.title}
-            author={selectedBook.author}
-            coverUrl={selectedBook.coverUrl}
-            publishedYear={selectedBook.publishedYear}
-            selected
-          />
-
-          <div className="mt-4">
+      <BookSearch
+        key={searchKey}
+        selectedBook={selectedBook}
+        onSelectBook={selectBook}
+        unavailableReason={alreadyNominated}
+      >
+        {selectedBook && (
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(selectedBook);
+            }}
+          >
             <NominationNoteField
               id="nomination-note"
               value={note}
               onChange={setNote}
               disabled={isSubmitting}
             />
-          </div>
-
-          {error && (
-            <Alert variant="destructive" className="mt-4">
-              {error}
-            </Alert>
-          )}
-
-          <div className="mt-4 flex gap-3">
+            {error && <Alert variant="destructive">{error}</Alert>}
             <Button
-              onClick={handleNominate}
-              disabled={isSubmitting || alreadyNominated}
-              className="bg-rust-600 hover:bg-rust-700 text-cream-100 flex-1"
-            >
-              {isSubmitting ? "Nominating..." : "Nominate This Book"}
-            </Button>
-            <Button
-              onClick={() => {
-                setSelectedBook(null);
-                setNote("");
-                reset();
-              }}
-              variant="outline"
+              type="submit"
+              size="lg"
+              className="w-full"
               disabled={isSubmitting}
             >
-              Clear Selection
+              {isSubmitting ? "Nominating…" : `Nominate ${selectedBook.title}`}
             </Button>
-          </div>
+          </form>
+        )}
+      </BookSearch>
+
+      {existingNominations.length > 0 && (
+        <div>
+          <h3 className="text-foreground mb-3 font-bold">
+            Nominated so far ({existingNominations.length})
+          </h3>
+          <ul className="space-y-2">
+            {existingNominations.map((nomination) => (
+              <li key={nomination.id}>
+                <BookCard
+                  title={nomination.book.title}
+                  author={nomination.book.author}
+                  coverUrl={nomination.book.coverUrl || undefined}
+                >
+                  {nomination.addedBy === currentUserId ? (
+                    <EditableNominationNote
+                      bookOptionId={nomination.id}
+                      note={nomination.nominationNote}
+                      nominatorName={nomination.nominatorName}
+                    />
+                  ) : (
+                    <NominationNote
+                      note={nomination.nominationNote}
+                      nominatorName={nomination.nominatorName}
+                    />
+                  )}
+                </BookCard>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

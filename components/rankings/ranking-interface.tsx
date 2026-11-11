@@ -53,19 +53,19 @@ function SortableBookItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-4"
+      className="border-border bg-card flex items-center gap-3 rounded-2xl border p-3 shadow-xs"
     >
       {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab touch-none active:cursor-grabbing"
+        className="-m-2 cursor-grab touch-none p-2 active:cursor-grabbing"
       >
         <GripVertical className="text-dark-500 h-5 w-5" />
       </div>
 
       {/* Rank badge */}
-      <div className="bg-gold-100 text-dark-900 font-inria flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold">
+      <div className="bg-sage-100 text-dark-900 font-inria flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold">
         {rank}
       </div>
 
@@ -115,7 +115,7 @@ function UnreadBookItem({
   onMarkRead: (bookId: string) => void;
 }) {
   return (
-    <div className="bg-cream-100 border-gold-600/20 flex items-center gap-3 rounded-lg border p-4 opacity-60">
+    <div className="bg-muted/50 border-border flex items-center gap-3 rounded-2xl border p-3 opacity-70">
       {/* Book cover */}
       {book.coverUrl && (
         <Image
@@ -239,7 +239,7 @@ export function RankingInterface({
           <div className="text-dark-600 text-sm">
             {isSaving ? (
               <span className="flex items-center gap-2">
-                <span className="bg-gold-500 inline-block h-2 w-2 animate-pulse rounded-full"></span>
+                <span className="bg-sage-500 inline-block h-2 w-2 animate-pulse rounded-full"></span>
                 Saving...
               </span>
             ) : lastSaved ? (
@@ -261,7 +261,7 @@ export function RankingInterface({
         )}
 
         {rankedBooks.length === 0 ? (
-          <div className="bg-cream-100 border-gold-600/20 rounded-lg border py-12 text-center">
+          <div className="border-border rounded-2xl border border-dashed py-12 text-center">
             <p className="text-dark-600">
               No books in your ranking yet. Add books from below to get started!
             </p>

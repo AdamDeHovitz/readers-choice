@@ -39,16 +39,18 @@ export function EditableNominationNote({
     return (
       <div className="space-y-1">
         <NominationNote note={note} nominatorName={nominatorName} />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
+          className="text-primary -ml-3"
           onClick={() => {
             setDraft(note ?? "");
             setIsEditing(true);
           }}
-          className="text-gold-700 hover:text-gold-800 text-xs font-medium"
         >
           {note ? "Edit note" : "Add a note"}
-        </button>
+        </Button>
       </div>
     );
   }
@@ -64,7 +66,7 @@ export function EditableNominationNote({
       {error && <Alert variant="destructive">{error}</Alert>}
       <div className="flex gap-2">
         <Button size="sm" onClick={handleSave} disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save Note"}
+          {isSaving ? "Saving…" : "Save note"}
         </Button>
         <Button
           size="sm"

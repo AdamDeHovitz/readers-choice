@@ -117,7 +117,7 @@ export function EditMeetingDetailsStep({
       {currentBook && (
         <div className="space-y-2">
           <Label>Current Book</Label>
-          <div className="bg-cream-100 border-gold-600/20 rounded-lg border p-3">
+          <div className="bg-cream-100 border-border rounded-lg border p-3">
             <p className="font-inria text-dark-900 text-sm font-medium">
               {currentBook.title}
             </p>

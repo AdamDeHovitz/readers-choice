@@ -5,6 +5,7 @@ import { finalizeMeeting } from "@/app/actions/meetings";
 import { voteForBook } from "@/app/actions/meeting-voting";
 import { useAction } from "@/hooks/use-action";
 import type { VotingResults } from "@/server/voting";
+import { EmptyState } from "@/components/ui/empty-state";
 import { VotingMethodToggle } from "./voting-method-toggle";
 import { MeetingRankedVoting } from "./meeting-ranked-voting";
 import { VotingResultsDisplay } from "./voting-results";
@@ -61,16 +62,12 @@ export function BookOptionsList({
   // Determine current voting method (default to approval if not set)
   const currentMethod = userVotingMethod || "approval";
 
-  // Check if user has existing votes
-  const hasExistingVotes =
-    (currentMethod === "approval" && bookOptions.some((o) => o.userHasVoted)) ||
-    (currentMethod === "ranked" && userRankedVotes.length > 0);
-
   if (bookOptions.length === 0) {
     return (
-      <p className="text-dark-500 py-8 text-center italic">
-        No book options added yet
-      </p>
+      <EmptyState
+        title="No books nominated"
+        description="Nothing was nominated for this meeting."
+      />
     );
   }
 
@@ -128,7 +125,6 @@ export function BookOptionsList({
             meetingId={meetingId}
             currentMethod={currentMethod}
             disabled={!canVote}
-            hasExistingVotes={hasExistingVotes}
           />
         </div>
 
@@ -143,7 +139,7 @@ export function BookOptionsList({
         {availability && (
           <section
             aria-labelledby="ranked-availability-heading"
-            className="border-gold-600/20 rounded-lg border bg-white p-4"
+            className="border-border bg-card rounded-2xl border p-4"
           >
             <h3
               id="ranked-availability-heading"
@@ -151,7 +147,7 @@ export function BookOptionsList({
             >
               Library availability
             </h3>
-            <ul className="divide-gold-600/15 divide-y">
+            <ul className="divide-sage-600/15 divide-y">
               {bookOptions.map((option) => (
                 <li
                   key={option.id}
@@ -202,22 +198,16 @@ export function BookOptionsList({
     <div className="space-y-4">
       {/* Voting method toggle - only show during active voting */}
       {canVote && (
-        <div className="flex justify-end">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-muted-foreground text-sm">
+            Vote for every book you&apos;d read. Counts stay hidden until voting
+            closes.
+          </p>
           <VotingMethodToggle
             meetingId={meetingId}
             currentMethod={currentMethod}
             disabled={!canVote}
-            hasExistingVotes={hasExistingVotes}
           />
-        </div>
-      )}
-
-      {/* Hidden votes notice */}
-      {canVote && (
-        <div className="bg-cream-100 border-gold-600/20 rounded-lg border p-3 text-center">
-          <p className="text-dark-600 text-sm">
-            Vote counts are hidden until voting closes
-          </p>
         </div>
       )}
 

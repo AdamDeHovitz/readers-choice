@@ -59,7 +59,9 @@ test("voters without libraries are invited to choose some", async ({
     .click();
   await page.getByRole("link", { name: "Choose libraries" }).click();
   await expect(page).toHaveURL(/\/settings\?returnTo=/);
-  await expect(page.getByRole("heading", { name: "Libraries" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Libraries", exact: true })
+  ).toBeVisible();
   await expect(page.getByRole("link", { name: "Back" })).toHaveAttribute(
     "href",
     `/meetings/${meetings.votingOpen}`

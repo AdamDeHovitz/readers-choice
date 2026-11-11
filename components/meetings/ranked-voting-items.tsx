@@ -130,7 +130,7 @@ export function SortableRankedBookItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3"
+      className="border-border bg-card flex items-center gap-3 rounded-lg border p-3"
     >
       {/* Drag handle */}
       <div
@@ -142,7 +142,7 @@ export function SortableRankedBookItem({
       </div>
 
       {/* Rank badge */}
-      <div className="bg-gold-100 text-dark-900 font-inria flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold">
+      <div className="bg-sage-100 text-dark-900 font-inria flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-bold">
         {rank}
       </div>
 
@@ -187,7 +187,7 @@ export function SortableUnrankedBookItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`bg-cream-100 border-gold-600/20 flex items-center gap-3 rounded-lg border p-3 ${isDragging ? "opacity-50" : "opacity-70"}`}
+      className={`bg-cream-100 border-border flex items-center gap-3 rounded-lg border p-3 ${isDragging ? "opacity-50" : "opacity-70"}`}
     >
       {/* Drag handle */}
       <div
@@ -216,7 +216,7 @@ export function BookDragOverlay({
   bookOption: MeetingBookOption;
 }) {
   return (
-    <div className="border-gold-600/20 flex items-center gap-3 rounded-lg border bg-white p-3 shadow-lg">
+    <div className="border-border bg-card flex items-center gap-3 rounded-lg border p-3 shadow-lg">
       <GripVertical className="text-dark-500 h-5 w-5" />
       <CoverThumbnail book={bookOption.book} />
       <div className="min-w-0 flex-1">
@@ -246,8 +246,8 @@ export function DroppableRankedZone({
     <div
       ref={setNodeRef}
       className={`min-h-[60px] rounded-lg transition-colors ${
-        isOver ? "bg-gold-100/50 ring-gold-500/30 ring-2" : ""
-      } ${isEmpty ? "bg-cream-100 border-gold-600/20 border py-6 text-center" : ""}`}
+        isOver ? "bg-sage-100/50 ring-sage-500/30 ring-2" : ""
+      } ${isEmpty ? "bg-cream-100 border-border border py-6 text-center" : ""}`}
     >
       {children}
     </div>

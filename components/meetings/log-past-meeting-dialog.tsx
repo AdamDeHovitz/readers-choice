@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -70,9 +71,12 @@ export function LogPastMeetingDialog({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline">Log Past Meeting</Button>
+        <Button variant="outline">
+          <HistoryIcon aria-hidden />
+          Log past meeting
+        </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Log Past Meeting</DialogTitle>
           <DialogDescription>
@@ -137,7 +141,7 @@ export function LogPastMeetingDialog({
 
         {step === "book" && (
           <div className="space-y-4">
-            <div className="bg-cream-100 border-gold-600/20 rounded-lg border p-3">
+            <div className="bg-cream-100 border-border rounded-lg border p-3">
               <p className="text-dark-600 text-sm">
                 <span className="font-inria font-medium">Date:</span>{" "}
                 {new Date(meetingDate).toLocaleDateString("en-US", {
@@ -155,24 +159,11 @@ export function LogPastMeetingDialog({
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Search for the book you read</Label>
-              <BookSearch
-                onSelectBook={setSelectedBook}
-                selectedBookId={selectedBook?.id}
-              />
-            </div>
-
-            {selectedBook && (
-              <div className="bg-gold-50 border-gold-600 rounded-lg border p-4">
-                <p className="font-inria text-dark-900 mb-1 text-sm font-medium">
-                  Selected: {selectedBook.title}
-                </p>
-                <p className="text-gold-700 text-sm">
-                  by {selectedBook.author}
-                </p>
-              </div>
-            )}
+            <BookSearch
+              label="Search for the book you read"
+              selectedBook={selectedBook}
+              onSelectBook={setSelectedBook}
+            />
 
             {error && <Alert variant="destructive">{error}</Alert>}
 

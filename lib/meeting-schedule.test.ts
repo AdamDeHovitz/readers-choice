@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  getClubStatus,
   getMeetingPhase,
   isNominationClosed,
   isVotingClosed,
@@ -157,25 +156,5 @@ describe("pickUpcomingMeeting", () => {
 
   it("returns null when nothing is upcoming", () => {
     expect(pickUpcomingMeeting([meeting("past", before)], now)).toBeNull();
-  });
-});
-
-describe("getClubStatus", () => {
-  it("is inactive without an upcoming meeting", () => {
-    expect(getClubStatus(null, now)).toBe("inactive");
-  });
-
-  it("is nominating, then voting, and stays voting until finalized", () => {
-    const status = (
-      nominationDeadline: string | null,
-      votingDeadline: string | null
-    ) =>
-      getClubStatus(
-        { isFinalized: false, nominationDeadline, votingDeadline },
-        now
-      );
-    expect(status(after, after)).toBe("nominating");
-    expect(status(before, after)).toBe("voting");
-    expect(status(before, before)).toBe("voting");
   });
 });

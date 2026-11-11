@@ -78,10 +78,10 @@ export function AvailabilityButton({
       : LibraryIcon;
   const tone =
     !configured || summary.kind === "none"
-      ? "border-dark-900/15 bg-white text-dark-700 hover:bg-cream-50"
+      ? "border-dark-900/15 bg-card text-dark-700 hover:bg-cream-50"
       : summary.kind === "available"
-        ? "border-gold-700/50 bg-gold-200 text-dark-900 hover:bg-gold-300"
-        : "border-gold-600/40 bg-cream-50 text-dark-900 hover:bg-cream-200";
+        ? "border-sage-700/50 bg-sage-200 text-dark-900 hover:bg-sage-300"
+        : "border-sage-600/40 bg-cream-50 text-dark-900 hover:bg-cream-200";
 
   return (
     <Dialog>
@@ -106,13 +106,11 @@ export function AvailabilityButton({
       </DialogTrigger>
 
       <DialogContent
-        className={cn(
-          "gap-0 p-0",
-          // Bottom sheet on phones, centered dialog from sm up.
-          "max-sm:top-auto max-sm:bottom-0 max-sm:max-w-full max-sm:translate-y-0 max-sm:rounded-t-2xl max-sm:rounded-b-none"
-        )}
+        // Sections bring their own padding; keep the sheet's top handle space
+        // and home-indicator inset on phones.
+        className="gap-0 px-0 pb-[env(safe-area-inset-bottom)] sm:p-0"
       >
-        <DialogHeader className="border-gold-600/20 border-b px-5 pt-5 pb-4 text-left">
+        <DialogHeader className="border-border border-b px-5 pt-5 pb-4 text-left">
           <p className="font-inria text-dark-500 text-xs tracking-wide uppercase">
             Library availability
           </p>
@@ -135,7 +133,7 @@ export function AvailabilityButton({
             </ul>
           ) : (
             <div className="py-4 text-center">
-              <div className="bg-gold-200 text-gold-800 mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
+              <div className="bg-sage-200 text-sage-800 mx-auto mb-3 flex size-12 items-center justify-center rounded-full">
                 <LibraryIcon className="size-6" aria-hidden />
               </div>
               <p className="font-inria text-dark-900 font-semibold">
@@ -153,7 +151,7 @@ export function AvailabilityButton({
         </div>
 
         {configured && (
-          <div className="border-gold-600/20 font-inria text-dark-500 flex items-center justify-between gap-3 border-t px-5 py-3 text-xs">
+          <div className="border-border font-inria text-dark-500 flex items-center justify-between gap-3 border-t px-5 py-3 text-xs">
             <span>Waits are Libby estimates.</span>
             <Link
               href={settingsHref}
@@ -175,7 +173,7 @@ function LibraryResult({ result }: { result: LibraryAvailability }) {
         {result.library.name}
       </h3>
       {result.formats.length > 0 ? (
-        <ul className="border-gold-600/20 divide-gold-600/15 divide-y overflow-hidden rounded-lg border bg-white">
+        <ul className="border-border divide-border bg-card divide-y overflow-hidden rounded-lg border">
           {result.formats.map((format) => (
             <li key={format.format}>
               <FormatRow
@@ -192,7 +190,7 @@ function LibraryResult({ result }: { result: LibraryAvailability }) {
           href={result.searchUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="border-dark-900/15 font-inria text-dark-600 hover:bg-cream-50 flex items-center gap-3 rounded-lg border border-dashed bg-white px-3 py-2.5 text-sm"
+          className="border-dark-900/15 font-inria text-dark-600 hover:bg-cream-50 bg-card flex items-center gap-3 rounded-lg border border-dashed px-3 py-2.5 text-sm"
         >
           <SearchIcon className="text-dark-500 size-4 shrink-0" aria-hidden />
           <span className="flex-1">Not found. Search the catalog</span>
@@ -227,7 +225,7 @@ function FormatRow({
       <span
         className={cn(
           "rounded-full px-2 py-0.5 text-xs font-semibold",
-          available ? "bg-gold-200 text-dark-900" : "bg-cream-200 text-dark-700"
+          available ? "bg-sage-200 text-dark-900" : "bg-cream-200 text-dark-700"
         )}
       >
         {available

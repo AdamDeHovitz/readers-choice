@@ -12,7 +12,7 @@ export function SignInButton({
   return (
     <button
       onClick={() => signIn("google", { callbackUrl })}
-      className="border-gold-600/20 font-inria text-dark-600 hover:bg-cream-100 hover:border-gold-600/20 flex w-full items-center justify-center gap-3 rounded-lg border-2 bg-white px-6 py-3 font-medium shadow-sm transition-all duration-200 hover:shadow"
+      className="border-dark-900/20 text-foreground hover:bg-muted bg-card flex h-12 w-full items-center justify-center gap-3 rounded-xl border px-6 font-bold transition-colors"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24">
         <path

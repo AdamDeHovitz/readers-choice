@@ -30,7 +30,7 @@ export function JoinBookClubButton({
       onClick={handleJoin}
       disabled={isJoining}
       size="lg"
-      className="w-full sm:w-auto"
+      className="w-full"
     >
       {isJoining ? "Joining..." : `Join ${bookClubName}`}
     </Button>

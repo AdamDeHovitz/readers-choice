@@ -42,8 +42,9 @@ export const config = {
      * - api/auth (auth API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
+     * - favicon.ico, icon, apple-icon, manifest.webmanifest (app metadata,
+     *   which browsers and home screens fetch without a session)
      */
-    "/((?!api/auth|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/auth|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)",
   ],
 };

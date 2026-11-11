@@ -1,5 +1,9 @@
 "use client";
 
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 
@@ -43,17 +47,17 @@ export function CredentialsForm({
       <div>
         <label
           htmlFor="email"
-          className="text-dark-700 mb-1 block text-sm font-medium"
+          className="text-foreground mb-1.5 block text-sm font-bold"
         >
           Email
         </label>
-        <input
+        <Input
           id="email"
+          autoComplete="email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="border-dark-200 focus:ring-gold-500 w-full rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
           placeholder="you@example.com"
         />
       </div>
@@ -61,37 +65,33 @@ export function CredentialsForm({
       <div>
         <label
           htmlFor="password"
-          className="text-dark-700 mb-1 block text-sm font-medium"
+          className="text-foreground mb-1.5 block text-sm font-bold"
         >
           Password
         </label>
-        <input
+        <Input
           id="password"
+          autoComplete="current-password"
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="border-dark-200 focus:ring-gold-500 w-full rounded-lg border px-3 py-2 focus:border-transparent focus:ring-2 focus:outline-none"
           placeholder="Enter your password"
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <Alert variant="destructive">{error}</Alert>}
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="bg-gold-600 hover:bg-gold-700 w-full rounded-lg py-3 font-medium text-white transition-colors disabled:opacity-50"
-      >
+      <Button type="submit" disabled={loading} size="lg" className="w-full">
         {loading ? "Signing in..." : "Sign In"}
-      </button>
+      </Button>
 
-      <p className="text-dark-600 text-center text-sm">
+      <p className="text-muted-foreground text-center text-sm">
         Don&apos;t have an account?{" "}
         <button
           type="button"
           onClick={onSwitchToRegister}
-          className="text-gold-600 font-medium hover:underline"
+          className="text-primary font-bold hover:underline"
         >
           Register
         </button>

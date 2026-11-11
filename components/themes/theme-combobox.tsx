@@ -74,7 +74,7 @@ export function ThemeCombobox({
         autoComplete="off"
       />
       {showSuggestions && filteredSuggestions.length > 0 && (
-        <div className="border-gold-600/20 absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border bg-white shadow-lg">
+        <div className="border-border bg-card absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border shadow-lg">
           {filteredSuggestions.map((theme, index) => (
             <button
               key={index}
