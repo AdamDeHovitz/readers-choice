@@ -9,7 +9,7 @@ test("member sees nomination guidance and notes", async ({ page }) => {
     page.getByText("add a note saying what your personal obsession is")
   ).toBeVisible();
   await expect(page.getByText("My obsession: houseplants.")).toBeVisible();
-  await expect(page.getByText("Nominated by Carol Member")).toBeVisible();
+  await expect(page.getByText(/Nominated by/)).toHaveCount(0);
 });
 
 test("finalized meeting shows voting results on demand", async ({ page }) => {

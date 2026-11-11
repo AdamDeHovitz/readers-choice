@@ -11,14 +11,12 @@ import { useAction } from "@/hooks/use-action";
 interface EditableNominationNoteProps {
   bookOptionId: string;
   note: string | null;
-  nominatorName: string | null;
 }
 
 /** The current user's note on their own nomination, editable in place. */
 export function EditableNominationNote({
   bookOptionId,
   note,
-  nominatorName,
 }: EditableNominationNoteProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(note ?? "");
@@ -38,7 +36,7 @@ export function EditableNominationNote({
   if (!isEditing) {
     return (
       <div className="space-y-1">
-        <NominationNote note={note} nominatorName={nominatorName} />
+        <NominationNote note={note} />
         <Button
           type="button"
           variant="ghost"
