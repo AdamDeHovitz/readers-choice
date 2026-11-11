@@ -18,7 +18,11 @@ export default defineConfig({
   },
   projects: [{ name: "mobile", use: { ...devices["Pixel 7"] } }],
   webServer: {
-    command: "npm run dev:local",
+    // CI serves a production build it made while Supabase started: faster
+    // than next dev compiling each page on first visit.
+    command: process.env.E2E_PREBUILT
+      ? "scripts/dev-local.sh --prebuilt"
+      : "npm run dev:local",
     url: "http://localhost:3000/login",
     reuseExistingServer: true,
     timeout: 180_000,
