@@ -3,6 +3,7 @@ import { ChevronRightIcon } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { BookMeta } from "@/components/books/book-meta";
 import { Section } from "@/components/ui/page-header";
+import { LocalDate } from "@/components/ui/local-date";
 import { sanitizeDescription } from "@/lib/sanitize-description";
 import type { MeetingSummary } from "@/server/meetings";
 
@@ -17,16 +18,15 @@ export function BookDisplay({ meeting, label }: BookDisplayProps) {
   const book = meeting.selectedBook;
   if (!book) return null;
 
-  const date = new Date(meeting.meetingDate).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-
   return (
     <Section
       title={label === "Upcoming" ? "Reading now" : "Last read"}
-      description={[date, meeting.theme?.name].filter(Boolean).join(" · ")}
+      description={
+        <>
+          <LocalDate iso={meeting.meetingDate} format="date" />
+          {meeting.theme && ` · ${meeting.theme.name}`}
+        </>
+      }
     >
       <article className="bg-card border-border overflow-hidden rounded-2xl border shadow-xs">
         <div className="flex gap-4 p-4 sm:gap-6 sm:p-6">

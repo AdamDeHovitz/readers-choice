@@ -175,6 +175,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      calendar_feed_tokens: {
+        Row: {
+          book_club_id: string;
+          created_at: string;
+          token: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          book_club_id: string;
+          created_at?: string;
+          token: string;
+          user_id: string;
+        };
+        Update: {
+          book_club_id?: string;
+          created_at?: string;
+          token?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "calendar_feed_tokens_book_club_id_fkey";
+            columns: ["book_club_id"];
+            isOneToOne: false;
+            referencedRelation: "book_clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "calendar_feed_tokens_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invite_links: {
         Row: {
           book_club_id: string;

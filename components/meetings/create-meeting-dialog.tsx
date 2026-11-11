@@ -2,19 +2,25 @@
 
 import { useState } from "react";
 import { createMeeting } from "@/app/actions/meetings";
-import { fromDateTimeInput } from "@/lib/datetime-input";
+import { END_OF_DAY, fromDateTimeInput } from "@/lib/datetime-input";
+import {
+  suggestMeetingSchedule,
+  type MeetingScheduleDefaults,
+  type PastMeetingSchedule,
+} from "@/lib/meeting-defaults";
 import { useAction } from "@/hooks/use-action";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { PlusIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
@@ -22,11 +28,20 @@ import { Alert } from "@/components/ui/alert";
 
 interface CreateMeetingDialogProps {
   bookClubId: string;
+  /** The club's meetings, newest first, to suggest the next one from. */
+  pastMeetings: PastMeetingSchedule[];
 }
 
-export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
+export function CreateMeetingDialog({
+  bookClubId,
+  pastMeetings,
+}: CreateMeetingDialogProps) {
   const [open, setOpen] = useState(false);
   const [themeName, setThemeName] = useState("");
+  // Suggested on open, in the browser, so dates are in the user's time zone.
+  const [schedule, setSchedule] = useState<MeetingScheduleDefaults | null>(
+    null
+  );
   const {
     run: create,
     pending: isSubmitting,
@@ -40,20 +55,33 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const field = (name: string) => String(form.get(name) ?? "");
+    if (!schedule) return;
+    const details = String(new FormData(e.currentTarget).get("details") ?? "");
 
     create(bookClubId, {
-      meetingDate: fromDateTimeInput(field("meetingDate")) ?? "",
-      nominationDeadline: fromDateTimeInput(field("nominationDeadline")),
-      votingDeadline: fromDateTimeInput(field("votingDeadline")),
+      meetingDate: fromDateTimeInput(schedule.meetingDate) ?? "",
+      nominationDeadline: fromDateTimeInput(schedule.nominationDeadline),
+      votingDeadline: fromDateTimeInput(schedule.votingDeadline),
       themeName,
-      details: field("details"),
+      details,
     });
   }
 
+  function setScheduleField(
+    field: "meetingDate" | "nominationDeadline" | "votingDeadline",
+    value: string
+  ) {
+    setSchedule((prev) => prev && { ...prev, [field]: value });
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (newOpen) setSchedule(suggestMeetingSchedule(pastMeetings));
+        setOpen(newOpen);
+      }}
+    >
       <DialogTrigger asChild>
         <Button>
           <PlusIcon aria-hidden />
@@ -72,13 +100,15 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="meetingDate">Meeting Date & Time</Label>
-            <Input
-              id="meetingDate"
-              name="meetingDate"
-              type="datetime-local"
-              required
-              disabled={isSubmitting}
-            />
+            {schedule && (
+              <DateTimeField
+                id="meetingDate"
+                value={schedule.meetingDate}
+                onChange={(value) => setScheduleField("meetingDate", value)}
+                defaultTime={schedule.meetingTime}
+                disabled={isSubmitting}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
@@ -116,12 +146,18 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
             <Label htmlFor="nominationDeadline">
               Nomination Deadline (Optional)
             </Label>
-            <Input
-              id="nominationDeadline"
-              name="nominationDeadline"
-              type="datetime-local"
-              disabled={isSubmitting}
-            />
+            {schedule && (
+              <DateTimeField
+                id="nominationDeadline"
+                value={schedule.nominationDeadline}
+                onChange={(value) =>
+                  setScheduleField("nominationDeadline", value)
+                }
+                defaultTime={END_OF_DAY}
+                clearable
+                disabled={isSubmitting}
+              />
+            )}
             <p className="text-dark-500 text-xs">
               When should nominations close? After this, members can only vote.
             </p>
@@ -129,12 +165,16 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
 
           <div className="space-y-2">
             <Label htmlFor="votingDeadline">Voting Deadline (Optional)</Label>
-            <Input
-              id="votingDeadline"
-              name="votingDeadline"
-              type="datetime-local"
-              disabled={isSubmitting}
-            />
+            {schedule && (
+              <DateTimeField
+                id="votingDeadline"
+                value={schedule.votingDeadline}
+                onChange={(value) => setScheduleField("votingDeadline", value)}
+                defaultTime={END_OF_DAY}
+                clearable
+                disabled={isSubmitting}
+              />
+            )}
             <p className="text-dark-500 text-xs">
               When should voting close? Usually set to meeting time.
             </p>
@@ -142,7 +182,7 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
 
           {error && <Alert variant="destructive">{error}</Alert>}
 
-          <div className="flex justify-end gap-2">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -151,10 +191,13 @@ export function CreateMeetingDialog({ bookClubId }: CreateMeetingDialogProps) {
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button
+              type="submit"
+              disabled={isSubmitting || !schedule?.meetingDate}
+            >
               {isSubmitting ? "Creating..." : "Create Meeting"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

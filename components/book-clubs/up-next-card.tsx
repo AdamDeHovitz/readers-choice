@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { MeetingStatusBadge } from "@/components/meetings/meeting-status-badge";
 import { Button } from "@/components/ui/button";
+import { LocalDate } from "@/components/ui/local-date";
 import { getMeetingPhase } from "@/lib/meeting-schedule";
 import type { MeetingSummary } from "@/server/meetings";
 
@@ -15,15 +16,6 @@ import type { MeetingSummary } from "@/server/meetings";
 const CARD = "bg-rust-600 text-cream-50 rounded-3xl p-5 shadow-md sm:p-6";
 const BUTTON =
   "bg-cream-50 text-rust-700 hover:bg-cream-100 mt-5 w-full sm:w-auto";
-
-const longDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 /**
  * The club home's call to action: what the next meeting needs from the
@@ -65,13 +57,19 @@ export function UpNextCard({
         ? "Vote for a book"
         : "See the results";
   const deadline =
-    phase === "nominating" && meeting.nominationDeadline
-      ? `Nominations close ${shortDate(meeting.nominationDeadline)}`
-      : phase === "voting" && meeting.votingDeadline
-        ? `Voting closes ${shortDate(meeting.votingDeadline)}`
-        : phase === "awaiting_finalization"
-          ? "Waiting for an admin to pick the book"
-          : null;
+    phase === "nominating" && meeting.nominationDeadline ? (
+      <>
+        Nominations close{" "}
+        <LocalDate iso={meeting.nominationDeadline} format="deadline" />
+      </>
+    ) : phase === "voting" && meeting.votingDeadline ? (
+      <>
+        Voting closes{" "}
+        <LocalDate iso={meeting.votingDeadline} format="deadline" />
+      </>
+    ) : phase === "awaiting_finalization" ? (
+      "Waiting for an admin to pick the book"
+    ) : null;
 
   return (
     <section className={CARD}>
@@ -90,7 +88,7 @@ export function UpNextCard({
       <ul className="text-rust-100 mt-3 space-y-1.5 text-sm">
         <li className="flex items-center gap-2">
           <CalendarDaysIcon className="size-4 shrink-0" aria-hidden />
-          {longDate(meeting.meetingDate)}
+          <LocalDate iso={meeting.meetingDate} format="meeting" />
         </li>
         {deadline && (
           <li className="flex items-center gap-2">

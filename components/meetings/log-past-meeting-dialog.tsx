@@ -7,19 +7,22 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { HistoryIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
 import { BookSearch } from "@/components/books/book-search";
 import type { BookSearchResult } from "@/lib/open-library";
 import { Alert } from "@/components/ui/alert";
+import { fromDateTimeInput } from "@/lib/datetime-input";
+import { DEFAULT_MEETING_TIME } from "@/lib/meeting-defaults";
 
 interface LogPastMeetingDialogProps {
   bookClubId: string;
@@ -59,7 +62,11 @@ export function LogPastMeetingDialog({
 
   function handleSubmit() {
     if (!selectedBook || !meetingDate) return;
-    logMeeting(bookClubId, { meetingDate, themeName, details }, selectedBook);
+    logMeeting(
+      bookClubId,
+      { meetingDate: fromDateTimeInput(meetingDate) ?? "", themeName, details },
+      selectedBook
+    );
   }
 
   return (
@@ -87,13 +94,12 @@ export function LogPastMeetingDialog({
         {step === "details" && (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="pastMeetingDate">Meeting Date</Label>
-              <Input
+              <Label htmlFor="pastMeetingDate">Meeting Date & Time</Label>
+              <DateTimeField
                 id="pastMeetingDate"
-                type="date"
                 value={meetingDate}
-                onChange={(e) => setMeetingDate(e.target.value)}
-                required
+                onChange={setMeetingDate}
+                defaultTime={DEFAULT_MEETING_TIME}
               />
             </div>
 
@@ -124,7 +130,7 @@ export function LogPastMeetingDialog({
               </p>
             </div>
 
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -135,7 +141,7 @@ export function LogPastMeetingDialog({
               <Button onClick={() => setStep("book")} disabled={!meetingDate}>
                 Next: Select Book
               </Button>
-            </div>
+            </DialogFooter>
           </div>
         )}
 
@@ -167,7 +173,7 @@ export function LogPastMeetingDialog({
 
             {error && <Alert variant="destructive">{error}</Alert>}
 
-            <div className="flex justify-end gap-2">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -182,7 +188,7 @@ export function LogPastMeetingDialog({
               >
                 {isSubmitting ? "Logging..." : "Log Meeting"}
               </Button>
-            </div>
+            </DialogFooter>
           </div>
         )}
       </DialogContent>
