@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { updateMeeting, deleteMeeting } from "@/app/actions/meetings";
+import { updateMeeting } from "@/app/actions/meetings";
 import {
   Dialog,
   DialogContent,
@@ -61,7 +60,6 @@ export function EditMeetingDialog({
   currentDetails,
   currentBook,
 }: EditMeetingDialogProps) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"details" | "book">("details");
 
@@ -90,15 +88,7 @@ export function EditMeetingDialog({
       resetDialog();
     },
   });
-  const remove = useAction(deleteMeeting, {
-    refresh: false,
-    onSuccess: () => {
-      setOpen(false);
-      router.push(`/book-clubs/${bookClubId}/schedule`);
-    },
-  });
-  const isSubmitting = update.pending || remove.pending;
-  const error = update.error ?? remove.error;
+  const { pending: isSubmitting, error } = update;
 
   const {
     meetingDate,
@@ -121,12 +111,10 @@ export function EditMeetingDialog({
     setSelectedBook(toBookSearchResult(currentBook));
     setChangeBook(false);
     update.reset();
-    remove.reset();
   }
 
   function handleSubmit() {
     if (!meetingDate) return;
-    remove.reset();
 
     const newBook =
       changeBook && selectedBook && selectedBook.id !== currentBook?.id
@@ -144,18 +132,6 @@ export function EditMeetingDialog({
       },
       newBook
     );
-  }
-
-  function handleDelete() {
-    if (
-      !confirm(
-        "Are you sure you want to delete this meeting? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
-    update.reset();
-    remove.run(meetingId);
   }
 
   return (
@@ -190,7 +166,6 @@ export function EditMeetingDialog({
             onChangeBookToggle={setChangeBook}
             error={error}
             isSubmitting={isSubmitting}
-            onDelete={handleDelete}
             onCancel={() => setOpen(false)}
             onNext={() => setStep("book")}
             onSave={handleSubmit}

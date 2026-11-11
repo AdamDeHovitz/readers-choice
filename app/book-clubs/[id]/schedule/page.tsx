@@ -37,7 +37,14 @@ export default async function SchedulePage({
         actions={
           bookClub.currentUserIsAdmin && (
             <>
-              <CreateMeetingDialog bookClubId={bookClubId} />
+              <CreateMeetingDialog
+                bookClubId={bookClubId}
+                pastMeetings={meetings.slice(0, 2).map((meeting) => ({
+                  meetingDate: meeting.meetingDate,
+                  nominationDeadline: meeting.nominationDeadline,
+                  votingDeadline: meeting.votingDeadline,
+                }))}
+              />
               <LogPastMeetingDialog bookClubId={bookClubId} />
             </>
           )
