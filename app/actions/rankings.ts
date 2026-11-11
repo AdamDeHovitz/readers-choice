@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runAction, type ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
+import { runAction } from "@/server/action";
 import { requireMember } from "@/server/authz";
 import * as rankings from "@/server/rankings";
 

@@ -44,7 +44,7 @@ export function SuggestThemeDialog({ bookClubId }: SuggestThemeDialogProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!themeName.trim()) return;
-    suggest(bookClubId, themeName);
+    suggest({ bookClubId, name: themeName });
   }
 
   return (

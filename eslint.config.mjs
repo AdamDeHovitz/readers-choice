@@ -44,7 +44,13 @@ export default defineConfig([
         {
           patterns: [
             {
-              group: ["@/server/*", "@/app/*", "@/components/*", "@/auth"],
+              group: [
+                "@/server/*",
+                "@/app/*",
+                "@/components/*",
+                "@/contract/*",
+                "@/auth",
+              ],
               message:
                 "lib/ is pure, isomorphic logic with no app dependencies.",
             },
@@ -65,6 +71,45 @@ export default defineConfig([
             {
               name: "bcryptjs",
               message: "Password hashing is server-only: server/password.ts.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // Operation contracts are shared with the mobile app: schemas and types
+    // only, built from zod and lib/.
+    files: ["contract/**/*.{ts,tsx}"],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "@/server/*",
+                "@/app/*",
+                "@/components/*",
+                "@/hooks/*",
+                "@/auth",
+              ],
+              message:
+                "contract/ holds client-facing schemas and types; it may import only zod and lib/.",
+            },
+            {
+              group: [...builtinModules, "node:*"],
+              message: "contract/ runs in browsers and React Native too.",
+            },
+          ],
+          paths: [
+            {
+              name: "@supabase/supabase-js",
+              message: "contract/ never talks to the database.",
+            },
+            {
+              name: "server-only",
+              message: "contract/ is imported by clients.",
             },
           ],
         },

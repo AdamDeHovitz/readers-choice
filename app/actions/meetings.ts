@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import type { BookSearchResult } from "@/lib/open-library";
-import { runAction, type ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
+import { runAction } from "@/server/action";
 import { requireAdmin } from "@/server/authz";
 import { saveBook } from "@/server/books";
 import type { Db } from "@/server/db";

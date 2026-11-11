@@ -1,4 +1,5 @@
 import "server-only";
+import type { ActionResult } from "@/contract/result";
 import { UserError } from "@/lib/user-error";
 
 /**
@@ -29,4 +30,28 @@ export function throwIfDbError(
   const message = error.message && DB_ERROR_MESSAGES[error.message];
   if (message) throw new UserError(message);
   throw error;
+}
+
+export const UNAUTHORIZED = "Unauthorized";
+
+/**
+ * Run `body` and turn its outcome into an ActionResult.
+ *
+ * - `UserError`: fails with its (user-facing) message.
+ * - Anything else: logged, and fails with `fallbackError` so database or
+ *   network internals never reach the client.
+ */
+export async function settle<T>(
+  fallbackError: string,
+  body: () => Promise<T>
+): Promise<ActionResult<T>> {
+  try {
+    return { success: true, data: await body() };
+  } catch (error) {
+    if (error instanceof UserError) {
+      return { success: false, error: error.message };
+    }
+    console.error(`${fallbackError}:`, error);
+    return { success: false, error: fallbackError };
+  }
 }

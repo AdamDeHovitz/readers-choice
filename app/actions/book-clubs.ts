@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { UserError } from "@/lib/user-error";
-import { runAction, type ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
+import { runAction } from "@/server/action";
 import { isSuperAdmin, requireAdmin } from "@/server/authz";
 import * as clubs from "@/server/clubs";
 import { optionalText, requiredText } from "@/server/input";
