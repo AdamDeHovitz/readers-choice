@@ -2,6 +2,13 @@
 
 Mobile-first book club app (clubs, meetings, nominations, approval + ranked-choice voting, themes, year rankings). Next.js 16 App Router, React 19, strict TypeScript, Tailwind v4 + shadcn/ui, Supabase Postgres, NextAuth v5, Vercel.
 
+## Ownership
+
+You own this codebase. There is no other team: you wrote most of it, you will maintain it, and you will build on whatever you leave behind. Don't treat existing code as someone else's to work around. If it's in the way, change it.
+
+- When the clean solution needs a refactor (renaming, moving code, changing an interface, deleting dead code), do it as part of the work. Don't leave workarounds or TODOs for someone else.
+- Check in first only when a refactor is large or changes product behavior, data, or production. This replaces the global "stop and wait for a decision on any refactor" rule for this repo.
+
 ## Commands
 
 - Before committing: `npm run lint && npx tsc --noEmit && npm run test:run`, and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
