@@ -1,8 +1,12 @@
 import { defineConfig, devices } from "@playwright/test";
 
 // Browser tests against the local stack (npm run dev:local), never production.
-// Specs only read seed data, so they can run against an already-used database;
-// run `npm run db:reset` for a clean slate.
+// Specs only read seed data (apart from rows no spec reads back, like a
+// calendar feed token), so they can run against an already-used database;
+// run `npm run db:reset` for a clean slate. PORT picks the server, as it does
+// for scripts/dev-local.sh, so a second worktree can run specs on its own.
+const baseURL = `http://localhost:${process.env.PORT ?? "3000"}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -10,7 +14,7 @@ export default defineConfig({
   // CI adds HTML and JSON reporters on the command line (see ci.yml).
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     // A final screenshot of every test is cheap evidence; full traces only
     // when something fails.
     screenshot: "on",
@@ -23,7 +27,7 @@ export default defineConfig({
     command: process.env.E2E_PREBUILT
       ? "scripts/dev-local.sh --prebuilt"
       : "npm run dev:local",
-    url: "http://localhost:3000/login",
+    url: `${baseURL}/login`,
     reuseExistingServer: true,
     timeout: 180_000,
   },

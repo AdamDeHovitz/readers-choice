@@ -1,6 +1,7 @@
 import { CalendarDaysIcon, ClockIcon } from "lucide-react";
 import { MeetingStatusBadge } from "@/components/meetings/meeting-status-badge";
 import { PageHeader, Section } from "@/components/ui/page-header";
+import { LocalDate } from "@/components/ui/local-date";
 import { EditMeetingDialog } from "@/components/meetings/edit-meeting-dialog";
 import { DeleteMeetingButton } from "@/components/meetings/delete-meeting-button";
 import { BookOptionsList } from "@/components/meetings/book-options-list";
@@ -37,15 +38,7 @@ export default async function MeetingPage({
     redirect("/dashboard");
   }
 
-  const meetingDate = new Date(meeting.meetingDate);
-
-  // Determine meeting phase
-  const nominationDeadline = meeting.nominationDeadline
-    ? new Date(meeting.nominationDeadline)
-    : null;
-  const votingDeadline = meeting.votingDeadline
-    ? new Date(meeting.votingDeadline)
-    : null;
+  const { nominationDeadline, votingDeadline } = meeting;
 
   // Same deadline rules the server actions enforce.
   const phase = getMeetingPhase(meeting);
@@ -81,11 +74,13 @@ export default async function MeetingPage({
       )
     : undefined;
 
-  const title = meeting.theme
-    ? meeting.theme.name
-    : "Meeting " + meetingDate.toLocaleDateString();
-  const shortDate = (date: Date) =>
-    date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const title = meeting.theme ? (
+    meeting.theme.name
+  ) : (
+    <>
+      Meeting of <LocalDate iso={meeting.meetingDate} format="date" />
+    </>
+  );
 
   return (
     <div className="space-y-8">
@@ -98,23 +93,20 @@ export default async function MeetingPage({
             <>
               <p className="flex items-center gap-2">
                 <CalendarDaysIcon className="size-4 shrink-0" aria-hidden />
-                {meetingDate.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
+                <LocalDate iso={meeting.meetingDate} format="meeting" />
               </p>
               {nominationsOpen && nominationDeadline && (
                 <p className="flex items-center gap-2">
                   <ClockIcon className="size-4 shrink-0" aria-hidden />
-                  Nominations close {shortDate(nominationDeadline)}
+                  Nominations close{" "}
+                  <LocalDate iso={nominationDeadline} format="deadline" />
                 </p>
               )}
               {votingOpen && votingDeadline && (
                 <p className="flex items-center gap-2">
                   <ClockIcon className="size-4 shrink-0" aria-hidden />
-                  Voting closes {shortDate(votingDeadline)}
+                  Voting closes{" "}
+                  <LocalDate iso={votingDeadline} format="deadline" />
                 </p>
               )}
             </>
@@ -135,7 +127,7 @@ export default async function MeetingPage({
                 <DeleteMeetingButton
                   meetingId={meeting.id}
                   bookClubId={meeting.bookClub.id}
-                  meetingName={title}
+                  meetingName={meeting.theme?.name}
                 />
               </div>
             )

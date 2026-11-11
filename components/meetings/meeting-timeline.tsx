@@ -3,6 +3,7 @@ import { CalendarDaysIcon, ChevronRightIcon } from "lucide-react";
 import { BookCover } from "@/components/books/book-cover";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Section } from "@/components/ui/page-header";
+import { LocalDate } from "@/components/ui/local-date";
 import { cn } from "@/lib/utils";
 import type { MeetingSummary } from "@/server/meetings";
 import { MeetingStatusBadge } from "./meeting-status-badge";
@@ -59,7 +60,6 @@ function MeetingList({
   return (
     <ul className="bg-card border-border divide-border divide-y overflow-hidden rounded-2xl border shadow-xs">
       {meetings.map((meeting) => {
-        const date = new Date(meeting.meetingDate);
         const book = meeting.selectedBook;
         return (
           <li key={meeting.id}>
@@ -76,20 +76,18 @@ function MeetingList({
                 )}
               >
                 <span className="text-[11px] font-bold uppercase">
-                  {date.toLocaleDateString("en-US", { month: "short" })}
+                  <LocalDate iso={meeting.meetingDate} format="shortMonth" />
                 </span>
                 <span className="text-foreground text-xl leading-none font-bold">
-                  {date.getDate()}
+                  <LocalDate iso={meeting.meetingDate} format="day" />
                 </span>
               </div>
 
               <div className="min-w-0 flex-1">
                 <p className="text-foreground truncate font-bold">
-                  {meeting.theme?.name ??
-                    date.toLocaleDateString("en-US", {
-                      month: "long",
-                      year: "numeric",
-                    })}
+                  {meeting.theme?.name ?? (
+                    <LocalDate iso={meeting.meetingDate} format="monthYear" />
+                  )}
                 </p>
                 {book ? (
                   <p className="text-muted-foreground truncate text-sm">

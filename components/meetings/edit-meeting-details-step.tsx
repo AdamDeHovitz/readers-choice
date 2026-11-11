@@ -1,9 +1,12 @@
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimeField } from "@/components/ui/date-time-field";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ThemeCombobox } from "@/components/themes/theme-combobox";
+import { END_OF_DAY } from "@/lib/datetime-input";
+import { DEFAULT_MEETING_TIME } from "@/lib/meeting-defaults";
 
 export interface EditMeetingFormValues {
   meetingDate: string;
@@ -22,7 +25,6 @@ interface EditMeetingDetailsStepProps {
   onChangeBookToggle: (changeBook: boolean) => void;
   error: string | null;
   isSubmitting: boolean;
-  onDelete: () => void;
   onCancel: () => void;
   onNext: () => void;
   onSave: () => void;
@@ -38,7 +40,6 @@ export function EditMeetingDetailsStep({
   onChangeBookToggle,
   error,
   isSubmitting,
-  onDelete,
   onCancel,
   onNext,
   onSave,
@@ -47,12 +48,11 @@ export function EditMeetingDetailsStep({
     <div className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="editMeetingDate">Meeting Date & Time</Label>
-        <Input
+        <DateTimeField
           id="editMeetingDate"
-          type="datetime-local"
           value={values.meetingDate}
-          onChange={(e) => onValueChange("meetingDate", e.target.value)}
-          required
+          onChange={(value) => onValueChange("meetingDate", value)}
+          defaultTime={DEFAULT_MEETING_TIME}
         />
       </div>
 
@@ -90,11 +90,12 @@ export function EditMeetingDetailsStep({
         <Label htmlFor="editNominationDeadline">
           Nomination Deadline (Optional)
         </Label>
-        <Input
+        <DateTimeField
           id="editNominationDeadline"
-          type="datetime-local"
           value={values.nominationDeadline}
-          onChange={(e) => onValueChange("nominationDeadline", e.target.value)}
+          onChange={(value) => onValueChange("nominationDeadline", value)}
+          defaultTime={END_OF_DAY}
+          clearable
         />
         <p className="text-dark-500 text-xs">
           When should nominations close? After this, members can only vote.
@@ -103,11 +104,12 @@ export function EditMeetingDetailsStep({
 
       <div className="space-y-2">
         <Label htmlFor="editVotingDeadline">Voting Deadline (Optional)</Label>
-        <Input
+        <DateTimeField
           id="editVotingDeadline"
-          type="datetime-local"
           value={values.votingDeadline}
-          onChange={(e) => onValueChange("votingDeadline", e.target.value)}
+          onChange={(value) => onValueChange("votingDeadline", value)}
+          defaultTime={END_OF_DAY}
+          clearable
         />
         <p className="text-dark-500 text-xs">
           When should voting close? Usually set to meeting time.
@@ -140,35 +142,28 @@ export function EditMeetingDetailsStep({
 
       {error && <Alert variant="destructive">{error}</Alert>}
 
-      <div className="flex justify-between gap-2">
+      <DialogFooter>
         <Button
           type="button"
-          variant="destructive"
-          onClick={onDelete}
+          variant="outline"
+          onClick={onCancel}
           disabled={isSubmitting}
         >
-          Delete Meeting
+          Cancel
         </Button>
-        <div className="flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
+        {changeBook ? (
+          <Button onClick={onNext} disabled={!values.meetingDate}>
+            Next: Select Book
           </Button>
-          {changeBook ? (
-            <Button onClick={onNext} disabled={!values.meetingDate}>
-              Next: Select Book
-            </Button>
-          ) : (
-            <Button onClick={onSave} disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Save Changes"}
-            </Button>
-          )}
-        </div>
-      </div>
+        ) : (
+          <Button
+            onClick={onSave}
+            disabled={isSubmitting || !values.meetingDate}
+          >
+            {isSubmitting ? "Saving..." : "Save Changes"}
+          </Button>
+        )}
+      </DialogFooter>
     </div>
   );
 }
