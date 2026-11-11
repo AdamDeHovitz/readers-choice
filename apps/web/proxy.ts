@@ -9,7 +9,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/", "/login", "/browse", "/book-clubs"];
+  const publicRoutes = ["/", "/login", "/browse", "/book-clubs", "/privacy"];
   const isPublicRoute =
     publicRoutes.some(
       (route) => pathname === route || pathname.startsWith(route + "/")

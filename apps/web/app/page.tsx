@@ -62,6 +62,11 @@ export default async function Home() {
         <Button asChild size="lg" variant="ghost" className="w-full">
           <Link href="/browse">Browse book clubs</Link>
         </Button>
+        <p className="text-center text-sm">
+          <Link href="/privacy" className="text-muted-foreground underline">
+            Privacy policy
+          </Link>
+        </p>
       </div>
     </main>
   );
