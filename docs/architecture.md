@@ -2,11 +2,13 @@
 
 Three layers. Each imports only from the layers below it; ESLint enforces the boundaries (`eslint.config.mjs`), and type-only imports may cross them so DTO types have one definition.
 
-| Layer                        | Holds                                                        | Must not                             |
-| ---------------------------- | ------------------------------------------------------------ | ------------------------------------ |
-| `app/` pages, `app/actions/` | Routes, and `"use server"` endpoints                         | Query the database directly          |
-| `server/` (`server-only`)    | Every query and write, DTO types, rules that need data       | Import actions or UI                 |
-| `lib/`                       | Pure, isomorphic, unit-tested logic and external API clients | Import app code or create DB clients |
+| Layer                        | Holds                                                        | Must not                                                  |
+| ---------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
+| `app/` pages, `app/actions/` | Routes, and `"use server"` endpoints                         | Query the database directly                               |
+| `server/` (`server-only`)    | Every query and write, DTO types, rules that need data       | Import actions or UI                                      |
+| `lib/`                       | Pure, isomorphic, unit-tested logic and external API clients | Import app code, create DB clients, or use Node built-ins |
+
+`lib/` will be shared with the mobile app (#75), which has no Node runtime, so ESLint bans Node built-ins (`crypto`, `fs`, …) and `bcryptjs` there. Node-only helpers such as `server/password.ts` and `server/invite-code.ts` live in `server/`.
 
 ## Request paths
 

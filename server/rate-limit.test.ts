@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Db } from "./db";
 import {
   consumeRateLimit,
   getClientIp,
@@ -11,7 +11,7 @@ const rule: RateLimitRule = { scope: "test", limit: 3, windowSeconds: 60 };
 
 function mockClient(result: { data: unknown; error: unknown }) {
   const rpc = vi.fn().mockResolvedValue(result);
-  return { client: { rpc } as unknown as SupabaseClient, rpc };
+  return { client: { rpc } as unknown as Db, rpc };
 }
 
 describe("getClientIp", () => {

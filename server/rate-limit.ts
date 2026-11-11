@@ -1,5 +1,6 @@
+import "server-only";
 import { createHash } from "crypto";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Db } from "./db";
 
 export interface RateLimitRule {
   /** Namespace for the key, e.g. "register:ip". */
@@ -40,11 +41,11 @@ export function rateLimitKey(scope: string, identifier: string): string {
  * is allowed and the error logged, so rate limiting can never lock everyone out.
  */
 export async function consumeRateLimit(
-  supabase: SupabaseClient,
+  db: Db,
   rule: RateLimitRule,
   identifier: string
 ): Promise<boolean> {
-  const { data, error } = await supabase.rpc("consume_rate_limit", {
+  const { data, error } = await db.rpc("consume_rate_limit", {
     p_key: rateLimitKey(rule.scope, identifier),
     p_limit: rule.limit,
     p_window_seconds: rule.windowSeconds,

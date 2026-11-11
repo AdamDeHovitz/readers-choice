@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { verifyPassword } from "@/lib/password";
+import { verifyPassword } from "@/server/password";
 import { createAdminClient } from "@/server/db";
 import { findAccountByEmail, upsertGoogleAccount } from "@/server/users";
 

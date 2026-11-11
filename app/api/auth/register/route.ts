@@ -1,15 +1,15 @@
 import {
-  hashPassword,
   MAX_PASSWORD_BYTES,
   MIN_PASSWORD_LENGTH,
   normalizeEmail,
-} from "@/lib/password";
+} from "@/lib/credentials";
 import {
   consumeRateLimit,
   getClientIp,
   type RateLimitRule,
-} from "@/lib/rate-limit";
+} from "@/server/rate-limit";
 import { createAdminClient } from "@/server/db";
+import { hashPassword } from "@/server/password";
 import { findAccountByEmail } from "@/server/users";
 
 const IP_RULE: RateLimitRule = {

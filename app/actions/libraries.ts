@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { consumeRateLimit, type RateLimitRule } from "@/lib/rate-limit";
+import { consumeRateLimit, type RateLimitRule } from "@/server/rate-limit";
 import {
   MAX_LIBRARIES,
   isLibraryKey,
