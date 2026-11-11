@@ -6,5 +6,18 @@
       "path": "/api/keep-alive",
       "schedule": "0 12 * * *"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/((?!api/keep-alive$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "readers-choice.vercel.app"
+        }
+      ],
+      "destination": "https://readers-choice.dehovitz.com/$1",
+      "permanent": true
+    }
   ]
 }

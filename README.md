@@ -2,7 +2,7 @@
 
 A beautiful, mobile-first book club management application that helps communities organize reading groups, vote on books, track meetings, and share their favorite reads.
 
-🌐 **Live Demo**: [https://readers-choice.vercel.app/](https://readers-choice.vercel.app/)
+🌐 **Live Demo**: [https://readers-choice.dehovitz.com/](https://readers-choice.dehovitz.com/)
 
 ## ✨ Features
 

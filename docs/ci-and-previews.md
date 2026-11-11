@@ -12,7 +12,7 @@ CI (`.github/workflows/ci.yml`) never touches production. It uses dummy env vars
 
 ## Deploys
 
-Merging to `main` deploys to production (https://readers-choice.vercel.app). Deploys never run migrations. Vercel preview URLs are behind SSO.
+Merging to `main` deploys to production (https://readers-choice.dehovitz.com; the old readers-choice.vercel.app address redirects there, see `apps/web/vercel.json`). Deploys never run migrations. Vercel preview URLs are behind SSO.
 
 ## Preview database (staging)
 
