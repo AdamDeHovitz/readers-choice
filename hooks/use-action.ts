@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import type { ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
 
 const NETWORK_ERROR = "Something went wrong. Please try again.";
 

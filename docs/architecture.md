@@ -1,53 +1,70 @@
 # Architecture
 
-Three layers. Each imports only from the layers below it; ESLint enforces the boundaries (`eslint.config.mjs`), and type-only imports may cross them so DTO types have one definition.
+Four layers. Each imports only from the layers below it; ESLint enforces the boundaries (`eslint.config.mjs`), and type-only imports may cross them so DTO types have one definition.
 
-| Layer                        | Holds                                                        | Must not                                                  |
-| ---------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
-| `app/` pages, `app/actions/` | Routes, and `"use server"` endpoints                         | Query the database directly                               |
-| `server/` (`server-only`)    | Every query and write, DTO types, rules that need data       | Import actions or UI                                      |
-| `lib/`                       | Pure, isomorphic, unit-tested logic and external API clients | Import app code, create DB clients, or use Node built-ins |
+| Layer                        | Holds                                                                                                        | Must not                                                  |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
+| `app/` pages, `app/actions/` | Routes, and `"use server"` endpoints                                                                         | Query the database directly                               |
+| `server/` (`server-only`)    | Every query and write, DTO types, rules that need data, and operation implementations (`server/operations/`) | Import actions or UI                                      |
+| `contract/`                  | Operation contracts: names, zod input schemas, output types, invalidation keys                               | Import anything but zod and `lib/`                        |
+| `lib/`                       | Pure, isomorphic, unit-tested logic and external API clients                                                 | Import app code, create DB clients, or use Node built-ins |
 
-`lib/` will be shared with the mobile app (#75), which has no Node runtime, so ESLint bans Node built-ins (`crypto`, `fs`, …) and `bcryptjs` there. Node-only helpers such as `server/password.ts` and `server/invite-code.ts` live in `server/`.
+`contract/` and `lib/` will be shared with the mobile app (#75), which has no Node runtime, so ESLint bans Node built-ins (`crypto`, `fs`, …) and `bcryptjs` there. Node-only helpers such as `server/password.ts` and `server/invite-code.ts` live in `server/`.
 
 ## Request paths
 
 **Page (read):** `getViewer()` (session + typed client, cached per request) → a `server/<domain>.ts` query that takes the viewer, checks membership itself, and returns DTOs → render. Pages never call server actions to read.
 
-**Action (write, or a read a client component needs):**
+**Operation (write, or a read a client component needs):** an operation is declared once and served to every client. The web calls it as a server action; the mobile app will call the same operation over HTTP (#75).
 
 ```ts
-export async function doThing(
-  id: string,
-  input: Input
-): Promise<ActionResult<Out>> {
-  return runAction("Failed to do thing", async ({ db, userId }) => {
-    const parsed = requiredText(input?.name, "Name is required"); // server/input.ts
-    const meeting = await getMeetingContext(db, id); // throws UserError if missing
-    await requireAdmin(
-      db,
-      meeting.bookClubId,
-      userId,
-      "Only admins can do thing"
+// contract/themes.ts: what clients see. zod schema in, output type out.
+export const deleteTheme = defineContract()({
+  name: "themes.delete",
+  kind: "mutation",
+  input: z.object({ themeId: rowId }),
+});
+
+// server/operations/themes.ts: authorize, call server/, say what's stale.
+export const deleteTheme = implement(
+  contract.deleteTheme,
+  "Failed to delete theme",
+  async (ctx, { themeId }) => {
+    const theme = await themes.getThemeContext(ctx.db, themeId); // UserError if missing
+    const membership = await requireMember(
+      ctx.db,
+      theme.bookClubId,
+      ctx.userId
     );
-    const out = await meetings.doThing(db, meeting, parsed); // server/ owns the write
-    revalidatePath(`/meetings/${id}`);
-    return out;
-  });
-}
+    if (theme.submittedBy !== ctx.userId && !membership.isAdmin) {
+      throw new UserError(
+        "You can only delete themes you submitted or be an admin"
+      );
+    }
+    await themes.deleteUnusedTheme(ctx.db, theme); // server/ owns the write
+    ctx.invalidate(keys.clubThemes(theme.bookClubId));
+  }
+);
+
+// app/actions/themes.ts ("use server"): the web transport.
+export const deleteTheme = serverAction(themes.deleteTheme);
 ```
 
-- `runAction` (`server/action.ts`) rejects signed-out callers and returns `{ success: true, data } | { success: false, error }`.
+- `executeOperation` (`server/operation.ts`) rejects signed-out callers, parses the input with the contract's schema (the first issue's message is the error), runs the implementation, and returns `{ success: true, data } | { success: false, error }` (`ActionResult`, `contract/result.ts`).
 - Throw `UserError` (`lib/user-error.ts`) for messages users should see. Any other error is logged, and the client gets only the fallback message. `throwIfDbError` maps our Postgres functions' error codes to `UserError`s.
-- Action arguments are untrusted client input whatever their TypeScript types say. Validate them with `server/input.ts` or domain checks.
+- The schema guards the shape; the implementation still authorizes the viewer for the resource (`server/authz.ts`). Every operation is a public endpoint.
+- `ctx.invalidate(...)` takes keys from `contract/keys.ts`. The web maps each key to the paths to revalidate (`pathsFor` in `app/actions/server-action.ts`); mobile will use the same keys as query keys. Add a key and its paths together.
+- `contract/index.ts` and `server/operations/index.ts` list every domain; a test fails if a contract has no implementation.
+
+Domains not yet moved to operations still write the action body inline with `runAction` (`server/action.ts`): same error handling, positional arguments, and `revalidatePath` in the action. Move a domain over when you change it.
 
 ## Adding a feature
 
 1. Schema change? Follow the database-migrations skill, then `npm run db:types`.
 2. Put queries and writes in the matching `server/<domain>.ts`, or add a domain module. Map rows to camelCase DTOs there and export the DTO type.
 3. Pure rules (phases, validation, scoring) go in `lib/` with unit tests. Example: `lib/meeting-schedule.ts` is the only place that decides whether nominations or voting are open.
-4. Reads for a page: call the query from the page. Mutations: add an action as above.
-5. Components `import type` DTOs from `server/`. Call mutations with `useAction` (`hooks/use-action.ts`), which tracks pending (through the follow-up refresh) and error state and refreshes server data on success. Use `useDebouncedSearch` for search-as-you-type. Prefer loading data in the page (e.g. a `?year=` param) over fetching in effects.
+4. Reads for a page: call the query from the page. Mutations (and reads a client component needs): add an operation as above, in the domain's `contract/`, `server/operations/` and `app/actions/` files.
+5. Components `import type` DTOs from `server/`. Call operations with `useAction` (`hooks/use-action.ts`), which tracks pending (through the follow-up refresh) and error state and refreshes server data on success. Use `useDebouncedSearch` for search-as-you-type. Prefer loading data in the page (e.g. a `?year=` param) over fetching in effects.
 
 ## Data access
 

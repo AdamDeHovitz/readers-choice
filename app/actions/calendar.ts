@@ -1,6 +1,7 @@
 "use server";
 
-import { runAction, type ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
+import { runAction } from "@/server/action";
 import { requireMember } from "@/server/authz";
 import { getOrCreateFeedToken, resetFeedToken } from "@/server/calendar";
 

@@ -22,7 +22,7 @@ You own this codebase. There is no other team: you wrote most of it, you will ma
 
 ## Architecture
 
-`app/` (pages, `"use server"` actions) → `server/` (all data access, `server-only`) → `lib/` (pure logic). ESLint enforces the direction. Pages read through `getViewer()` and `server/` queries. Actions only validate, authorize, call `server/`, and revalidate. Each one wraps its body in `runAction` and returns `ActionResult<T>`. Throw `UserError` for messages users should see. Details and an "adding a feature" walkthrough: `docs/architecture.md`.
+`app/` (pages, `"use server"` actions) → `server/` (all data access, `server-only`) → `contract/` (operation schemas and types, shared with mobile) → `lib/` (pure logic). ESLint enforces the direction. Pages read through `getViewer()` and `server/` queries. Writes are operations: a contract in `contract/`, an implementation in `server/operations/` that authorizes, calls `server/` and invalidates keys, and a one-line `serverAction(...)` in `app/actions/`. Domains not yet migrated use `runAction`; move them when you touch them (#75). Throw `UserError` for messages users should see. Details and an "adding a feature" walkthrough: `docs/architecture.md`.
 
 ## Don't break production
 

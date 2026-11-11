@@ -9,7 +9,8 @@ import {
   type LibrarySearchResult,
 } from "@/lib/libraries/overdrive";
 import { UserError } from "@/lib/user-error";
-import { runAction, type ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
+import { runAction } from "@/server/action";
 import { resolveLibraries, setMyLibraries } from "@/server/libraries";
 
 // Each search proxies a request to Libby's directory; keep that polite.

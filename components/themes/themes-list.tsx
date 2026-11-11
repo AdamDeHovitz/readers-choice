@@ -47,7 +47,7 @@ export function ThemesList({
 
   async function handleUpvote(themeId: string) {
     setTarget(themeId);
-    const result = await upvote.run(themeId);
+    const result = await upvote.run({ themeId });
     if (!result.success) alert(`Error: ${result.error}`);
   }
 
@@ -56,7 +56,7 @@ export function ThemesList({
       return;
     }
     setTarget(themeId);
-    const result = await remove.run(themeId);
+    const result = await remove.run({ themeId });
     if (!result.success) alert(`Error: ${result.error}`);
   }
 

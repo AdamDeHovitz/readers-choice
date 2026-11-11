@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { ActionResult } from "@/server/action";
+import type { ActionResult } from "@/contract/result";
 
 interface Options {
   /** Queries shorter than this (after trimming) don't search. */

@@ -27,7 +27,7 @@ export function ThemeCombobox({
 
   useEffect(() => {
     async function loadSuggestions() {
-      const result = await getThemeSuggestions(bookClubId);
+      const result = await getThemeSuggestions({ bookClubId });
       const themes = result.success ? result.data : [];
       setSuggestions(themes);
       setFilteredSuggestions(themes.slice(0, 10)); // Show top 10 by default
