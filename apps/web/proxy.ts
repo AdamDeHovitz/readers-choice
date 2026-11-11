@@ -1,5 +1,9 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import { isRowId } from "@readers-choice/core/row-id";
+
+/** Club and meeting ids in page URLs, e.g. /book-clubs/<id>/schedule. */
+const ID_SEGMENT = /^\/(?:book-clubs|meetings)\/([^/]+)/;
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -18,6 +22,15 @@ export default auth((req) => {
     pathname.startsWith("/favicon.ico")
   ) {
     return NextResponse.next();
+  }
+
+  // A malformed id can't match any row, and Postgres rejects it outright,
+  // so answer with the 404 page before any page queries run.
+  const id = ID_SEGMENT.exec(pathname)?.[1];
+  if (id !== undefined && !isRowId(id)) {
+    return NextResponse.rewrite(new URL("/not-found", req.nextUrl.origin), {
+      status: 404,
+    });
   }
 
   // If not authenticated and trying to access protected route, redirect to login
