@@ -168,3 +168,78 @@ describe("getThemeSuggestions", () => {
     });
   });
 });
+
+describe("listThemes", () => {
+  const row = (
+    id: string,
+    submitter: string | null,
+    meetings: { id: string; meeting_date: string; is_finalized: boolean }[] = []
+  ) => ({
+    id,
+    name: `Theme ${id}`,
+    created_at: "2026-01-01T00:00:00Z",
+    users: submitter
+      ? { id: submitter, name: submitter, avatar_url: null }
+      : null,
+    theme_votes: [{ user_id: "me" }, { user_id: "x" }],
+    meetings,
+  });
+  const used = [{ id: "m1", meeting_date: "2026-02-01", is_finalized: true }];
+  const list = (viewer: Viewer) =>
+    executeOperation(themes.listThemes, viewer, { bookClubId: CLUB });
+
+  it("refuses non-members before reading themes", async () => {
+    const { viewer, calls } = viewerWith([notMember]);
+    expect((await list(viewer)).result).toEqual({
+      success: false,
+      error: "You must be a member of this book club",
+      code: "refused",
+    });
+    expect(calls).toHaveLength(1);
+  });
+
+  it("lets members delete only their own unused themes", async () => {
+    const { viewer } = viewerWith([
+      member,
+      {
+        data: [
+          row("a", "me"),
+          row("b", "someone-else"),
+          row("c", "me", used),
+          row("d", null),
+        ],
+      },
+    ]);
+    const { result } = await list(viewer);
+    if (!result.success) throw new Error(result.error);
+    expect(
+      result.data.themes.map(({ id, canDelete }) => [id, canDelete])
+    ).toEqual([
+      ["a", true],
+      ["b", false],
+      ["c", false],
+      ["d", false],
+    ]);
+    expect(result.data.themes[0]).toEqual({
+      id: "a",
+      name: "Theme a",
+      createdAt: "2026-01-01T00:00:00Z",
+      submittedBy: { id: "me", name: "me", image: null },
+      upvoteCount: 2,
+      userHasUpvoted: true,
+      timesUsed: 0,
+      meetings: [],
+      canDelete: true,
+    });
+  });
+
+  it("lets admins delete any unused theme", async () => {
+    const { viewer } = viewerWith([
+      admin,
+      { data: [row("b", "someone-else"), row("c", "me", used)] },
+    ]);
+    const { result } = await list(viewer);
+    if (!result.success) throw new Error(result.error);
+    expect(result.data.themes.map((t) => t.canDelete)).toEqual([true, false]);
+  });
+});

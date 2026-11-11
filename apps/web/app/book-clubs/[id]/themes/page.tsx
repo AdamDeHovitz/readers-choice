@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/server/clubs";
-import { getBookClubThemes } from "@/server/themes";
-import { getViewer } from "@/server/viewer";
+import { loadPageData } from "@/app/_operations/page-data";
+import { listThemes } from "@/server/operations/themes";
 import { SuggestThemeDialog } from "@/components/themes/suggest-theme-dialog";
 import { ThemesList } from "@/components/themes/themes-list";
 import { PageHeader } from "@/components/ui/page-header";
@@ -14,19 +13,13 @@ export default async function ThemesPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
-  if (!viewer) {
-    redirect("/login");
-  }
-
-  const [bookClub, themes] = await Promise.all([
-    getBookClubDetails(viewer, bookClubId),
-    getBookClubThemes(viewer, bookClubId),
-  ]);
-
-  if (!bookClub) {
-    redirect("/dashboard");
-  }
+  const { id: bookClubId } = await params;
+  // Non-members land on the club page, which offers to join.
+  const { themes } = await loadPageData(
+    listThemes,
+    { bookClubId },
+    { onRefused: () => redirect(`/book-clubs/${bookClubId}`) }
+  );
 
   return (
     <>
@@ -35,11 +28,7 @@ export default async function ThemesPage({
         description="Suggest themes for future meetings and upvote your favorites."
         actions={<SuggestThemeDialog bookClubId={bookClubId} />}
       />
-      <ThemesList
-        themes={themes}
-        currentUserId={viewer.userId}
-        isAdmin={bookClub.currentUserIsAdmin}
-      />
+      <ThemesList themes={themes} />
     </>
   );
 }

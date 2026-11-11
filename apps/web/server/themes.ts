@@ -1,4 +1,5 @@
 import "server-only";
+import type { ClubTheme } from "@readers-choice/contract/themes";
 import { findFuzzyMatch } from "@readers-choice/core/fuzzy-match";
 import { UserError } from "@readers-choice/core/user-error";
 import type { Db } from "./db";
@@ -118,22 +119,14 @@ export async function getThemeSuggestions(
     .map((theme) => theme.name);
 }
 
-export interface ClubTheme {
-  id: string;
-  name: string;
-  createdAt: string | null;
-  submittedBy: { id: string; name: string; image: string | null } | null;
-  upvoteCount: number;
-  userHasUpvoted: boolean;
-  timesUsed: number;
-  meetings: { id: string; meetingDate: string; isFinalized: boolean }[];
-}
-
-/** All of a club's themes with upvotes and usage, newest first. */
+/**
+ * All of a club's themes with upvotes and usage, newest first. Doesn't
+ * check membership or work out `canDelete`; the themes.list operation does.
+ */
 export async function getBookClubThemes(
   { db, userId }: Viewer,
   bookClubId: string
-): Promise<ClubTheme[]> {
+): Promise<Omit<ClubTheme, "canDelete">[]> {
   const { data, error } = await db
     .from("themes")
     .select(

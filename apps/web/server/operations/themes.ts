@@ -1,6 +1,7 @@
 import "server-only";
 import { keys } from "@readers-choice/contract/keys";
 import * as contract from "@readers-choice/contract/themes";
+import { themeDeletionBlocker } from "@readers-choice/core/themes";
 import { UserError } from "@readers-choice/core/user-error";
 import { requireMember } from "../authz";
 import { implement } from "../operation";
@@ -56,13 +57,36 @@ export const deleteTheme = implement(
       ctx.userId,
       "You must be a member to delete themes"
     );
-    if (theme.submittedBy !== ctx.userId && !membership.isAdmin) {
-      throw new UserError(
-        "You can only delete themes you submitted or be an admin"
-      );
-    }
+    const blocker = themeDeletionBlocker(theme, {
+      userId: ctx.userId,
+      isAdmin: membership.isAdmin,
+    });
+    if (blocker) throw new UserError(blocker);
     await themes.deleteUnusedTheme(ctx.db, theme);
     ctx.invalidate(keys.clubThemes(theme.bookClubId));
+  }
+);
+
+export const listThemes = implement(
+  contract.listThemes,
+  "Failed to load themes",
+  async (ctx, { bookClubId }) => {
+    const membership = await requireMember(ctx.db, bookClubId, ctx.userId);
+    const member = { userId: ctx.userId, isAdmin: membership.isAdmin };
+    const list = await themes.getBookClubThemes(ctx, bookClubId);
+    return {
+      themes: list.map((theme) => ({
+        ...theme,
+        canDelete:
+          themeDeletionBlocker(
+            {
+              submittedBy: theme.submittedBy?.id ?? null,
+              timesUsed: theme.timesUsed,
+            },
+            member
+          ) === null,
+      })),
+    };
   }
 );
 

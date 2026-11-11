@@ -26,6 +26,37 @@ export const deleteTheme = defineContract({
   output: z.void(),
 });
 
+/** One theme as the themes screen shows it. */
+const clubTheme = z.object({
+  id: z.string(),
+  name: z.string(),
+  createdAt: z.string().nullable(),
+  submittedBy: z
+    .object({ id: z.string(), name: z.string(), image: z.string().nullable() })
+    .nullable(),
+  upvoteCount: z.number().int(),
+  userHasUpvoted: z.boolean(),
+  timesUsed: z.number().int(),
+  meetings: z.array(
+    z.object({
+      id: z.string(),
+      meetingDate: z.string(),
+      isFinalized: z.boolean(),
+    })
+  ),
+  /** Whether the viewer may delete it: the same rule deleteTheme enforces. */
+  canDelete: z.boolean(),
+});
+export type ClubTheme = z.output<typeof clubTheme>;
+
+/** The themes screen: every theme in a club, newest first. Members only. */
+export const listThemes = defineContract({
+  name: "themes.list",
+  kind: "query",
+  input: z.object({ bookClubId: rowId }),
+  output: z.object({ themes: z.array(clubTheme) }),
+});
+
 /** Theme names for the meeting form's autocomplete. */
 export const getThemeSuggestions = defineContract({
   name: "themes.suggestions",
