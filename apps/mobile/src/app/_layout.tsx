@@ -4,22 +4,27 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { sessions, useSession } from "@/auth";
 import { colors, fontFamily } from "@/theme";
 import { fontFiles } from "@/theme/fonts";
 
-// Keep the splash screen up until the fonts are ready, so text never flashes
-// in the system font.
+// Keep the splash screen up until the fonts and the saved session are
+// loaded, so nothing flashes in the system font or on the wrong screen.
 void SplashScreen.preventAutoHideAsync();
+void sessions.restore();
 
 export default function RootLayout() {
   const [fontsLoaded, fontError] = useFonts(fontFiles);
-  const ready = fontsLoaded || fontError !== null;
+  const session = useSession();
+  const ready =
+    (fontsLoaded || fontError !== null) && session.status !== "loading";
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
   }, [ready]);
 
   if (!ready) return null;
+  const signedIn = session.status === "signedIn";
 
   return (
     <SafeAreaProvider>
@@ -32,7 +37,17 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: colors.background },
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false }} />
+        {/* Signed-out and signed-in screens never mix: each group is only
+            reachable while its guard holds. */}
+        <Stack.Protected guard={!signedIn}>
+          <Stack.Screen
+            name="(auth)/sign-in"
+            options={{ headerShown: false }}
+          />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn}>
+          <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
+        </Stack.Protected>
       </Stack>
     </SafeAreaProvider>
   );

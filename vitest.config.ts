@@ -32,6 +32,16 @@ export default defineConfig({
           exclude,
         },
       },
+      {
+        // Plain-TypeScript modules of the mobile app (no React Native imports).
+        test: {
+          name: "mobile",
+          root: "apps/mobile",
+          globals: true,
+          include: ["src/**/*.test.ts"],
+          exclude,
+        },
+      },
       { test: { name: "scripts", root: "scripts", include: ["**/*.test.ts"] } },
     ],
     coverage: {
