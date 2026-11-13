@@ -11,7 +11,7 @@ You own this codebase. There is no other team: you wrote most of it, you will ma
 
 ## Commands
 
-- Run everything from the repo root (npm workspaces). Before committing: `npm run lint && npm run typecheck && npm run test:run`, and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
+- Run everything from the repo root (npm workspaces). Before committing: `npm run lint && npm run format:check && npm run typecheck && npm run test:run` (`npx prettier --write <files>` fixes formatting), and the build with dummy env: `NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co SUPABASE_SERVICE_ROLE_KEY=dummy npm run build`.
 - Local app and database: the `verify-locally` skill. Schema changes: the `database-migrations` skill.
 
 ## Verifying work
