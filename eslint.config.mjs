@@ -155,10 +155,8 @@ export default defineConfig([
     files: ["apps/web/app/actions/**/*.ts"],
     ignores: [
       "**/*.test.ts",
-      "apps/web/app/actions/book-clubs.ts",
       "apps/web/app/actions/books.ts",
       "apps/web/app/actions/calendar.ts",
-      "apps/web/app/actions/invites.ts",
       "apps/web/app/actions/libraries.ts",
       "apps/web/app/actions/meeting-voting.ts",
       "apps/web/app/actions/meetings.ts",

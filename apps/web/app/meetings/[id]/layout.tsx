@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/shell/app-shell";
+import { countPendingJoinRequests } from "@/server/join-requests";
 import { getMeetingDetails } from "@/server/meetings";
 import { getViewer } from "@/server/viewer";
 
@@ -17,12 +18,20 @@ export default async function MeetingLayout({
   if (!viewer || !meeting) return children;
 
   const clubId = meeting.bookClub.id;
+  const pendingJoinRequests = meeting.currentUserIsAdmin
+    ? await countPendingJoinRequests(viewer.db, clubId)
+    : 0;
   return (
     <AppShell
       title={meeting.bookClub.name}
       back={{ href: `/book-clubs/${clubId}/schedule`, label: "Schedule" }}
       userName={viewer.name}
-      section={{ kind: "club", clubId, activeTab: "schedule" }}
+      section={{
+        kind: "club",
+        clubId,
+        activeTab: "schedule",
+        pendingJoinRequests,
+      }}
     >
       {children}
     </AppShell>

@@ -46,7 +46,7 @@ export function DeleteBookClubDialog({
 
   function handleDelete() {
     if (isDeleting || confirmationName !== bookClubName) return;
-    deleteClub(bookClubId, confirmationName);
+    deleteClub({ bookClubId, confirmationName });
   }
 
   return (

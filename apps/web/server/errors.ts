@@ -4,7 +4,8 @@ import { UserError } from "@readers-choice/core/user-error";
 
 /**
  * Stable error codes raised by our database functions (see
- * supabase/migrations/*_atomic_voting_and_membership.sql).
+ * supabase/migrations/*_atomic_voting_and_membership.sql and
+ * *_add_club_join_policy_and_requests.sql).
  */
 const DB_ERROR_MESSAGES: Record<string, string> = {
   meeting_not_found: "Meeting not found",
@@ -16,6 +17,9 @@ const DB_ERROR_MESSAGES: Record<string, string> = {
   invalid_voting_method: "Invalid voting method",
   invalid_rankings: "Invalid rankings",
   last_admin: "Cannot remove the last admin",
+  already_member: "You are already a member of this book club",
+  club_invite_only: "This book club is invite-only",
+  join_request_cooldown: "You can't ask to join this book club again yet",
 };
 
 /**

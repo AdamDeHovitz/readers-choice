@@ -25,6 +25,8 @@ export type NavSection =
       clubId: string;
       /** Force a tab active, for pages outside the club's URL space. */
       activeTab?: ClubTab;
+      /** Requests waiting on an admin, counted on the Members tab. */
+      pendingJoinRequests?: number;
     };
 
 interface NavItem {
@@ -35,6 +37,8 @@ interface NavItem {
   /** Also active on these path prefixes. */
   matches?: string[];
   exact?: boolean;
+  /** Something waiting on the viewer here, e.g. join requests. */
+  count?: number;
 }
 
 function navItems(section: NavSection): NavItem[] {
@@ -82,6 +86,7 @@ function navItems(section: NavSection): NavItem[] {
       label: "Members",
       href: `${base}/members`,
       icon: UsersIcon,
+      count: section.pendingJoinRequests,
     },
   ];
 }
@@ -129,6 +134,7 @@ export function NavTabs({
             >
               <item.icon className="size-4" aria-hidden />
               {item.label}
+              <CountBadge count={item.count} />
             </Link>
           );
         })}
@@ -156,10 +162,14 @@ export function NavTabs({
               >
                 <span
                   className={cn(
-                    "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                    "relative flex h-7 w-12 items-center justify-center rounded-full transition-colors",
                     active && "bg-rust-100"
                   )}
                 >
+                  <CountBadge
+                    count={item.count}
+                    className="absolute -top-1 right-1"
+                  />
                   <item.icon
                     className="size-5"
                     strokeWidth={active ? 2.25 : 1.75}
@@ -173,5 +183,27 @@ export function NavTabs({
         })}
       </ul>
     </nav>
+  );
+}
+
+/** A small count beside a tab; nothing when there's nothing waiting. */
+function CountBadge({
+  count,
+  className,
+}: {
+  count: number | undefined;
+  className?: string;
+}) {
+  if (!count) return null;
+  return (
+    <span
+      className={cn(
+        "bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold",
+        className
+      )}
+    >
+      {count > 9 ? "9+" : count}
+      <span className="sr-only"> waiting</span>
+    </span>
   );
 }

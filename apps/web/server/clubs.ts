@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import type { MyClub } from "@readers-choice/contract/clubs";
+import { isListed, type JoinPolicy } from "@readers-choice/core/join-policy";
 import { UserError } from "@readers-choice/core/user-error";
 import { createAdminClient, type Db } from "./db";
 import { throwIfDbError } from "./errors";
@@ -41,14 +42,15 @@ export interface BookClubDetails {
   id: string;
   name: string;
   description: string | null;
+  joinPolicy: JoinPolicy;
   members: ClubMember[];
   currentUserIsAdmin: boolean;
   currentUserIsMember: boolean;
 }
 
 /**
- * A club and its members. Public (the club page shows non-members an invite
- * prompt), so member emails are only included for members. Cached per
+ * A club and its members. Public (the club page shows non-members how to
+ * join), so member emails are only included for members. Cached per
  * request, so the club layout and its pages share one lookup.
  */
 export const getBookClubDetails = cache(async function getBookClubDetails(
@@ -60,7 +62,7 @@ export const getBookClubDetails = cache(async function getBookClubDetails(
   const [clubResult, membersResult] = await Promise.all([
     db
       .from("book_clubs")
-      .select("id, name, description")
+      .select("id, name, description, join_policy")
       .eq("id", bookClubId)
       .maybeSingle(),
     db
@@ -86,6 +88,7 @@ export const getBookClubDetails = cache(async function getBookClubDetails(
     id: club.id,
     name: club.name,
     description: club.description,
+    joinPolicy: club.join_policy,
     members: members.map(({ users: user, is_admin, joined_at }) => ({
       id: user.id,
       name: user.name,
@@ -104,40 +107,67 @@ export interface BrowsableBookClub {
   name: string;
   description: string | null;
   createdAt: string | null;
+  joinPolicy: JoinPolicy;
   memberCount: number;
   isMember: boolean;
+  /** The viewer has asked to join and is waiting on an admin. */
+  hasPendingRequest: boolean;
 }
 
-/** Every club, newest first, flagged with whether the viewer belongs to it. */
-export async function getAllBookClubs(
-  viewer: Viewer | null
+/**
+ * The clubs Browse lists, newest first: listed clubs (open or taking
+ * requests) plus the viewer's own. `includeUnlisted` (super admins, who
+ * moderate every club) lists invite-only clubs too.
+ */
+export async function getBrowsableBookClubs(
+  viewer: Viewer | null,
+  { includeUnlisted = false } = {}
 ): Promise<BrowsableBookClub[]> {
   const db = viewer?.db ?? createAdminClient();
+  const none = Promise.resolve({ data: [], error: null });
 
-  const [clubsResult, membershipsResult] = await Promise.all([
+  const [clubsResult, membershipsResult, requestsResult] = await Promise.all([
     db
       .from("book_clubs")
-      .select("id, name, description, created_at, members(count)")
+      .select("id, name, description, created_at, join_policy, members(count)")
       .order("created_at", { ascending: false }),
     viewer
       ? db.from("members").select("book_club_id").eq("user_id", viewer.userId)
-      : Promise.resolve({ data: [], error: null }),
+      : none,
+    viewer
+      ? db
+          .from("join_requests")
+          .select("book_club_id")
+          .eq("user_id", viewer.userId)
+          .eq("status", "pending")
+      : none,
   ]);
   if (clubsResult.error) throw clubsResult.error;
   if (membershipsResult.error) throw membershipsResult.error;
+  if (requestsResult.error) throw requestsResult.error;
 
   const memberOf = new Set(
     (membershipsResult.data ?? []).map((m) => m.book_club_id)
   );
+  const requested = new Set(
+    (requestsResult.data ?? []).map((r) => r.book_club_id)
+  );
 
-  return clubsResult.data.map((club) => ({
-    id: club.id,
-    name: club.name,
-    description: club.description,
-    createdAt: club.created_at,
-    memberCount: club.members[0]?.count ?? 0,
-    isMember: memberOf.has(club.id),
-  }));
+  return clubsResult.data
+    .filter(
+      (club) =>
+        includeUnlisted || isListed(club.join_policy) || memberOf.has(club.id)
+    )
+    .map((club) => ({
+      id: club.id,
+      name: club.name,
+      description: club.description,
+      createdAt: club.created_at,
+      joinPolicy: club.join_policy,
+      memberCount: club.members[0]?.count ?? 0,
+      isMember: memberOf.has(club.id),
+      hasPendingRequest: requested.has(club.id),
+    }));
 }
 
 /** Create a club with its creator as the first admin, atomically; returns its id. */

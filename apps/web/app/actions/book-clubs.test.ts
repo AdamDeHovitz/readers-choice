@@ -23,6 +23,8 @@ import { viewerIsSuperAdmin } from "@/server/authz";
 import { createAdminClient } from "@/server/db";
 import { deleteBookClub } from "./book-clubs";
 
+const CLUB_ID = "22222222-0000-4000-8000-000000000001";
+
 const session: Session = {
   user: { id: "actor-id", name: "Reader", email: "reader@example.test" },
   expires: "2099-01-01T00:00:00.000Z",
@@ -47,7 +49,12 @@ beforeEach(() => {
 describe("super-admin club deletion", () => {
   it("rejects unauthenticated deletion without accessing the database", async () => {
     auth.mockResolvedValue(null);
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: false,
       error: "Unauthorized",
       code: "unauthenticated",
@@ -61,7 +68,12 @@ describe("super-admin club deletion", () => {
       ...session,
       user: { ...session.user, is_super_admin: true },
     } as Session);
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: false,
       error: "Only super admins can delete book clubs",
       code: "refused",
@@ -74,9 +86,12 @@ describe("super-admin club deletion", () => {
 
   it("rejects a session whose user no longer exists", async () => {
     maybeSingle.mockResolvedValue({ data: null, error: null });
-    expect(await deleteBookClub("club-id", "Spam Club")).toHaveProperty(
-      "error"
-    );
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toHaveProperty("error");
     expect(rpc).not.toHaveBeenCalled();
   });
 
@@ -85,7 +100,12 @@ describe("super-admin club deletion", () => {
       data: { is_super_admin: true },
       error: { message: "Lookup failed" },
     });
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: false,
       error: "Failed to delete book club",
       code: "internal",
@@ -98,20 +118,25 @@ describe("super-admin club deletion", () => {
       data: { is_super_admin: true },
       error: null,
     });
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: true,
       data: undefined,
     });
     expect(from).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith("delete_book_club", {
       p_actor_id: "actor-id",
-      p_book_club_id: "club-id",
+      p_book_club_id: CLUB_ID,
       p_confirmation_name: "Spam Club",
     });
-    expect(revalidatePath).toHaveBeenCalledWith("/browse");
-    expect(revalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(revalidatePath).toHaveBeenCalledWith("/browse", "layout");
+    expect(revalidatePath).toHaveBeenCalledWith("/dashboard", "layout");
     expect(revalidatePath).toHaveBeenCalledWith(
-      "/book-clubs/club-id",
+      `/book-clubs/${CLUB_ID}`,
       "layout"
     );
     expect(revalidatePath).toHaveBeenCalledWith("/meetings", "layout");
@@ -127,7 +152,12 @@ describe("super-admin club deletion", () => {
       error: null,
     });
     rpc.mockResolvedValue({ error: { message, code: "P0001" } });
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: false,
       error: message,
       code: "refused",
@@ -143,7 +173,12 @@ describe("super-admin club deletion", () => {
     rpc.mockResolvedValue({
       error: { message: "connection reset", code: "08006" },
     });
-    expect(await deleteBookClub("club-id", "Spam Club")).toEqual({
+    expect(
+      await deleteBookClub({
+        bookClubId: CLUB_ID,
+        confirmationName: "Spam Club",
+      })
+    ).toEqual({
       success: false,
       error: "Failed to delete book club",
       code: "internal",

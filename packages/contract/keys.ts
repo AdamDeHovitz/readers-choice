@@ -10,6 +10,10 @@
 export const keys = {
   /** The signed-in member's clubs. */
   myClubs: () => ["me", "clubs"] as const,
+  /** The clubs anyone can find and join or ask to join. */
+  clubDirectory: () => ["clubs"] as const,
+  /** Everything about one club: its details, members, requests, meetings. */
+  club: (clubId: string) => ["club", clubId] as const,
   /** A club's themes. */
   clubThemes: (clubId: string) => ["club", clubId, "themes"] as const,
 };

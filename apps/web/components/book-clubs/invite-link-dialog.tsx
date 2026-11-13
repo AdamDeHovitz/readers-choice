@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Alert } from "@/components/ui/alert";
 import { UserPlusIcon, CopyIcon, CheckIcon, XIcon } from "lucide-react";
 
 interface InviteLinkDialogProps {
@@ -45,7 +46,7 @@ export function InviteLinkDialog({
 
   function handleCreateLink() {
     deactivate.reset();
-    create.run(bookClubId);
+    create.run({ bookClubId });
   }
 
   async function handleCopy() {
@@ -59,7 +60,7 @@ export function InviteLinkDialog({
   function handleDeactivate() {
     if (!inviteCode) return;
     create.reset();
-    deactivate.run(bookClubId, inviteCode);
+    deactivate.run({ bookClubId, code: inviteCode });
   }
 
   function resetDialog() {
@@ -90,7 +91,7 @@ export function InviteLinkDialog({
           <DialogTitle>Invite Members to {bookClubName}</DialogTitle>
           <DialogDescription>
             Share this link with people you want to invite. Anyone with the link
-            can join the book club.
+            joins right away, without waiting for approval.
           </DialogDescription>
         </DialogHeader>
 
@@ -152,11 +153,7 @@ export function InviteLinkDialog({
             </>
           ) : null}
 
-          {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
+          {error && <Alert variant="destructive">{error}</Alert>}
         </div>
       </DialogContent>
     </Dialog>
