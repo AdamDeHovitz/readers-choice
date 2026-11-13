@@ -1,0 +1,18 @@
+# Expo
+.expo/
+dist/
+web-build/
+
+# Generated native projects (EAS builds them from app.config.ts)
+/ios
+/android
+
+# Signing material never belongs in git
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+.metro-health-check*
+.env*.local

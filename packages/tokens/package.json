@@ -1,0 +1,10 @@
+{
+  "name": "@readers-choice/tokens",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Design tokens (colors, type) shared by the web and mobile apps. apps/web/app/globals.css must match; a test there checks it.",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts"
+  }
+}

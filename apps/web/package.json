@@ -18,6 +18,7 @@
     "@radix-ui/react-switch": "^1.2.6",
     "@readers-choice/contract": "*",
     "@readers-choice/core": "*",
+    "@readers-choice/tokens": "*",
     "@supabase/supabase-js": "^2.81.1",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
