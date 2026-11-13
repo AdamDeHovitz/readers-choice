@@ -65,6 +65,25 @@ describe("handleOperationRequest", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("lets a bearer request through from another origin, since it never uses the cookie", async () => {
+    const { viewer } = viewerWith([
+      { data: { is_admin: false } },
+      { data: [] },
+    ]);
+    const response = await handleOperationRequest(
+      post("themes.suggestions", JSON.stringify({ bookClubId: CLUB }), {
+        "content-type": "application/json",
+        origin: "http://localhost:8081",
+        authorization: "Bearer token-from-the-app",
+      }),
+      "themes.suggestions",
+      async () => viewer
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("access-control-allow-origin")).toBe("*");
+    expect(response.headers.get("access-control-allow-credentials")).toBeNull();
+  });
+
   it("allows same-origin requests and requests without an Origin (native apps)", async () => {
     for (const headers of <Record<string, string>[]>[
       { "content-type": "application/json", origin: SITE },

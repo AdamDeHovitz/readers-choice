@@ -1,0 +1,28 @@
+name: Expo health
+
+# expo-doctor compares the mobile app's dependencies with the latest release
+# of its Expo SDK, so its answer changes when Expo publishes a patch, not when
+# we change code. It runs on a schedule (and on demand) instead of on PRs,
+# where it would fail unrelated changes. When it fails: `npx expo install
+# --check` in apps/mobile shows the upgrades; open a PR with them.
+
+on:
+  schedule:
+    - cron: "0 14 * * 1" # Mondays
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  doctor:
+    name: expo-doctor
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run doctor -w @readers-choice/mobile
