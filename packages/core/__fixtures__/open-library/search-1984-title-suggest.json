@@ -1,238 +1,199 @@
 {
- "num_found": 23824,
- "docs": [
-  {
-   "author_name": [
-    "Michael Dean",
-    "George Orwell"
-   ],
-   "cover_i": 8745958,
-   "edition_count": 4,
-   "first_publish_year": 2003,
-   "isbn": [
-    "0582777313"
-   ],
-   "key": "/works/OL11326416W",
-   "number_of_pages_median": 72,
-   "title": "1984 (adaptation)",
-   "editions": {
-    "numFound": 3,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Fido Nesti"
-   ],
-   "cover_i": 10502178,
-   "edition_count": 7,
-   "first_publish_year": 1984,
-   "isbn": [
-    "9780241436493"
-   ],
-   "key": "/works/OL23745689W",
-   "number_of_pages_median": 256,
-   "title": "1984",
-   "editions": {
-    "numFound": 6,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Robert Owens"
-   ],
-   "edition_count": 2,
-   "first_publish_year": 1963,
-   "isbn": [
-    "9789994641871"
-   ],
-   "key": "/works/OL1168186W",
-   "title": "George Orwell's 1984",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell's 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Spark Publishing",
-    "SparkNotes"
-   ],
-   "cover_i": 853463,
-   "edition_count": 4,
-   "first_publish_year": 2003,
-   "isbn": [
-    "9781586633639"
-   ],
-   "key": "/works/OL14905934W",
-   "number_of_pages_median": 75,
-   "title": "SparkNotes for 1984 by George Orwell",
-   "editions": {
-    "numFound": 4,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Ralph A. Ranald"
-   ],
-   "cover_i": 6504344,
-   "edition_count": 1,
-   "first_publish_year": 1965,
-   "isbn": [
-    "067100719X"
-   ],
-   "key": "/works/OL15140593W",
-   "number_of_pages_median": 122,
-   "title": "George Orwell's 1984",
-   "editions": {
-    "numFound": 1,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell's 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Samuel R. Delany"
-   ],
-   "cover_i": 731623,
-   "edition_count": 3,
-   "first_publish_year": 2000,
-   "isbn": [
-    "0966599810"
-   ],
-   "key": "/works/OL56819W",
-   "number_of_pages_median": 351,
-   "title": "1984",
-   "editions": {
-    "numFound": 3,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Robert Icke",
-    "Duncan Macmillan"
-   ],
-   "cover_i": 13028139,
-   "edition_count": 2,
-   "first_publish_year": 2013,
-   "isbn": [
-    "1783190612"
-   ],
-   "key": "/works/OL29259934W",
-   "number_of_pages_median": 94,
-   "title": "1984",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Peru"
-   ],
-   "edition_count": 31,
-   "first_publish_year": 1960,
-   "isbn": [
-    "9789972653056"
-   ],
-   "key": "/works/OL650071W",
-   "number_of_pages_median": 516,
-   "title": "Código civil (1984)",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Código civil, 1936-1984"
-     }
-    ]
-   }
-  },
-  {
-   "cover_i": 8064294,
-   "edition_count": 1,
-   "first_publish_year": 2013,
-   "isbn": [
-    "9588773830"
-   ],
-   "key": "/works/OL17785515W",
-   "title": "George Orwell 1984",
-   "editions": {
-    "numFound": 1,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Mahmood, M."
-   ],
-   "edition_count": 4,
-   "first_publish_year": 2004,
-   "key": "/works/OL2323537W",
-   "number_of_pages_median": 1401,
-   "title": "Qanun-e-Shahadat order, 1984",
-   "editions": {
-    "numFound": 4,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "An exhaustive commentary on the Qanun-e-Shahadat Order, 1984"
-     }
-    ]
-   },
-   "isbn": []
-  }
- ]
+  "num_found": 23824,
+  "docs": [
+    {
+      "author_name": ["Michael Dean", "George Orwell"],
+      "cover_i": 8745958,
+      "edition_count": 4,
+      "first_publish_year": 2003,
+      "isbn": ["0582777313"],
+      "key": "/works/OL11326416W",
+      "number_of_pages_median": 72,
+      "title": "1984 (adaptation)",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Fido Nesti"],
+      "cover_i": 10502178,
+      "edition_count": 7,
+      "first_publish_year": 1984,
+      "isbn": ["9780241436493"],
+      "key": "/works/OL23745689W",
+      "number_of_pages_median": 256,
+      "title": "1984",
+      "editions": {
+        "numFound": 6,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Robert Owens"],
+      "edition_count": 2,
+      "first_publish_year": 1963,
+      "isbn": ["9789994641871"],
+      "key": "/works/OL1168186W",
+      "title": "George Orwell's 1984",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell's 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Spark Publishing", "SparkNotes"],
+      "cover_i": 853463,
+      "edition_count": 4,
+      "first_publish_year": 2003,
+      "isbn": ["9781586633639"],
+      "key": "/works/OL14905934W",
+      "number_of_pages_median": 75,
+      "title": "SparkNotes for 1984 by George Orwell",
+      "editions": {
+        "numFound": 4,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Ralph A. Ranald"],
+      "cover_i": 6504344,
+      "edition_count": 1,
+      "first_publish_year": 1965,
+      "isbn": ["067100719X"],
+      "key": "/works/OL15140593W",
+      "number_of_pages_median": 122,
+      "title": "George Orwell's 1984",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell's 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Samuel R. Delany"],
+      "cover_i": 731623,
+      "edition_count": 3,
+      "first_publish_year": 2000,
+      "isbn": ["0966599810"],
+      "key": "/works/OL56819W",
+      "number_of_pages_median": 351,
+      "title": "1984",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Robert Icke", "Duncan Macmillan"],
+      "cover_i": 13028139,
+      "edition_count": 2,
+      "first_publish_year": 2013,
+      "isbn": ["1783190612"],
+      "key": "/works/OL29259934W",
+      "number_of_pages_median": 94,
+      "title": "1984",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Peru"],
+      "edition_count": 31,
+      "first_publish_year": 1960,
+      "isbn": ["9789972653056"],
+      "key": "/works/OL650071W",
+      "number_of_pages_median": 516,
+      "title": "Código civil (1984)",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Código civil, 1936-1984"
+          }
+        ]
+      }
+    },
+    {
+      "cover_i": 8064294,
+      "edition_count": 1,
+      "first_publish_year": 2013,
+      "isbn": ["9588773830"],
+      "key": "/works/OL17785515W",
+      "title": "George Orwell 1984",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Mahmood, M."],
+      "edition_count": 4,
+      "first_publish_year": 2004,
+      "key": "/works/OL2323537W",
+      "number_of_pages_median": 1401,
+      "title": "Qanun-e-Shahadat order, 1984",
+      "editions": {
+        "numFound": 4,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "An exhaustive commentary on the Qanun-e-Shahadat Order, 1984"
+          }
+        ]
+      },
+      "isbn": []
+    }
+  ]
 }

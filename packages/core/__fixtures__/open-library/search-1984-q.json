@@ -1,494 +1,415 @@
 {
- "num_found": 78050,
- "docs": [
-  {
-   "author_name": [
-    "George Orwell"
-   ],
-   "cover_i": 9267242,
-   "edition_count": 727,
-   "first_publish_year": 1949,
-   "isbn": [
-    "1717012221"
-   ],
-   "key": "/works/OL1168083W",
-   "number_of_pages_median": 318,
-   "title": "Nineteen Eighty-Four",
-   "editions": {
-    "numFound": 727,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Nineteen eighty-four"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "George Orwell",
-    "G Orwell",
-    "George Orwel",
-    "George Orwell"
-   ],
-   "cover_i": 10524365,
-   "edition_count": 48,
-   "first_publish_year": 1949,
-   "isbn": [
-    "9789706668462"
-   ],
-   "key": "/works/OL1167981W",
-   "number_of_pages_median": 360,
-   "title": "Animal Farm / Nineteen Eighty-Four",
-   "editions": {
-    "numFound": 48,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Animal Farm and 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Michael Dean",
-    "George Orwell"
-   ],
-   "cover_i": 8745958,
-   "edition_count": 4,
-   "first_publish_year": 2003,
-   "isbn": [
-    "0582777313"
-   ],
-   "key": "/works/OL11326416W",
-   "number_of_pages_median": 72,
-   "title": "1984 (adaptation)",
-   "editions": {
-    "numFound": 4,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Spark Publishing",
-    "SparkNotes"
-   ],
-   "cover_i": 853463,
-   "edition_count": 4,
-   "first_publish_year": 2003,
-   "isbn": [
-    "9781586633639"
-   ],
-   "key": "/works/OL14905934W",
-   "number_of_pages_median": 75,
-   "title": "SparkNotes for 1984 by George Orwell",
-   "editions": {
-    "numFound": 4,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Anthony Burgess",
-    "Anthony Burgess"
-   ],
-   "cover_i": 6640240,
-   "edition_count": 12,
-   "first_publish_year": 1978,
-   "isbn": [
-    "2221003616"
-   ],
-   "key": "/works/OL1386730W",
-   "number_of_pages_median": 272,
-   "title": "1985",
-   "editions": {
-    "numFound": 12,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984-85"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Robert Owens"
-   ],
-   "edition_count": 2,
-   "first_publish_year": 1963,
-   "isbn": [
-    "9789994641871"
-   ],
-   "key": "/works/OL1168186W",
-   "title": "George Orwell's 1984",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell's 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Louis L'Amour",
-    "Louis L'amour"
-   ],
-   "cover_i": 5298687,
-   "edition_count": 23,
-   "first_publish_year": 1796,
-   "isbn": [
-    "9780553208801"
-   ],
-   "key": "/works/OL51063W",
-   "number_of_pages_median": 155,
-   "title": "Brionne",
-   "editions": {
-    "numFound": 23,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Brionne by Louis L'Amour (1984-10-01)"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Fido Nesti"
-   ],
-   "cover_i": 10502178,
-   "edition_count": 7,
-   "first_publish_year": 1984,
-   "isbn": [
-    "9780241436493"
-   ],
-   "key": "/works/OL23745689W",
-   "number_of_pages_median": 256,
-   "title": "1984",
-   "editions": {
-    "numFound": 7,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Ralph A. Ranald"
-   ],
-   "cover_i": 6504344,
-   "edition_count": 1,
-   "first_publish_year": 1965,
-   "isbn": [
-    "067100719X"
-   ],
-   "key": "/works/OL15140593W",
-   "number_of_pages_median": 122,
-   "title": "George Orwell's 1984",
-   "editions": {
-    "numFound": 1,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell's 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Jean Fritz"
-   ],
-   "cover_i": 446320,
-   "edition_count": 13,
-   "first_publish_year": 1969,
-   "isbn": [
-    "0613078497"
-   ],
-   "key": "/works/OL1931487W",
-   "number_of_pages_median": 47,
-   "title": "George Washington's Breakfast",
-   "editions": {
-    "numFound": 13,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Washington's Breakfast by Jean Fritz (1984-10-06)"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Eleanor Burford"
-   ],
-   "cover_i": 5024447,
-   "edition_count": 23,
-   "first_publish_year": 1733,
-   "isbn": [
-    "5557104496"
-   ],
-   "key": "/works/OL3931432W",
-   "number_of_pages_median": 446,
-   "title": "The Landower Legacy",
-   "editions": {
-    "numFound": 23,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "The Landower Legacy by Victoria Holt (1984-11-04)"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Robin McKinley"
-   ],
-   "cover_i": 6987328,
-   "edition_count": 36,
-   "first_publish_year": 1924,
-   "isbn": [
-    "9781497674127"
-   ],
-   "key": "/works/OL109414W",
-   "number_of_pages_median": 246,
-   "title": "The Hero and the Crown",
-   "editions": {
-    "numFound": 36,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "The Hero and the Crown"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Andreas Gursky",
-    "Marie Luise Syring",
-    "Lynne Cooke",
-    "Rupert Pfab",
-    "Kunsthalle Dusseldorf",
-    "Helmut Newton",
-    "Fiona Bradley",
-    "Greg Hilty",
-    "Lewis Biggs"
-   ],
-   "cover_i": 2252968,
-   "edition_count": 21,
-   "first_publish_year": 1992,
-   "isbn": [
-    "9780948835261"
-   ],
-   "key": "/works/OL858950W",
-   "number_of_pages_median": 127,
-   "title": "Andreas Gursky",
-   "editions": {
-    "numFound": 21,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Andreas Gursky"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Henry Patterson"
-   ],
-   "cover_i": 292116,
-   "edition_count": 44,
-   "first_publish_year": 1752,
-   "isbn": [
-    "2253040266"
-   ],
-   "key": "/works/OL157385W",
-   "number_of_pages_median": 240,
-   "title": "Exocet",
-   "editions": {
-    "numFound": 44,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Exocet by Jack Higgins (1984-08-02)"
-     }
-    ]
-   }
-  },
-  {
-   "cover_i": 8064294,
-   "edition_count": 1,
-   "first_publish_year": 2013,
-   "isbn": [
-    "9588773830"
-   ],
-   "key": "/works/OL17785515W",
-   "title": "George Orwell 1984",
-   "editions": {
-    "numFound": 1,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "George Orwell 1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Michael Gene Sullivan"
-   ],
-   "edition_count": 1,
-   "first_publish_year": 2013,
-   "isbn": [
-    "9781623842550"
-   ],
-   "key": "/works/OL25382485W",
-   "number_of_pages_median": 80,
-   "title": "1984 by George Orwell",
-   "editions": {
-    "numFound": 1,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984 by George Orwell"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Ian Glasper"
-   ],
-   "cover_i": 4848063,
-   "edition_count": 8,
-   "first_publish_year": 2004,
-   "isbn": [
-    "9781629630007"
-   ],
-   "key": "/works/OL8932021W",
-   "number_of_pages_median": 450,
-   "title": "Burning Britain",
-   "editions": {
-    "numFound": 8,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Burning Britain"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Robert Icke",
-    "Duncan Macmillan"
-   ],
-   "cover_i": 13028139,
-   "edition_count": 2,
-   "first_publish_year": 2013,
-   "isbn": [
-    "1783190612"
-   ],
-   "key": "/works/OL29259934W",
-   "number_of_pages_median": 94,
-   "title": "1984",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "Didier Eribon"
-   ],
-   "cover_i": 4055887,
-   "edition_count": 7,
-   "first_publish_year": 1989,
-   "isbn": [
-    "9780674572874"
-   ],
-   "key": "/works/OL868721W",
-   "number_of_pages_median": 374,
-   "title": "Michel Foucault",
-   "editions": {
-    "numFound": 7,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "Michel Foucault"
-     }
-    ]
-   }
-  },
-  {
-   "author_name": [
-    "George Orwell"
-   ],
-   "cover_i": 9267251,
-   "edition_count": 2,
-   "first_publish_year": 1989,
-   "isbn": [
-    "5010020947"
-   ],
-   "key": "/works/OL1167984W",
-   "number_of_pages_median": 410,
-   "title": "'1984' i esse raznykh let roman i khudozhestvennaya publitsistika",
-   "editions": {
-    "numFound": 2,
-    "start": 0,
-    "numFoundExact": true,
-    "docs": [
-     {
-      "title": "1984 / Скотный двор"
-     }
-    ]
-   }
-  }
- ]
+  "num_found": 78050,
+  "docs": [
+    {
+      "author_name": ["George Orwell"],
+      "cover_i": 9267242,
+      "edition_count": 727,
+      "first_publish_year": 1949,
+      "isbn": ["1717012221"],
+      "key": "/works/OL1168083W",
+      "number_of_pages_median": 318,
+      "title": "Nineteen Eighty-Four",
+      "editions": {
+        "numFound": 727,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Nineteen eighty-four"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": [
+        "George Orwell",
+        "G Orwell",
+        "George Orwel",
+        "George Orwell"
+      ],
+      "cover_i": 10524365,
+      "edition_count": 48,
+      "first_publish_year": 1949,
+      "isbn": ["9789706668462"],
+      "key": "/works/OL1167981W",
+      "number_of_pages_median": 360,
+      "title": "Animal Farm / Nineteen Eighty-Four",
+      "editions": {
+        "numFound": 48,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Animal Farm and 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Michael Dean", "George Orwell"],
+      "cover_i": 8745958,
+      "edition_count": 4,
+      "first_publish_year": 2003,
+      "isbn": ["0582777313"],
+      "key": "/works/OL11326416W",
+      "number_of_pages_median": 72,
+      "title": "1984 (adaptation)",
+      "editions": {
+        "numFound": 4,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Spark Publishing", "SparkNotes"],
+      "cover_i": 853463,
+      "edition_count": 4,
+      "first_publish_year": 2003,
+      "isbn": ["9781586633639"],
+      "key": "/works/OL14905934W",
+      "number_of_pages_median": 75,
+      "title": "SparkNotes for 1984 by George Orwell",
+      "editions": {
+        "numFound": 4,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Anthony Burgess", "Anthony Burgess"],
+      "cover_i": 6640240,
+      "edition_count": 12,
+      "first_publish_year": 1978,
+      "isbn": ["2221003616"],
+      "key": "/works/OL1386730W",
+      "number_of_pages_median": 272,
+      "title": "1985",
+      "editions": {
+        "numFound": 12,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984-85"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Robert Owens"],
+      "edition_count": 2,
+      "first_publish_year": 1963,
+      "isbn": ["9789994641871"],
+      "key": "/works/OL1168186W",
+      "title": "George Orwell's 1984",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell's 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Louis L'Amour", "Louis L'amour"],
+      "cover_i": 5298687,
+      "edition_count": 23,
+      "first_publish_year": 1796,
+      "isbn": ["9780553208801"],
+      "key": "/works/OL51063W",
+      "number_of_pages_median": 155,
+      "title": "Brionne",
+      "editions": {
+        "numFound": 23,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Brionne by Louis L'Amour (1984-10-01)"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Fido Nesti"],
+      "cover_i": 10502178,
+      "edition_count": 7,
+      "first_publish_year": 1984,
+      "isbn": ["9780241436493"],
+      "key": "/works/OL23745689W",
+      "number_of_pages_median": 256,
+      "title": "1984",
+      "editions": {
+        "numFound": 7,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Ralph A. Ranald"],
+      "cover_i": 6504344,
+      "edition_count": 1,
+      "first_publish_year": 1965,
+      "isbn": ["067100719X"],
+      "key": "/works/OL15140593W",
+      "number_of_pages_median": 122,
+      "title": "George Orwell's 1984",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell's 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Jean Fritz"],
+      "cover_i": 446320,
+      "edition_count": 13,
+      "first_publish_year": 1969,
+      "isbn": ["0613078497"],
+      "key": "/works/OL1931487W",
+      "number_of_pages_median": 47,
+      "title": "George Washington's Breakfast",
+      "editions": {
+        "numFound": 13,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Washington's Breakfast by Jean Fritz (1984-10-06)"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Eleanor Burford"],
+      "cover_i": 5024447,
+      "edition_count": 23,
+      "first_publish_year": 1733,
+      "isbn": ["5557104496"],
+      "key": "/works/OL3931432W",
+      "number_of_pages_median": 446,
+      "title": "The Landower Legacy",
+      "editions": {
+        "numFound": 23,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The Landower Legacy by Victoria Holt (1984-11-04)"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Robin McKinley"],
+      "cover_i": 6987328,
+      "edition_count": 36,
+      "first_publish_year": 1924,
+      "isbn": ["9781497674127"],
+      "key": "/works/OL109414W",
+      "number_of_pages_median": 246,
+      "title": "The Hero and the Crown",
+      "editions": {
+        "numFound": 36,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "The Hero and the Crown"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": [
+        "Andreas Gursky",
+        "Marie Luise Syring",
+        "Lynne Cooke",
+        "Rupert Pfab",
+        "Kunsthalle Dusseldorf",
+        "Helmut Newton",
+        "Fiona Bradley",
+        "Greg Hilty",
+        "Lewis Biggs"
+      ],
+      "cover_i": 2252968,
+      "edition_count": 21,
+      "first_publish_year": 1992,
+      "isbn": ["9780948835261"],
+      "key": "/works/OL858950W",
+      "number_of_pages_median": 127,
+      "title": "Andreas Gursky",
+      "editions": {
+        "numFound": 21,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Andreas Gursky"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Henry Patterson"],
+      "cover_i": 292116,
+      "edition_count": 44,
+      "first_publish_year": 1752,
+      "isbn": ["2253040266"],
+      "key": "/works/OL157385W",
+      "number_of_pages_median": 240,
+      "title": "Exocet",
+      "editions": {
+        "numFound": 44,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Exocet by Jack Higgins (1984-08-02)"
+          }
+        ]
+      }
+    },
+    {
+      "cover_i": 8064294,
+      "edition_count": 1,
+      "first_publish_year": 2013,
+      "isbn": ["9588773830"],
+      "key": "/works/OL17785515W",
+      "title": "George Orwell 1984",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "George Orwell 1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Michael Gene Sullivan"],
+      "edition_count": 1,
+      "first_publish_year": 2013,
+      "isbn": ["9781623842550"],
+      "key": "/works/OL25382485W",
+      "number_of_pages_median": 80,
+      "title": "1984 by George Orwell",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984 by George Orwell"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Ian Glasper"],
+      "cover_i": 4848063,
+      "edition_count": 8,
+      "first_publish_year": 2004,
+      "isbn": ["9781629630007"],
+      "key": "/works/OL8932021W",
+      "number_of_pages_median": 450,
+      "title": "Burning Britain",
+      "editions": {
+        "numFound": 8,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Burning Britain"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Robert Icke", "Duncan Macmillan"],
+      "cover_i": 13028139,
+      "edition_count": 2,
+      "first_publish_year": 2013,
+      "isbn": ["1783190612"],
+      "key": "/works/OL29259934W",
+      "number_of_pages_median": 94,
+      "title": "1984",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Didier Eribon"],
+      "cover_i": 4055887,
+      "edition_count": 7,
+      "first_publish_year": 1989,
+      "isbn": ["9780674572874"],
+      "key": "/works/OL868721W",
+      "number_of_pages_median": 374,
+      "title": "Michel Foucault",
+      "editions": {
+        "numFound": 7,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Michel Foucault"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["George Orwell"],
+      "cover_i": 9267251,
+      "edition_count": 2,
+      "first_publish_year": 1989,
+      "isbn": ["5010020947"],
+      "key": "/works/OL1167984W",
+      "number_of_pages_median": 410,
+      "title": "'1984' i esse raznykh let roman i khudozhestvennaya publitsistika",
+      "editions": {
+        "numFound": 2,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "1984 / Скотный двор"
+          }
+        ]
+      }
+    }
+  ]
 }
