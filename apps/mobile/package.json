@@ -16,7 +16,7 @@
     "@readers-choice/contract": "*",
     "@readers-choice/core": "*",
     "@readers-choice/tokens": "*",
-    "expo": "~58.0.24",
+    "expo": "~58.0.25",
     "expo-constants": "~58.0.16",
     "expo-font": "~58.0.12",
     "expo-linking": "~58.0.17",
