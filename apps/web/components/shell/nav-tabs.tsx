@@ -134,6 +134,7 @@ export function NavTabs({
             >
               <item.icon className="size-4" aria-hidden />
               {item.label}
+              <WaitingLabel count={item.count} />
               <CountBadge count={item.count} />
             </Link>
           );
@@ -177,6 +178,7 @@ export function NavTabs({
                   />
                 </span>
                 {item.label}
+                <WaitingLabel count={item.count} />
               </Link>
             </li>
           );
@@ -186,7 +188,10 @@ export function NavTabs({
   );
 }
 
-/** A small count beside a tab; nothing when there's nothing waiting. */
+/**
+ * A small count beside a tab; nothing when there's nothing waiting. Hidden
+ * from screen readers, which hear `WaitingLabel` after the tab's name.
+ */
 function CountBadge({
   count,
   className,
@@ -197,13 +202,18 @@ function CountBadge({
   if (!count) return null;
   return (
     <span
+      aria-hidden
       className={cn(
         "bg-primary text-primary-foreground flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold",
         className
       )}
     >
       {count > 9 ? "9+" : count}
-      <span className="sr-only"> waiting</span>
     </span>
   );
+}
+
+function WaitingLabel({ count }: { count: number | undefined }) {
+  if (!count) return null;
+  return <span className="sr-only">, {count} waiting</span>;
 }
