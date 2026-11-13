@@ -1,9 +1,6 @@
 import "server-only";
 import { findGoogleBooksDescription } from "@readers-choice/core/google-books";
-import {
-  getWorkDescription,
-  type BookSearchResult,
-} from "@readers-choice/core/open-library";
+import { getWorkDescription, type BookSearchResult } from "@readers-choice/core/open-library";
 import { UserError } from "@readers-choice/core/user-error";
 import type { Db, Tables } from "./db";
 

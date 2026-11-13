@@ -1,8 +1,5 @@
 import "server-only";
-import {
-  lookupLibrary,
-  type Library,
-} from "@readers-choice/core/libraries/overdrive";
+import { lookupLibrary, type Library } from "@readers-choice/core/libraries/overdrive";
 import type { Viewer } from "./viewer";
 
 /** The viewer's libraries, in their chosen order. */
