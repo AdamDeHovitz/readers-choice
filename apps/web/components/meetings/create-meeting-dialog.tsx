@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { createMeeting } from "@/app/actions/meetings";
-import { END_OF_DAY, fromDateTimeInput } from "@readers-choice/core/datetime-input";
+import {
+  END_OF_DAY,
+  fromDateTimeInput,
+} from "@readers-choice/core/datetime-input";
 import {
   suggestMeetingSchedule,
   type MeetingScheduleDefaults,
