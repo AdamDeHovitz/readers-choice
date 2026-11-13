@@ -37,7 +37,7 @@ From a phone, use your computer's LAN address instead of `localhost`.
 ```bash
 npm run lint && npm run typecheck                  # repo-wide; covers this app
 npm run export:ios -w @readers-choice/mobile       # bundle for iOS (CI's Mobile job)
-npm run doctor -w @readers-choice/mobile           # dependency versions vs the Expo SDK
+npm run doctor -w @readers-choice/mobile           # dependency versions vs the latest Expo SDK release (weekly in CI: expo-health.yml)
 ```
 
 ## Layout
