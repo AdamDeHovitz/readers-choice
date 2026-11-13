@@ -1,29 +1,19 @@
 import "server-only";
 import { cache } from "react";
+import type { MyClub } from "@readers-choice/contract/clubs";
 import { UserError } from "@readers-choice/core/user-error";
 import { createAdminClient, type Db } from "./db";
 import { throwIfDbError } from "./errors";
 import type { Viewer } from "./viewer";
 
-export interface MyBookClub {
-  id: string;
-  name: string;
-  description: string | null;
-  createdAt: string | null;
-  isAdmin: boolean;
-  joinedAt: string | null;
-}
-
 /** Clubs the viewer belongs to, most recently joined first. */
 export async function getMyBookClubs({
   db,
   userId,
-}: Viewer): Promise<MyBookClub[]> {
+}: Viewer): Promise<MyClub[]> {
   const { data, error } = await db
     .from("members")
-    .select(
-      "is_admin, joined_at, book_clubs!inner (id, name, description, created_at)"
-    )
+    .select("is_admin, joined_at, book_clubs!inner (id, name, description)")
     .eq("user_id", userId)
     .order("joined_at", { ascending: false });
   if (error) throw error;
@@ -32,7 +22,6 @@ export async function getMyBookClubs({
     id: club.id,
     name: club.name,
     description: club.description,
-    createdAt: club.created_at,
     isAdmin: is_admin === true,
     joinedAt: joined_at,
   }));

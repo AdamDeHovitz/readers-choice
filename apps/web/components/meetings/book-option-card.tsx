@@ -117,7 +117,11 @@ export function BookOptionCard({
               </div>
             </div>
 
-            <NominationNote note={option.nominationNote} className="mb-3" />
+            <NominationNote
+              note={option.nominationNote}
+              nominatorName={option.nominatorName}
+              className="mb-3"
+            />
 
             {option.book.description && (
               <div className="mb-3">

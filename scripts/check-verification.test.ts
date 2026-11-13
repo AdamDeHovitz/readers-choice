@@ -93,7 +93,13 @@ describe("check-verification.sh", () => {
   it("fails an untouched copy of the template on every section", () => {
     const r = check(template);
     expect(r.status).toBe(1);
-    for (const s of ["change", "checks", "behavior", "not verified", "harness gaps"]) {
+    for (const s of [
+      "change",
+      "checks",
+      "behavior",
+      "not verified",
+      "harness gaps",
+    ]) {
       expect(r.out).toContain(`"## ${s}" is empty`);
     }
     expect(r.out).not.toContain("unclosed");
@@ -124,11 +130,15 @@ describe("check-verification.sh", () => {
   });
 
   it("counts non-ASCII text as content", () => {
-    expect(check(file({ behavior: "✅ 通過しました" }))).toMatchObject({ status: 0 });
+    expect(check(file({ behavior: "✅ 通過しました" }))).toMatchObject({
+      status: 0,
+    });
   });
 
   it("treats <!--> as a complete comment", () => {
-    expect(check(file({ behavior: "<!--> Saw it." }))).toMatchObject({ status: 0 });
+    expect(check(file({ behavior: "<!--> Saw it." }))).toMatchObject({
+      status: 0,
+    });
   });
 
   it("treats the template's comments as empty", () => {
@@ -152,7 +162,8 @@ describe("check-verification.sh", () => {
   it("treats <!-- in inline code or a code fence as text", () => {
     const r = check(
       file({
-        behavior: "An unclosed `<!--` used to pass.\n```html\n<!-- literal\n```",
+        behavior:
+          "An unclosed `<!--` used to pass.\n```html\n<!-- literal\n```",
       })
     );
     expect(r).toMatchObject({ status: 0 });

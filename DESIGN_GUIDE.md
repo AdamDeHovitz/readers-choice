@@ -6,9 +6,9 @@ Readers' Choice is mobile-first: design for a 360–430px phone, then let layout
 
 Every page sits in `AppShell` (`apps/web/components/shell/app-shell.tsx`), rendered by a **layout**, never by the page:
 
-| Layout                           | Shell                                                                  |
-| -------------------------------- | ---------------------------------------------------------------------- |
-| `app/(main)/layout.tsx`          | App tabs: My clubs, Browse, Settings                                   |
+| Layout                                    | Shell                                                                  |
+| ----------------------------------------- | ---------------------------------------------------------------------- |
+| `app/(main)/layout.tsx`                   | App tabs: My clubs, Browse, Settings                                   |
 | `apps/web/app/book-clubs/[id]/layout.tsx` | Club tabs: Home, Schedule, Rankings, Themes, Members; back to My clubs |
 | `apps/web/app/meetings/[id]/layout.tsx`   | The meeting's club tabs, Schedule active; back to Schedule             |
 
