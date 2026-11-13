@@ -127,11 +127,13 @@ export interface MeetingBookOption {
   id: string;
   /** The book, with any per-nomination description/page count applied. */
   book: Book;
-  /**
-   * Whether the viewer nominated it. Nominations are anonymous, so this is
-   * the only nominator information that reaches the client.
-   */
+  /** Whether the viewer nominated it. */
   isViewerNomination: boolean;
+  /**
+   * Who nominated it, for club admins only. Nominations are anonymous to
+   * other members, so this is null unless the viewer is an admin.
+   */
+  nominatorName: string | null;
   /** Plain-text note the nominator attached (never HTML). */
   nominationNote: string | null;
 }
@@ -188,6 +190,7 @@ export const getMeetingDetails = cache(async function getMeetingDetails(
       .select(
         `id, created_at, added_by, description_override, page_count_override,
          nomination_note,
+         nominator:users!book_options_added_by_fkey (name),
          books!inner (id, title, author, cover_url, published_year),
          votes (user_id)`
       )
@@ -219,6 +222,9 @@ export const getMeetingDetails = cache(async function getMeetingDetails(
       userHasVoted: option.votes.some((vote) => vote.user_id === userId),
       createdAt: option.created_at,
       isViewerNomination: option.added_by === userId,
+      nominatorName: membership.isAdmin
+        ? (option.nominator?.name ?? null)
+        : null,
       nominationNote: option.nomination_note,
     })),
     currentUserIsAdmin: membership.isAdmin,

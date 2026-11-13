@@ -1,5 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { getMeetingPhase, type MeetingSchedule } from "@readers-choice/core/meeting-schedule";
+import {
+  getMeetingPhase,
+  type MeetingSchedule,
+} from "@readers-choice/core/meeting-schedule";
 
 const PHASES = {
   nominating: { label: "Nominations open", variant: "active" },

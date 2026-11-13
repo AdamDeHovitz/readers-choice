@@ -24,7 +24,9 @@ export function createOperationClient({
   return {
     async call<C extends OperationContract>(
       contract: C,
-      input: InputOf<C>
+      input: InputOf<C>,
+      /** Headers for this call only, after the client-wide ones. */
+      options: { headers?: Record<string, string> } = {}
     ): Promise<OperationResponse<OutputOf<C>>> {
       try {
         const response = await fetchImpl(
@@ -34,6 +36,7 @@ export function createOperationClient({
             headers: {
               "Content-Type": "application/json",
               ...(await headers?.()),
+              ...options.headers,
             },
             body: JSON.stringify(input ?? null),
           }

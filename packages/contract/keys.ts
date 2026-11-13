@@ -1,9 +1,16 @@
 /**
- * Cache keys for data an operation's writes make stale. They're arrays so
- * they double as TanStack Query key prefixes on mobile; the web maps each one
- * to the paths to revalidate (app/actions/server-action.ts).
+ * Cache keys: queries are cached under them (`cacheKey` on a contract), and
+ * writes return the ones they make stale. They're arrays so they work as
+ * TanStack Query keys and prefixes on mobile; the web maps each one to the
+ * pages to revalidate (apps/web/app/_operations/revalidate.ts).
+ *
+ * Installed apps match these against what the server sends, so their shapes
+ * are part of the API: the contract snapshot records them.
  */
 export const keys = {
+  /** The signed-in member's clubs. */
+  myClubs: () => ["me", "clubs"] as const,
+  /** A club's themes. */
   clubThemes: (clubId: string) => ["club", clubId, "themes"] as const,
 };
 

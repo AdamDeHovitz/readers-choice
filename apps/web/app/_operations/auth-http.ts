@@ -5,6 +5,7 @@ import type { ActionResult, ErrorCode } from "@readers-choice/contract/result";
 import { normalizeEmail } from "@readers-choice/core/credentials";
 import { UserError } from "@readers-choice/core/user-error";
 import { createAdminClient, type Db } from "@/server/db";
+import { corsJson } from "./cors";
 import { settle } from "@/server/errors";
 import { verifyGoogleIdToken } from "@/server/google-id-token";
 import * as sessions from "@/server/mobile-sessions";
@@ -34,7 +35,7 @@ const STATUS: Record<ErrorCode, number> = {
 };
 
 const reply = <T>(result: ActionResult<T>) =>
-  Response.json(result, { status: result.success ? 200 : STATUS[result.code] });
+  corsJson(result, result.success ? 200 : STATUS[result.code]);
 
 const fail = (code: ErrorCode, error: string) =>
   reply({ success: false, error, code });

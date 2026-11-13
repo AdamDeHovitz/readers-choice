@@ -1,5 +1,6 @@
 import "server-only";
 import type { Operation } from "../operation";
+import * as clubs from "./clubs";
 import * as themes from "./themes";
 
 /**
@@ -7,7 +8,7 @@ import * as themes from "./themes";
  * contract/index.ts (a test keeps the two in step). Transports (server
  * actions and the HTTP API, app/_operations/) dispatch through here.
  */
-export const operations = { themes };
+export const operations = { clubs, themes };
 
 const byName = new Map<string, Operation>(
   Object.values(operations).flatMap((domain) =>

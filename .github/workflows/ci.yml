@@ -29,6 +29,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - run: npm run format:check
       # Every workspace, including the packages and the mobile app; the web
       # build only type-checks what the website imports.
       - run: npm run typecheck
@@ -68,7 +69,8 @@ jobs:
 
   # The mobile app can't run in CI without a simulator, but bundling it for
   # iOS catches what tsc can't: Metro resolution in the monorepo, native-only
-  # imports, assets. expo-doctor checks dependency versions against the SDK.
+  # imports, assets. (Version drift against the Expo SDK is checked weekly in
+  # expo-health.yml, since it depends on what Expo has released, not on the PR.)
   mobile:
     name: Mobile
     runs-on: ubuntu-latest
@@ -81,8 +83,6 @@ jobs:
       - run: npm ci
       - name: Bundle the iOS app
         run: npm run export:ios -w @readers-choice/mobile
-      - name: Expo health check
-        run: npm run doctor -w @readers-choice/mobile
 
   e2e:
     name: E2E

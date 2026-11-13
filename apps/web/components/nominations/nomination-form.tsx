@@ -132,7 +132,10 @@ export function NominationForm({
                       note={nomination.nominationNote}
                     />
                   ) : (
-                    <NominationNote note={nomination.nominationNote} />
+                    <NominationNote
+                      note={nomination.nominationNote}
+                      nominatorName={nomination.nominatorName}
+                    />
                   )}
                 </BookCard>
               </li>
