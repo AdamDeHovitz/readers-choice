@@ -140,6 +140,12 @@ AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 # (optional; without it, Google sign-in from the app is refused)
 GOOGLE_MOBILE_CLIENT_IDS=
 
+# Google Books API key, for book descriptions Open Library lacks (optional;
+# without it, requests share Google's anonymous quota, which is usually used up).
+# Google Cloud console: enable the Books API, create an API key, and restrict
+# it to the Books API.
+GOOGLE_BOOKS_API_KEY=
+
 # App URL (for OAuth callbacks)
 NEXTAUTH_URL=http://localhost:3000  # Change to your production URL when deploying
 ```
