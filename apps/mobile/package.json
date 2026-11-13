@@ -16,6 +16,7 @@
     "@readers-choice/contract": "*",
     "@readers-choice/core": "*",
     "@readers-choice/tokens": "*",
+    "@tanstack/react-query": "^5.107.1",
     "expo": "~58.0.24",
     "expo-constants": "~58.0.16",
     "expo-device": "~58.0.5",

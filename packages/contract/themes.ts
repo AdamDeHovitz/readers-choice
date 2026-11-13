@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { keys } from "./keys";
 import { defineContract } from "./operation";
 import { rowId } from "./schemas";
 
@@ -55,6 +56,7 @@ export const listThemes = defineContract({
   kind: "query",
   input: z.object({ bookClubId: rowId }),
   output: z.object({ themes: z.array(clubTheme) }),
+  cacheKey: ({ bookClubId }) => keys.clubThemes(bookClubId),
 });
 
 /** Theme names for the meeting form's autocomplete. */

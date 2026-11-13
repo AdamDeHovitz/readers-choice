@@ -1,9 +1,11 @@
+import { QueryClientProvider } from "@tanstack/react-query";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { queryClient } from "@/api/query-client";
 import { sessions, useSession } from "@/auth";
 import { colors, fontFamily } from "@/theme";
 import { fontFiles } from "@/theme/fonts";
@@ -28,27 +30,29 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.accent },
-          headerTintColor: colors.accentForeground,
-          headerTitleStyle: { fontFamily: fontFamily.displayBold },
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
-        {/* Signed-out and signed-in screens never mix: each group is only
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style="dark" />
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: colors.accent },
+            headerTintColor: colors.accentForeground,
+            headerTitleStyle: { fontFamily: fontFamily.displayBold },
+            contentStyle: { backgroundColor: colors.background },
+          }}
+        >
+          {/* Signed-out and signed-in screens never mix: each group is only
             reachable while its guard holds. */}
-        <Stack.Protected guard={!signedIn}>
-          <Stack.Screen
-            name="(auth)/sign-in"
-            options={{ headerShown: false }}
-          />
-        </Stack.Protected>
-        <Stack.Protected guard={signedIn}>
-          <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
-        </Stack.Protected>
-      </Stack>
+          <Stack.Protected guard={!signedIn}>
+            <Stack.Screen
+              name="(auth)/sign-in"
+              options={{ headerShown: false }}
+            />
+          </Stack.Protected>
+          <Stack.Protected guard={signedIn}>
+            <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
+          </Stack.Protected>
+        </Stack>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

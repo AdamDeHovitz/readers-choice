@@ -1,4 +1,5 @@
 import type { z } from "zod";
+import type { InvalidationKey } from "./keys";
 
 /**
  * The client-facing shape of an operation: its name, whether it reads or
@@ -20,6 +21,12 @@ export interface OperationContract<
    * these fields and nothing the contract doesn't declare.
    */
   readonly output: Output;
+  /**
+   * Queries only: the cache key a client stores the result under, built
+   * from `keys` (keys.ts). Writes return the keys they make stale, so a
+   * client refetches exactly the queries whose key starts with one of them.
+   */
+  readonly cacheKey?: (input: z.output<Input>) => InvalidationKey;
 }
 
 /** What a client passes (before schema defaults and transforms). */
@@ -48,6 +55,7 @@ export function defineContract<
   kind: "query" | "mutation";
   input: Input;
   output: Output;
+  cacheKey?: (input: z.output<Input>) => InvalidationKey;
 }): OperationContract<Name, Input, Output> {
   return def;
 }
