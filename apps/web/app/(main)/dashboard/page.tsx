@@ -1,32 +1,33 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { LibraryIcon } from "lucide-react";
+import { loadPageData } from "@/app/_operations/page-data";
 import { CreateBookClubDialog } from "@/components/book-clubs/create-book-club-dialog";
 import { BookClubCard } from "@/components/book-clubs/book-club-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { getMyBookClubs } from "@/server/clubs";
+import { listMyClubs } from "@/server/operations/clubs";
 import { getViewer } from "@/server/viewer";
 
 export const metadata: Metadata = { title: "My clubs" };
 
 export default async function DashboardPage() {
-  const viewer = await getViewer();
-  if (!viewer) {
-    redirect("/login");
-  }
-
-  const bookClubs = await getMyBookClubs(viewer);
+  // The same read the mobile app's clubs screen makes (clubs.mine).
+  const [{ clubs }, viewer] = await Promise.all([
+    loadPageData(listMyClubs, {}, { onRefused: () => redirect("/login") }),
+    getViewer(),
+  ]);
+  const firstName = viewer?.name.split(" ")[0];
 
   return (
     <>
       <PageHeader
         title="My clubs"
-        description={`Welcome back, ${viewer.name.split(" ")[0]}.`}
-        actions={bookClubs.length > 0 && <CreateBookClubDialog />}
+        description={firstName && `Welcome back, ${firstName}.`}
+        actions={clubs.length > 0 && <CreateBookClubDialog />}
       />
 
-      {bookClubs.length === 0 ? (
+      {clubs.length === 0 ? (
         <EmptyState
           icon={<LibraryIcon />}
           title="No book clubs yet"
@@ -35,7 +36,7 @@ export default async function DashboardPage() {
         />
       ) : (
         <ul className="grid gap-3 sm:grid-cols-2">
-          {bookClubs.map((club) => (
+          {clubs.map((club) => (
             <li key={club.id}>
               <BookClubCard
                 id={club.id}

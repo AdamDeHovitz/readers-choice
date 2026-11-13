@@ -1,246 +1,324 @@
-[
-  {
-    "name": "themes.delete",
-    "kind": "mutation",
-    "input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "themeId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-        }
-      },
-      "required": [
-        "themeId"
-      ]
-    },
-    "output": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema"
-    }
+{
+  "keys": {
+    "myClubs": [
+      "me",
+      "clubs"
+    ],
+    "clubThemes": [
+      "club",
+      "<arg1>",
+      "themes"
+    ]
   },
-  {
-    "name": "themes.list",
-    "kind": "query",
-    "input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "bookClubId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-        }
+  "operations": [
+    {
+      "name": "clubs.mine",
+      "kind": "query",
+      "cacheKey": [
+        "me",
+        "clubs"
+      ],
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {}
       },
-      "required": [
-        "bookClubId"
-      ]
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "clubs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isAdmin": {
+                  "type": "boolean"
+                },
+                "joinedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "description",
+                "isAdmin",
+                "joinedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "clubs"
+        ],
+        "additionalProperties": false
+      }
     },
-    "output": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "themes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "createdAt": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "submittedBy": {
-                "anyOf": [
-                  {
+    {
+      "name": "themes.delete",
+      "kind": "mutation",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "themeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "themeId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    {
+      "name": "themes.list",
+      "kind": "query",
+      "cacheKey": [
+        "club",
+        "<bookClubId>",
+        "themes"
+      ],
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bookClubId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "bookClubId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "submittedBy": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "image": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "image"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "upvoteCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "userHasUpvoted": {
+                  "type": "boolean"
+                },
+                "timesUsed": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "meetings": {
+                  "type": "array",
+                  "items": {
                     "type": "object",
                     "properties": {
                       "id": {
                         "type": "string"
                       },
-                      "name": {
+                      "meetingDate": {
                         "type": "string"
                       },
-                      "image": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
+                      "isFinalized": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
                       "id",
-                      "name",
-                      "image"
+                      "meetingDate",
+                      "isFinalized"
                     ],
                     "additionalProperties": false
-                  },
-                  {
-                    "type": "null"
                   }
-                ]
-              },
-              "upvoteCount": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "userHasUpvoted": {
-                "type": "boolean"
-              },
-              "timesUsed": {
-                "type": "integer",
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
-              },
-              "meetings": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string"
-                    },
-                    "meetingDate": {
-                      "type": "string"
-                    },
-                    "isFinalized": {
-                      "type": "boolean"
-                    }
-                  },
-                  "required": [
-                    "id",
-                    "meetingDate",
-                    "isFinalized"
-                  ],
-                  "additionalProperties": false
+                },
+                "canDelete": {
+                  "type": "boolean"
                 }
               },
-              "canDelete": {
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "id",
-              "name",
-              "createdAt",
-              "submittedBy",
-              "upvoteCount",
-              "userHasUpvoted",
-              "timesUsed",
-              "meetings",
-              "canDelete"
-            ],
-            "additionalProperties": false
+              "required": [
+                "id",
+                "name",
+                "createdAt",
+                "submittedBy",
+                "upvoteCount",
+                "userHasUpvoted",
+                "timesUsed",
+                "meetings",
+                "canDelete"
+              ],
+              "additionalProperties": false
+            }
           }
-        }
-      },
-      "required": [
-        "themes"
-      ],
-      "additionalProperties": false
-    }
-  },
-  {
-    "name": "themes.suggest",
-    "kind": "mutation",
-    "input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "bookClubId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
         },
-        "name": {
-          "type": "string",
-          "minLength": 1
-        }
-      },
-      "required": [
-        "bookClubId",
-        "name"
-      ]
+        "required": [
+          "themes"
+        ],
+        "additionalProperties": false
+      }
     },
-    "output": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "themeId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-        }
+    {
+      "name": "themes.suggest",
+      "kind": "mutation",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bookClubId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "bookClubId",
+          "name"
+        ]
       },
-      "required": [
-        "themeId"
-      ],
-      "additionalProperties": false
-    }
-  },
-  {
-    "name": "themes.suggestions",
-    "kind": "query",
-    "input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "bookClubId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-        }
-      },
-      "required": [
-        "bookClubId"
-      ]
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "themeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "themeId"
+        ],
+        "additionalProperties": false
+      }
     },
-    "output": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "array",
-      "items": {
-        "type": "string"
+    {
+      "name": "themes.suggestions",
+      "kind": "query",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bookClubId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "bookClubId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    {
+      "name": "themes.toggleUpvote",
+      "kind": "mutation",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "themeId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "themeId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "upvoted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "upvoted"
+        ],
+        "additionalProperties": false
       }
     }
-  },
-  {
-    "name": "themes.toggleUpvote",
-    "kind": "mutation",
-    "input": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "themeId": {
-          "type": "string",
-          "format": "uuid",
-          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
-        }
-      },
-      "required": [
-        "themeId"
-      ]
-    },
-    "output": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "type": "object",
-      "properties": {
-        "upvoted": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "upvoted"
-      ],
-      "additionalProperties": false
-    }
-  }
-]
+  ]
+}

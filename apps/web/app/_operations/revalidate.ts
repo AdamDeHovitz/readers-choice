@@ -13,12 +13,11 @@ export function revalidateKeys(keys: readonly InvalidationKey[]): void {
 }
 
 /** The pages that show the data behind an invalidation key. */
-function pathsFor(key: InvalidationKey): string[] {
-  const [scope, id, part] = key;
-  switch (`${scope}/${part}`) {
-    case "club/themes":
-      return [`/book-clubs/${id}/themes`];
-    default:
-      throw new Error(`No web paths for invalidation key ${key.join("/")}`);
+export function pathsFor(key: InvalidationKey): string[] {
+  switch (key[0]) {
+    case "me":
+      return ["/dashboard"];
+    case "club":
+      return [`/book-clubs/${key[1]}/themes`];
   }
 }
