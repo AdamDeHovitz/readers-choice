@@ -1,6 +1,9 @@
 import "server-only";
 import { randomBytes } from "crypto";
-import { feedHistoryStart, type CalendarMeeting } from "@readers-choice/core/club-calendar";
+import {
+  feedHistoryStart,
+  type CalendarMeeting,
+} from "@readers-choice/core/club-calendar";
 import { isMember } from "./authz";
 import type { Db } from "./db";
 
