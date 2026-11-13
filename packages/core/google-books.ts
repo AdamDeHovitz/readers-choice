@@ -1,6 +1,9 @@
 /**
  * Google Books, used only as a fallback source of book descriptions when
  * Open Library has none. Docs: https://developers.google.com/books/docs/v1/using
+ *
+ * Pass an API key: requests without one share Google's anonymous quota, which
+ * is usually exhausted (429 "Queries per day").
  */
 
 import { normalizeApiHtml } from "./normalize-text";
@@ -13,7 +16,10 @@ interface Volume {
 }
 
 /** Search volumes; returns [] on any failure so callers can fall through. */
-export async function searchVolumes(query: string): Promise<Volume[]> {
+export async function searchVolumes(
+  query: string,
+  apiKey?: string
+): Promise<Volume[]> {
   try {
     const params = new URLSearchParams({
       q: query,
@@ -21,9 +27,12 @@ export async function searchVolumes(query: string): Promise<Volume[]> {
       printType: "books",
       langRestrict: "en",
     });
+    if (apiKey) params.set("key", apiKey);
     const response = await fetch(`${GOOGLE_BOOKS_API}?${params}`);
     if (!response.ok) {
-      throw new Error(`Google Books API error: ${response.statusText}`);
+      throw new Error(
+        `Google Books API error: ${response.status} ${response.statusText}`
+      );
     }
 
     const data: {
@@ -44,20 +53,26 @@ export async function searchVolumes(query: string): Promise<Volume[]> {
  * Find a description for a book: by ISBN first (most accurate), then by
  * title and first author, preferring a result whose title matches.
  */
-export async function findGoogleBooksDescription(book: {
-  title: string;
-  author: string;
-  isbn?: string;
-}): Promise<string | null> {
+export async function findGoogleBooksDescription(
+  book: {
+    title: string;
+    author: string;
+    isbn?: string;
+  },
+  apiKey?: string
+): Promise<string | null> {
   if (book.isbn) {
-    const [byIsbn] = await searchVolumes(`isbn:${book.isbn}`);
+    const [byIsbn] = await searchVolumes(`isbn:${book.isbn}`, apiKey);
     if (byIsbn?.description) return byIsbn.description;
   }
 
   // Drop subtitles, parentheticals and extra authors; they hurt matching.
   const title = book.title.split(":")[0].split("(")[0].trim();
   const author = book.author.split(",")[0].trim();
-  const results = await searchVolumes(`intitle:${title} inauthor:${author}`);
+  const results = await searchVolumes(
+    `intitle:${title} inauthor:${author}`,
+    apiKey
+  );
 
   const wanted = title.toLowerCase();
   const match =

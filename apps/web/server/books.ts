@@ -1,6 +1,9 @@
 import "server-only";
 import { findGoogleBooksDescription } from "@readers-choice/core/google-books";
-import { getWorkDescription, type BookSearchResult } from "@readers-choice/core/open-library";
+import {
+  getWorkDescription,
+  type BookSearchResult,
+} from "@readers-choice/core/open-library";
 import { UserError } from "@readers-choice/core/user-error";
 import type { Db, Tables } from "./db";
 
@@ -47,7 +50,8 @@ const OPEN_LIBRARY_COVER_URL =
  *
  * Book rows are shared across clubs, so client-supplied fields are not trusted
  * blindly: the work ID and cover URL must look like Open Library's, and the
- * description is always fetched server-side (Open Library, then Google Books).
+ * description is always fetched server-side (Open Library, then Google Books
+ * with `GOOGLE_BOOKS_API_KEY`).
  */
 export async function saveBook(
   db: Db,
@@ -71,7 +75,10 @@ export async function saveBook(
 
   const description =
     (await getWorkDescription(book.externalId)) ??
-    (await findGoogleBooksDescription(book)) ??
+    (await findGoogleBooksDescription(
+      book,
+      process.env.GOOGLE_BOOKS_API_KEY
+    )) ??
     null;
   const coverUrl =
     book.coverUrl && OPEN_LIBRARY_COVER_URL.test(book.coverUrl)

@@ -56,6 +56,15 @@ describe("searchVolumes", () => {
       "https://www.googleapis.com/books/v1/volumes"
     );
     expect(url.searchParams.get("maxResults")).toBe("10");
+    expect(url.searchParams.has("key")).toBe(false);
+  });
+
+  it("sends the API key when given one", async () => {
+    respondWith([]);
+    await searchVolumes("isbn:123", "test-key");
+
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.searchParams.get("key")).toBe("test-key");
   });
 
   it("returns [] with no items, a non-ok response, or a network error", async () => {
@@ -73,6 +82,19 @@ describe("searchVolumes", () => {
 });
 
 describe("findGoogleBooksDescription", () => {
+  it("sends the API key on every lookup", async () => {
+    respondWith([], []);
+    await findGoogleBooksDescription(
+      { title: "T", author: "A", isbn: "1" },
+      "test-key"
+    );
+
+    const keys = fetchMock.mock.calls.map(([url]) =>
+      new URL(String(url)).searchParams.get("key")
+    );
+    expect(keys).toEqual(["test-key", "test-key"]);
+  });
+
   const book = { title: "The Art of Fielding", author: "Chad Harbach" };
 
   it("uses the ISBN lookup first when it has a description", async () => {

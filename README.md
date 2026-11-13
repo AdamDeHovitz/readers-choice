@@ -20,6 +20,7 @@ A beautiful, mobile-first book club management application that helps communitie
 - **Meeting History**: Track past meetings and selected books
 
 ### Library Availability
+
 - Add the libraries you belong to in Settings: search by name, city, or ZIP. Any library on Libby (OverDrive) works.
 - While voting, each book shows the quickest way to borrow it across your libraries ("Available now · Ebook at NYPL"); tap it for every library and format, with links to the title in each catalog.
 - No library card or login is involved. Data comes from OverDrive's public, undocumented catalog endpoints (the ones the Libby app uses), cached for 15 minutes. Waits are library-wide estimates. If OverDrive can't be reached or no edition matches, a catalog search link is shown instead.
@@ -138,6 +139,12 @@ AUTH_GOOGLE_SECRET=your_google_oauth_client_secret
 # Mobile app Google sign-in: the app's OAuth client IDs, comma-separated
 # (optional; without it, Google sign-in from the app is refused)
 GOOGLE_MOBILE_CLIENT_IDS=
+
+# Google Books API key, for book descriptions Open Library lacks (optional;
+# without it, requests share Google's anonymous quota, which is usually used up).
+# Google Cloud console: enable the Books API, create an API key, and restrict
+# it to the Books API.
+GOOGLE_BOOKS_API_KEY=
 
 # App URL (for OAuth callbacks)
 NEXTAUTH_URL=http://localhost:3000  # Change to your production URL when deploying
