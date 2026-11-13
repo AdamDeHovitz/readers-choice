@@ -63,6 +63,14 @@ src/theme/         @readers-choice/tokens adapted for React Native: fonts, spaci
 - **Colors and type come from `@/theme`**, which reads `@readers-choice/tokens`.
   Don't hard-code hex values or font names, and use `Text` from
   `@/components/text`, not React Native's `Text` (it defaults to the system font).
+- **Rules shared with the website live in `packages/core`**, not in a screen.
+  The themes filter and sort (`themesToShow`, `countThemes`) are used by both
+  apps' themes lists, so they can't drift.
+- **Icons come from `@/components/icon`** (Ionicons, imported from its own
+  entry point so only its font is bundled). Label the control, not the icon.
+- **Confirm destructive actions with `confirm()`** (`@/lib/confirm`): a native
+  dialog on iOS, the browser's on the web build (React Native Web's `Alert`
+  does nothing).
 - **Fonts:** React Native selects a font file by family name, so each weight is
   its own family (`fontFamily.bodyBold`, not `fontWeight: "700"`). Import each
   weight from its own `@expo-google-fonts/<font>/<weight>` entry point, so

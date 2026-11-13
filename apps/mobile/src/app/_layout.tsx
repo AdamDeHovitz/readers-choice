@@ -50,6 +50,10 @@ export default function RootLayout() {
           </Stack.Protected>
           <Stack.Protected guard={signedIn}>
             <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="(app)/clubs/[id]/themes"
+              options={{ title: "Themes", headerBackTitle: "Clubs" }}
+            />
           </Stack.Protected>
         </Stack>
       </QueryClientProvider>
