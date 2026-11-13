@@ -4,112 +4,69 @@
  * in open-library.test.ts.
  */
 import { describe, it, expect } from "vitest";
-import { searchBooks } from "./open-library";
+import { searchBooks, type BookSearchResult } from "./open-library";
+
+/** [query, title substring, author substring] — the book that should rank first. */
+const FIRST_RESULT: [string, string, string][] = [
+  ["the disappearers", "disappearers", "marlon james"],
+  ["disappearers", "disappearers", "marlon james"],
+  ["the disappearers marlon james", "disappearers", "marlon james"],
+  ["dune", "dune", "frank herbert"],
+  ["dune frank herbert", "dune", "frank herbert"],
+  ["project hail mary", "project hail mary", "weir"],
+  ["the art of fielding", "art of fielding", "harbach"],
+  ["art of fielding", "art of fielding", "harbach"],
+  ["to kill a mockingbird", "mockingbird", "harper lee"],
+  ["my brilliant friend", "brilliant friend", "ferrante"],
+  ["beloved", "beloved", "morrison"],
+  ["james", "james", "everett"],
+  ["james percival everett", "james", "everett"],
+  ["piranesi", "piranesi", "susanna clarke"],
+  ["demon copperhead", "demon copperhead", "kingsolver"],
+  ["the covenant of water", "covenant of water", "verghese"],
+  ["intermezzo sally rooney", "intermezzo", "rooney"],
+  ["orbital", "orbital", "samantha harvey"],
+  ["the overstory", "overstory", "powers"],
+  ["one hundred years of solitude", "solitude", "garc"],
+  ["pachinko", "pachinko", "min jin lee"],
+  ["the remains of the day", "remains of the day", "ishiguro"],
+  ["lincoln in the bardo", "bardo", "saunders"],
+  ["tomorrow and tomorrow and tomorrow", "tomorrow, and tomorrow", "zevin"],
+  ["the god of small things", "god of small things", "arundhati roy"],
+  ["kafka on the shore", "kafka on the shore", ""], // author is listed as 村上春樹
+  ["the bee sting", "bee sting", "paul murray"],
+  ["prophet song", "prophet song", "paul lynch"],
+  ["north woods", "north woods", "daniel mason"],
+  // Orwell's work is titled "Nineteen Eighty-Four"; Open Library matches it
+  // on titles it doesn't return to us.
+  ["1984", "nineteen eighty-four", "george orwell"],
+  ["marlon james", "", "marlon james"], // author only
+];
+
+const isBook = (book: BookSearchResult, title: string, author: string) =>
+  book.title.toLowerCase().includes(title) &&
+  book.author.toLowerCase().includes(author);
 
 describe("searchBooks (live Open Library)", { timeout: 20000 }, () => {
-  it("should find 'The Art of Fielding' when searching by title", async () => {
-    const results = await searchBooks("the art of fielding");
+  it.each(FIRST_RESULT)(
+    "ranks the right book first for %j",
+    async (query, title, author) => {
+      const results = await searchBooks(query);
+      expect(results.length).toBeGreaterThan(0);
+      expect(
+        isBook(results[0], title, author),
+        results.map((b) => `${b.title} / ${b.author}`).join("\n")
+      ).toBe(true);
+    }
+  );
 
-    expect(results.length).toBeGreaterThan(0);
-
-    // The first result should be "The Art of Fielding" by Chad Harbach
-    const artOfFielding = results.find(
-      (book) =>
-        book.title.toLowerCase().includes("art of fielding") &&
-        book.author.toLowerCase().includes("harbach")
-    );
-    expect(artOfFielding).toBeDefined();
-    expect(artOfFielding?.title.toLowerCase()).toContain("art of fielding");
-    expect(artOfFielding?.author.toLowerCase()).toContain("harbach");
-  });
-
-  it("should not return unrelated books like 'Wizard of Oz' for 'art of fielding' search", async () => {
-    const results = await searchBooks("the art of fielding");
-
-    // Should NOT return books that just happen to have common words like "the" or "of"
-    const wizardOfOz = results.find((book) =>
-      book.title.toLowerCase().includes("wizard of oz")
-    );
-    expect(wizardOfOz).toBeUndefined();
-
-    const napoleonOfNottingHill = results.find((book) =>
-      book.title.toLowerCase().includes("napoleon of notting hill")
-    );
-    expect(napoleonOfNottingHill).toBeUndefined();
-  });
-
-  it("should deduplicate results with the same work ID", async () => {
-    const results = await searchBooks("the art of fielding");
-
-    // Check that we don't have duplicate work IDs
-    const workIds = results.map((book) => book.id);
-    const uniqueWorkIds = new Set(workIds);
-    expect(workIds.length).toBe(uniqueWorkIds.size);
-  });
-
-  it("should return at most 5 results", async () => {
+  it("returns at most 5 distinct works", async () => {
     const results = await searchBooks("harry potter");
     expect(results.length).toBeLessThanOrEqual(5);
-  }, 10000);
-
-  it("should return empty array for empty query", async () => {
-    const results = await searchBooks("");
-    expect(results).toEqual([]);
+    expect(new Set(results.map((b) => b.id)).size).toBe(results.length);
   });
 
-  it("should find 'To Kill a Mockingbird' when searching for it", async () => {
-    const results = await searchBooks("to kill a mockingbird");
-
-    expect(results.length).toBeGreaterThan(0);
-
-    const mockingbird = results.find(
-      (book) =>
-        book.title.toLowerCase().includes("mockingbird") &&
-        book.author.toLowerCase().includes("lee")
-    );
-    expect(mockingbird).toBeDefined();
-  });
-
-  it("should find '1984' when searching for it", async () => {
-    const results = await searchBooks("1984");
-
-    expect(results.length).toBeGreaterThan(0);
-
-    // Should find Orwell's 1984 in the results
-    const book1984 = results.find(
-      (book) =>
-        book.title.includes("1984") &&
-        book.author.toLowerCase().includes("orwell")
-    );
-    expect(book1984).toBeDefined();
-  });
-
-  it("should find 'My Brilliant Friend' by Elena Ferrante (translated work)", async () => {
-    const results = await searchBooks("my brilliant friend");
-
-    expect(results.length).toBeGreaterThan(0);
-
-    // Should find Ferrante's book (original Italian title: L'amica geniale)
-    const ferrante = results.find((book) =>
-      book.author.toLowerCase().includes("ferrante")
-    );
-    expect(ferrante).toBeDefined();
-    expect(ferrante?.title.toLowerCase()).toContain("brilliant friend");
-  });
-
-  it("should still find 'The Art of Fielding' with parallel search (direct title match)", async () => {
-    const results = await searchBooks("the art of fielding");
-
-    // Should find Harbach's book
-    const harbach = results.find((book) =>
-      book.author.toLowerCase().includes("harbach")
-    );
-    expect(harbach).toBeDefined();
-
-    // Should NOT return Wizard of Oz (which q= search returns)
-    const wizardOfOz = results.find((book) =>
-      book.title.toLowerCase().includes("wizard")
-    );
-    expect(wizardOfOz).toBeUndefined();
+  it("returns [] for an empty query", async () => {
+    expect(await searchBooks("")).toEqual([]);
   });
 });

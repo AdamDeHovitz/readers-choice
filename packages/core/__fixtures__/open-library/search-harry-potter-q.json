@@ -1,24 +1,22 @@
 {
-  "num_found": 3929,
-  "start": 0,
+  "num_found": 4070,
   "docs": [
     {
       "author_name": ["J. K. Rowling"],
       "cover_i": 15155833,
       "edition_count": 400,
       "first_publish_year": 1997,
-      "isbn": ["9784863895669"],
+      "isbn": ["9979865555"],
       "key": "/works/OL82563W",
       "number_of_pages_median": 302,
       "title": "Harry Potter and the Philosopher's Stone",
       "editions": {
-        "numFound": 386,
+        "numFound": 400,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Sorcerer's Stone",
-            "language": ["eng"]
+            "title": "Harry Potter and the Sorcerer's Stone"
           }
         ]
       }
@@ -28,18 +26,17 @@
       "cover_i": 15158664,
       "edition_count": 306,
       "first_publish_year": 1998,
-      "isbn": ["853251166X"],
+      "isbn": ["9782070588268"],
       "key": "/works/OL82537W",
       "number_of_pages_median": 339,
       "title": "Harry Potter and the Chamber of Secrets",
       "editions": {
-        "numFound": 295,
+        "numFound": 306,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter & the Chamber of Secrets",
-            "language": ["eng"]
+            "title": "Harry Potter & the Chamber of Secrets"
           }
         ]
       }
@@ -49,18 +46,17 @@
       "cover_i": 10580435,
       "edition_count": 279,
       "first_publish_year": 1999,
-      "isbn": ["8498383439"],
+      "isbn": ["9789654488808"],
       "key": "/works/OL82536W",
       "number_of_pages_median": 416,
       "title": "Harry Potter and the Prisoner of Azkaban",
       "editions": {
-        "numFound": 265,
+        "numFound": 279,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Prisoner of Azkaban (Harry Potter, Book 3)",
-            "language": ["eng"]
+            "title": "Harry Potter and the Prisoner of Azkaban (Harry Potter, Book 3)"
           }
         ]
       }
@@ -70,18 +66,17 @@
       "cover_i": 15158660,
       "edition_count": 144,
       "first_publish_year": 2007,
-      "isbn": ["3551577773"],
+      "isbn": ["1526618346"],
       "key": "/works/OL82586W",
       "number_of_pages_median": 701,
       "title": "Harry Potter and the Deathly Hallows",
       "editions": {
-        "numFound": 140,
+        "numFound": 144,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Deathly Hallows (Harry Potter #7)",
-            "language": ["eng"]
+            "title": "Harry Potter and the Deathly Hallows (Harry Potter #7)"
           }
         ]
       }
@@ -91,18 +86,17 @@
       "cover_i": 12059372,
       "edition_count": 244,
       "first_publish_year": 2000,
-      "isbn": ["9780606415170"],
+      "isbn": ["8000009943"],
       "key": "/works/OL82560W",
       "number_of_pages_median": 672,
       "title": "Harry Potter and the Goblet of Fire",
       "editions": {
-        "numFound": 240,
+        "numFound": 244,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter & chiếc cốc lửa",
-            "language": ["vie"]
+            "title": "Harry Potter & chiếc cốc lửa"
           }
         ]
       }
@@ -112,18 +106,17 @@
       "cover_i": 15158666,
       "edition_count": 247,
       "first_publish_year": 2003,
-      "isbn": ["9781526618177"],
+      "isbn": ["9780606305761"],
       "key": "/works/OL82548W",
       "number_of_pages_median": 870,
       "title": "Harry Potter and the Order of the Phoenix",
       "editions": {
-        "numFound": 237,
+        "numFound": 247,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Order of the Phoenix (Harry Potter, Book 5)",
-            "language": ["eng"]
+            "title": "Harry Potter and the Order of the Phoenix (Harry Potter, Book 5)"
           }
         ]
       }
@@ -133,18 +126,17 @@
       "cover_i": 10716273,
       "edition_count": 177,
       "first_publish_year": 2005,
-      "isbn": ["155192918X"],
+      "isbn": ["9544469303"],
       "key": "/works/OL82565W",
       "number_of_pages_median": 640,
       "title": "Harry Potter and the Half-Blood Prince",
       "editions": {
-        "numFound": 169,
+        "numFound": 177,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter & the Half-Blood Prince",
-            "language": ["eng"]
+            "title": "Harry Potter and the Half-Blood Prince (Harry Potter, Book 6)"
           }
         ]
       }
@@ -164,8 +156,7 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter Boxset Books 1-7",
-            "language": ["eng"]
+            "title": "Harry Potter Boxset Books 1-7"
           }
         ]
       }
@@ -175,18 +166,17 @@
       "cover_i": 8763851,
       "edition_count": 36,
       "first_publish_year": 2001,
-      "isbn": ["8674706908"],
+      "isbn": ["2075074208"],
       "key": "/works/OL17360811W",
-      "number_of_pages_median": 343,
+      "number_of_pages_median": 336,
       "title": "Harry Potter and the Cursed Child",
       "editions": {
-        "numFound": 33,
+        "numFound": 36,
         "start": 0,
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Cursed Child",
-            "language": ["eng"]
+            "title": "Harry Potter and the Cursed Child"
           }
         ]
       }
@@ -196,8 +186,9 @@
       "cover_i": 10195373,
       "edition_count": 1,
       "first_publish_year": 2007,
-      "isbn": ["1405233109"],
+      "isbn": ["9781405233101"],
       "key": "/works/OL20874116W",
+      "number_of_pages_median": 72,
       "title": "Harry Potter poster annual 2008",
       "editions": {
         "numFound": 1,
@@ -205,8 +196,7 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter",
-            "language": ["eng"]
+            "title": "Harry Potter"
           }
         ]
       }
@@ -224,8 +214,7 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter Box Set: Books 1-5",
-            "language": ["eng"]
+            "title": "Harry Potter Box Set: Books 1-5"
           }
         ]
       }
@@ -264,8 +253,7 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the sorcerer's stone",
-            "language": ["eng"]
+            "title": "Harry Potter and the sorcerer's stone"
           }
         ]
       }
@@ -284,8 +272,46 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter",
-            "language": ["eng"]
+            "title": "Harry Potter"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Rick DeMonico"],
+      "cover_i": 6984750,
+      "edition_count": 3,
+      "first_publish_year": 2001,
+      "isbn": ["0613938453"],
+      "key": "/works/OL16058211W",
+      "number_of_pages_median": 89,
+      "title": "Harry Potter Poster Book",
+      "editions": {
+        "numFound": 3,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter Poster Book"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["J. K. Rowling"],
+      "cover_i": 10229037,
+      "edition_count": 1,
+      "first_publish_year": 2013,
+      "isbn": ["9781408850756"],
+      "key": "/works/OL20895240W",
+      "title": "Harry Potter",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter"
           }
         ]
       }
@@ -304,8 +330,65 @@
         "numFoundExact": true,
         "docs": [
           {
-            "title": "Harry Potter and the Methods of Rationality",
-            "language": ["eng"]
+            "title": "Harry Potter and the Methods of Rationality"
+          }
+        ]
+      },
+      "isbn": []
+    },
+    {
+      "author_name": ["Kevin Wilson", "Matthew Reinhart"],
+      "cover_i": 9211955,
+      "edition_count": 6,
+      "first_publish_year": 2018,
+      "isbn": ["9781647227654"],
+      "key": "/works/OL20569879W",
+      "number_of_pages_median": 5,
+      "title": "Harry Potter",
+      "editions": {
+        "numFound": 6,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Adele Books"],
+      "edition_count": 1,
+      "first_publish_year": 2019,
+      "isbn": ["1650034881"],
+      "key": "/works/OL30530361W",
+      "title": "Harry Potter",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter"
+          }
+        ]
+      }
+    },
+    {
+      "author_name": ["Felicity Baker"],
+      "cover_i": 10515161,
+      "edition_count": 1,
+      "first_publish_year": 2016,
+      "isbn": ["1338158317"],
+      "key": "/works/OL23577451W",
+      "title": "Harry Potter, A Cinematic Guide (e-Book)",
+      "editions": {
+        "numFound": 1,
+        "start": 0,
+        "numFoundExact": true,
+        "docs": [
+          {
+            "title": "Harry Potter"
           }
         ]
       }
