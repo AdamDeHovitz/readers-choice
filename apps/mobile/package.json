@@ -13,6 +13,7 @@
   "dependencies": {
     "@expo-google-fonts/inria-serif": "^0.4.1",
     "@expo-google-fonts/playfair-display": "^0.4.2",
+    "@expo/vector-icons": "^15.1.1",
     "@readers-choice/contract": "*",
     "@readers-choice/core": "*",
     "@readers-choice/tokens": "*",

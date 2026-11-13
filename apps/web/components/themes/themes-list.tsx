@@ -12,13 +12,16 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import type { ClubTheme } from "@readers-choice/contract/themes";
+import {
+  countThemes,
+  themesToShow,
+  type ThemeFilter,
+} from "@readers-choice/core/themes";
 import { useAction } from "@/hooks/use-action";
 
 interface ThemesListProps {
   themes: ClubTheme[];
 }
-
-type FilterType = "all" | "used" | "unused";
 
 export function ThemesList({ themes }: ThemesListProps) {
   const upvote = useAction(toggleThemeUpvote);
@@ -30,7 +33,7 @@ export function ThemesList({ themes }: ThemesListProps) {
   const [expandedThemes, setExpandedThemes] = useState<Record<string, boolean>>(
     {}
   );
-  const [filter, setFilter] = useState<FilterType>("unused");
+  const [filter, setFilter] = useState<ThemeFilter>("unused");
 
   function toggleExpanded(themeId: string) {
     setExpandedThemes((prev) => ({
@@ -54,23 +57,7 @@ export function ThemesList({ themes }: ThemesListProps) {
     if (!result.success) alert(`Error: ${result.error}`);
   }
 
-  // Filter themes based on selected filter
-  const filteredThemes = themes.filter((theme) => {
-    if (filter === "used") return theme.timesUsed > 0;
-    if (filter === "unused") return theme.timesUsed === 0;
-    return true;
-  });
-
-  // Sort themes by upvotes (descending), then by creation date (newest first)
-  const sortedThemes = [...filteredThemes].sort((a, b) => {
-    if (b.upvoteCount !== a.upvoteCount) {
-      return b.upvoteCount - a.upvoteCount;
-    }
-    return (
-      new Date(b.createdAt ?? 0).getTime() -
-      new Date(a.createdAt ?? 0).getTime()
-    );
-  });
+  const sortedThemes = themesToShow(themes, filter);
 
   if (themes.length === 0) {
     return (
@@ -82,8 +69,7 @@ export function ThemesList({ themes }: ThemesListProps) {
     );
   }
 
-  const usedCount = themes.filter((t) => t.timesUsed > 0).length;
-  const unusedCount = themes.filter((t) => t.timesUsed === 0).length;
+  const counts = countThemes(themes);
 
   return (
     <div className="space-y-4">
@@ -102,7 +88,7 @@ export function ThemesList({ themes }: ThemesListProps) {
               : "text-sage-800 hover:bg-sage-200"
           }`}
         >
-          All ({themes.length})
+          All ({counts.all})
         </button>
         <button
           onClick={() => setFilter("unused")}
@@ -113,7 +99,7 @@ export function ThemesList({ themes }: ThemesListProps) {
               : "text-sage-800 hover:bg-sage-200"
           }`}
         >
-          Unused ({unusedCount})
+          Unused ({counts.unused})
         </button>
         <button
           onClick={() => setFilter("used")}
@@ -124,7 +110,7 @@ export function ThemesList({ themes }: ThemesListProps) {
               : "text-sage-800 hover:bg-sage-200"
           }`}
         >
-          Used ({usedCount})
+          Used ({counts.used})
         </button>
       </div>
 
