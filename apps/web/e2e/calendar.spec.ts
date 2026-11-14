@@ -38,10 +38,12 @@ test("unknown feed tokens are not found", async ({ request }) => {
   expect(feed.status()).toBe(404);
 });
 
-test("non-members get no calendar link", async ({ page }) => {
+test("non-members get no schedule or calendar link", async ({ page }) => {
   await logIn(page, users.dave);
   await page.goto(seedClubSchedule);
-  await expect(page.getByRole("heading", { name: "Schedule" })).toBeVisible();
+  // Sent to the club page, which says how to get in.
+  await page.waitForURL(seedClubSchedule.replace(/\/schedule$/, ""));
+  await expect(page.getByText("Invite required")).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Add to calendar" })
   ).toHaveCount(0);
