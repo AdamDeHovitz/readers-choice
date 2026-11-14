@@ -1,8 +1,9 @@
 import "server-only";
 import { cache } from "react";
+import type { ClubMeeting } from "@readers-choice/contract/meetings";
 import type { MeetingSchedule } from "@readers-choice/core/meeting-schedule";
 import { UserError } from "@readers-choice/core/user-error";
-import { getMembership, isMember } from "./authz";
+import { getMembership } from "./authz";
 import { toBook, type Book } from "./books";
 import type { Db } from "./db";
 import type { Viewer } from "./viewer";
@@ -74,30 +75,19 @@ export async function getBookOptionContext(
   };
 }
 
-export interface MeetingSummary extends MeetingSchedule {
-  id: string;
-  isFinalized: boolean;
-  meetingDate: string;
-  finalizedAt: string | null;
-  selectedBookId: string | null;
-  createdAt: string | null;
-  details: string | null;
-  theme: { id: string; name: string } | null;
-  selectedBook: Book | null;
-}
-
-/** A club's meetings, newest first; empty unless the viewer is a member. */
+/**
+ * A club's meetings, newest first. Callers authorize: the list is for
+ * members only.
+ */
 export async function getBookClubMeetings(
-  { db, userId }: Viewer,
+  db: Db,
   bookClubId: string
-): Promise<MeetingSummary[]> {
-  if (!(await isMember(db, bookClubId, userId))) return [];
-
+): Promise<ClubMeeting[]> {
   const { data, error } = await db
     .from("meetings")
     .select(
       `id, meeting_date, nomination_deadline, voting_deadline, is_finalized,
-       finalized_at, selected_book_id, created_at, details,
+       details,
        themes (id, name),
        selected_book:books!meetings_selected_book_id_fkey (
          id, title, author, cover_url, description, page_count, published_year
@@ -113,9 +103,6 @@ export async function getBookClubMeetings(
     nominationDeadline: meeting.nomination_deadline,
     votingDeadline: meeting.voting_deadline,
     isFinalized: meeting.is_finalized === true,
-    finalizedAt: meeting.finalized_at,
-    selectedBookId: meeting.selected_book_id,
-    createdAt: meeting.created_at,
     details: meeting.details,
     theme: meeting.themes,
     selectedBook: meeting.selected_book ? toBook(meeting.selected_book) : null,

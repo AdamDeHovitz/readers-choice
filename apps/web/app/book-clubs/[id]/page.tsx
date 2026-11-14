@@ -5,9 +5,10 @@ import {
   pickFeaturedMeeting,
   pickUpcomingMeeting,
 } from "@readers-choice/core/meeting-schedule";
+import { loadPageData } from "@/app/_operations/page-data";
 import { getBookClubDetails, type BookClubDetails } from "@/server/clubs";
 import { getViewerJoinRequest } from "@/server/join-requests";
-import { getBookClubMeetings } from "@/server/meetings";
+import { listClubMeetings } from "@/server/operations/meetings";
 import { getViewer, type Viewer } from "@/server/viewer";
 import { BookDisplay } from "@/components/book-clubs/book-display";
 import { JoinClubPanel } from "@/components/book-clubs/join-club-panel";
@@ -24,10 +25,7 @@ export default async function BookClubPage({
 }) {
   const [viewer, { id }] = await Promise.all([getViewer(), params]);
 
-  const [bookClub, meetings] = await Promise.all([
-    getBookClubDetails(viewer, id),
-    viewer ? getBookClubMeetings(viewer, id) : [],
-  ]);
+  const bookClub = await getBookClubDetails(viewer, id);
 
   if (!bookClub) {
     redirect("/browse");
@@ -52,6 +50,12 @@ export default async function BookClubPage({
     );
   }
 
+  const { meetings } = await loadPageData(
+    listClubMeetings,
+    { bookClubId: id },
+    // Only if membership ended between the two reads: show the join prompt.
+    { onRefused: () => redirect(`/book-clubs/${id}`) }
+  );
   const now = new Date();
   const upcomingMeeting = pickUpcomingMeeting(meetings, now);
   const featured = pickFeaturedMeeting(

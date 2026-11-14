@@ -51,8 +51,16 @@ export default function RootLayout() {
           <Stack.Protected guard={signedIn}>
             <Stack.Screen name="(app)/index" options={{ headerShown: false }} />
             <Stack.Screen
+              name="(app)/clubs/[id]/index"
+              options={{ title: "", headerBackTitle: "Clubs" }}
+            />
+            <Stack.Screen
+              name="(app)/clubs/[id]/schedule"
+              options={{ title: "Schedule" }}
+            />
+            <Stack.Screen
               name="(app)/clubs/[id]/themes"
-              options={{ title: "Themes", headerBackTitle: "Clubs" }}
+              options={{ title: "Themes" }}
             />
           </Stack.Protected>
         </Stack>

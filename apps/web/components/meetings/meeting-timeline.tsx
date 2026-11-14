@@ -5,7 +5,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Section } from "@/components/ui/page-header";
 import { LocalDate } from "@/components/ui/local-date";
 import { cn } from "@/lib/utils";
-import type { MeetingSummary } from "@/server/meetings";
+import { splitMeetingTimeline } from "@readers-choice/core/meeting-schedule";
+import type { ClubMeeting } from "@readers-choice/contract/meetings";
 import { MeetingStatusBadge } from "./meeting-status-badge";
 
 /** The club's meetings, split into upcoming (soonest first) and past. */
@@ -13,7 +14,7 @@ export function MeetingTimeline({
   meetings,
   now = new Date(),
 }: {
-  meetings: MeetingSummary[];
+  meetings: ClubMeeting[];
   now?: Date;
 }) {
   if (meetings.length === 0) {
@@ -26,13 +27,7 @@ export function MeetingTimeline({
     );
   }
 
-  const time = (m: MeetingSummary) => new Date(m.meetingDate).getTime();
-  const upcoming = meetings
-    .filter((m) => time(m) >= now.getTime())
-    .sort((a, b) => time(a) - time(b));
-  const past = meetings
-    .filter((m) => time(m) < now.getTime())
-    .sort((a, b) => time(b) - time(a));
+  const { upcoming, past } = splitMeetingTimeline(meetings, now);
 
   return (
     <div className="space-y-8">
@@ -54,7 +49,7 @@ function MeetingList({
   meetings,
   highlight = false,
 }: {
-  meetings: MeetingSummary[];
+  meetings: ClubMeeting[];
   highlight?: boolean;
 }) {
   return (

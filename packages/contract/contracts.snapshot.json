@@ -11,6 +11,11 @@
       "club",
       "<arg1>"
     ],
+    "clubMeetings": [
+      "club",
+      "<arg1>",
+      "meetings"
+    ],
     "clubThemes": [
       "club",
       "<arg1>",
@@ -437,6 +442,196 @@
         "required": [
           "bookClubId",
           "bookClubName"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "meetings.list",
+      "kind": "query",
+      "cacheKey": [
+        "club",
+        "<bookClubId>",
+        "meetings"
+      ],
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "bookClubId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "bookClubId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "club": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": false
+          },
+          "canSchedule": {
+            "type": "boolean"
+          },
+          "meetings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "meetingDate": {
+                  "type": "string"
+                },
+                "nominationDeadline": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "votingDeadline": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "isFinalized": {
+                  "type": "boolean"
+                },
+                "details": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "theme": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "selectedBook": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "author": {
+                          "type": "string"
+                        },
+                        "coverUrl": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "description": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "pageCount": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "publishedYear": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "title",
+                        "author",
+                        "coverUrl",
+                        "description",
+                        "pageCount",
+                        "publishedYear"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "meetingDate",
+                "nominationDeadline",
+                "votingDeadline",
+                "isFinalized",
+                "details",
+                "theme",
+                "selectedBook"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "club",
+          "canSchedule",
+          "meetings"
         ],
         "additionalProperties": false
       }

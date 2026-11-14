@@ -4,19 +4,11 @@ import {
   getWorkDescription,
   type BookSearchResult,
 } from "@readers-choice/core/open-library";
+import type { Book } from "@readers-choice/contract/schemas";
 import { UserError } from "@readers-choice/core/user-error";
 import type { Db, Tables } from "./db";
 
-/** A book as the UI sees it. */
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  coverUrl: string | null;
-  description: string | null;
-  pageCount: number | null;
-  publishedYear: number | null;
-}
+export type { Book };
 
 type BookRow = Pick<
   Tables<"books">,

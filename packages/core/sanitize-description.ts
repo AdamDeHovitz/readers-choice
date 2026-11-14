@@ -86,3 +86,33 @@ export function sanitizeDescription(
   if (!description) return "";
   return sanitizeHtml(description);
 }
+
+// An allowed tag in decoded text, e.g. "<p class="x">" or "<br/>".
+const ALLOWED_TAG = new RegExp(
+  `<(/?)(${ALLOWED_TAGS.join("|")})(?:\\s[^>]*)?/?>`,
+  "gi"
+);
+
+/**
+ * A book description as plain text, for clients that don't render HTML
+ * (the mobile app). Reads like `sanitizeDescription`'s output: paragraphs
+ * and line breaks become newlines, emphasis is dropped, and any other
+ * markup stays visible as text.
+ */
+export function descriptionToPlainText(
+  description: string | null | undefined
+): string {
+  if (!description) return "";
+  return decodeHtmlEntities(description)
+    .replace(/<script\b[\s\S]*?<\/script\s*>/gi, "")
+    .replace(/<style\b[\s\S]*?<\/style\s*>/gi, "")
+    .replace(ALLOWED_TAG, (_match, slash: string, tag: string) => {
+      const tagName = tag.toLowerCase();
+      if (tagName === "br") return "\n";
+      if (tagName === "p") return slash ? "\n\n" : "";
+      return "";
+    })
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}

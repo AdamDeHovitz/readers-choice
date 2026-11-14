@@ -21,9 +21,16 @@ export function pathsFor(key: InvalidationKey): string[] {
     case "clubs":
       return ["/browse"];
     case "club":
-      return key.length === 2
-        ? // Membership decides who sees and votes on the club's meetings.
-          [`/book-clubs/${key[1]}`, "/meetings"]
-        : [`/book-clubs/${key[1]}/themes`];
+      if (key.length === 2) {
+        // Membership decides who sees and votes on the club's meetings.
+        return [`/book-clubs/${key[1]}`, "/meetings"];
+      }
+      switch (key[2]) {
+        case "meetings":
+          // The club home and schedule, and the meeting pages.
+          return [`/book-clubs/${key[1]}`, "/meetings"];
+        case "themes":
+          return [`/book-clubs/${key[1]}/themes`];
+      }
   }
 }
