@@ -1,38 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-
-/** Named formats, so dates read the same across pages. */
-const FORMATS = {
-  /** "Wednesday, December 2, 7:00 PM" */
-  meeting: {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  },
-  /** "Wed, Dec 2, 11:59 PM" */
-  deadline: {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  },
-  /** "December 2, 2026" */
-  date: { month: "long", day: "numeric", year: "numeric" },
-  /** "December 2026" */
-  monthYear: { month: "long", year: "numeric" },
-  /** "Dec 2026" */
-  shortMonthYear: { month: "short", year: "numeric" },
-  /** "Dec" */
-  shortMonth: { month: "short" },
-  /** "2" */
-  day: { day: "numeric" },
-} satisfies Record<string, Intl.DateTimeFormatOptions>;
-
-export type DateFormat = keyof typeof FORMATS;
+import { formatDate, type DateFormat } from "@readers-choice/core/date-format";
 
 const subscribe = () => () => {};
 
@@ -48,11 +17,10 @@ export function LocalDate({
   iso: string;
   format: DateFormat;
 }) {
-  const options = FORMATS[format];
   const text = useSyncExternalStore(
     subscribe,
-    () => new Date(iso).toLocaleString("en-US", options),
-    () => new Date(iso).toLocaleString("en-US", { ...options, timeZone: "UTC" })
+    () => formatDate(iso, format),
+    () => formatDate(iso, format, "UTC")
   );
   return <time dateTime={iso}>{text}</time>;
 }

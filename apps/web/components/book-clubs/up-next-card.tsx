@@ -8,8 +8,12 @@ import {
 import { MeetingStatusBadge } from "@/components/meetings/meeting-status-badge";
 import { Button } from "@/components/ui/button";
 import { LocalDate } from "@/components/ui/local-date";
-import { getMeetingPhase } from "@readers-choice/core/meeting-schedule";
-import type { MeetingSummary } from "@/server/meetings";
+import {
+  getMeetingPhase,
+  UP_NEXT_ACTIONS,
+  upNextDeadline,
+} from "@readers-choice/core/meeting-schedule";
+import type { ClubMeeting } from "@readers-choice/contract/meetings";
 
 // The club home's one bold block: rust, so it stands apart from the sage
 // top bar, with a cream button as its single action.
@@ -27,7 +31,7 @@ export function UpNextCard({
   meeting,
 }: {
   bookClubId: string;
-  meeting: MeetingSummary | null;
+  meeting: ClubMeeting | null;
 }) {
   if (!meeting) {
     return (
@@ -49,27 +53,8 @@ export function UpNextCard({
     );
   }
 
-  const phase = getMeetingPhase(meeting);
-  const cta =
-    phase === "nominating"
-      ? "Nominate a book"
-      : phase === "voting"
-        ? "Vote for a book"
-        : "See the results";
-  const deadline =
-    phase === "nominating" && meeting.nominationDeadline ? (
-      <>
-        Nominations close{" "}
-        <LocalDate iso={meeting.nominationDeadline} format="deadline" />
-      </>
-    ) : phase === "voting" && meeting.votingDeadline ? (
-      <>
-        Voting closes{" "}
-        <LocalDate iso={meeting.votingDeadline} format="deadline" />
-      </>
-    ) : phase === "awaiting_finalization" ? (
-      "Waiting for an admin to pick the book"
-    ) : null;
+  const cta = UP_NEXT_ACTIONS[getMeetingPhase(meeting)];
+  const deadline = upNextDeadline(meeting);
 
   return (
     <section className={CARD}>
@@ -93,7 +78,15 @@ export function UpNextCard({
         {deadline && (
           <li className="flex items-center gap-2">
             <ClockIcon className="size-4 shrink-0" aria-hidden />
-            {deadline}
+            <span>
+              {deadline.label}
+              {deadline.at && (
+                <>
+                  {" "}
+                  <LocalDate iso={deadline.at} format="deadline" />
+                </>
+              )}
+            </span>
           </li>
         )}
       </ul>

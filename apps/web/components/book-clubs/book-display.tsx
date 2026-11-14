@@ -5,11 +5,11 @@ import { BookMeta } from "@/components/books/book-meta";
 import { Section } from "@/components/ui/page-header";
 import { LocalDate } from "@/components/ui/local-date";
 import { sanitizeDescription } from "@readers-choice/core/sanitize-description";
-import type { MeetingSummary } from "@/server/meetings";
+import type { ClubMeeting } from "@readers-choice/contract/meetings";
 
 interface BookDisplayProps {
   /** The featured meeting; its selected book is shown. */
-  meeting: MeetingSummary;
+  meeting: ClubMeeting;
   label: "Upcoming" | "Previous Book";
 }
 

@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeDescription } from "./sanitize-description";
+import {
+  descriptionToPlainText,
+  sanitizeDescription,
+} from "./sanitize-description";
 
 // Any "<" left in the output must start one of these bare tags
 const SAFE_TAG = /^<\/?(p|br|i|b|em|strong)>/;
@@ -60,5 +63,32 @@ describe("sanitizeDescription", () => {
 
   it("renders encoded allowed tags as markup", () => {
     expect(sanitizeDescription("&lt;i&gt;Dune&lt;/i&gt;")).toBe("<i>Dune</i>");
+  });
+});
+
+describe("descriptionToPlainText", () => {
+  it("is empty for a missing description", () => {
+    expect(descriptionToPlainText(null)).toBe("");
+    expect(descriptionToPlainText(undefined)).toBe("");
+  });
+
+  it("turns paragraphs and line breaks into newlines and drops emphasis", () => {
+    expect(
+      descriptionToPlainText(
+        '<p class="x">A <i>very</i> good book.</p><p>Line one<br/>line two</p>'
+      )
+    ).toBe("A very good book.\n\nLine one\nline two");
+  });
+
+  it("decodes entities, including escaped tags", () => {
+    expect(
+      descriptionToPlainText("&lt;p&gt;Tom &amp; Jerry&#x2019;s&lt;/p&gt;")
+    ).toBe("Tom & Jerry's");
+  });
+
+  it("drops scripts and keeps other markup visible, as the web does", () => {
+    expect(
+      descriptionToPlainText('<script>alert(1)</script><a href="x">link</a>')
+    ).toBe('<a href="x">link</a>');
   });
 });

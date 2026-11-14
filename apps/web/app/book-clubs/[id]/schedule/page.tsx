@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { getBookClubDetails } from "@/server/clubs";
-import { getBookClubMeetings } from "@/server/meetings";
-import { getViewer } from "@/server/viewer";
+import { loadPageData } from "@/app/_operations/page-data";
+import { listClubMeetings } from "@/server/operations/meetings";
 import { MeetingTimeline } from "@/components/meetings/meeting-timeline";
 import { CreateMeetingDialog } from "@/components/meetings/create-meeting-dialog";
 import { LogPastMeetingDialog } from "@/components/meetings/log-past-meeting-dialog";
@@ -16,19 +15,13 @@ export default async function SchedulePage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const [viewer, { id: bookClubId }] = await Promise.all([getViewer(), params]);
-  if (!viewer) {
-    redirect("/login");
-  }
-
-  const [bookClub, meetings] = await Promise.all([
-    getBookClubDetails(viewer, bookClubId),
-    getBookClubMeetings(viewer, bookClubId),
-  ]);
-
-  if (!bookClub) {
-    redirect("/dashboard");
-  }
+  const { id: bookClubId } = await params;
+  // Non-members land on the club page, which offers to join.
+  const { club, canSchedule, meetings } = await loadPageData(
+    listClubMeetings,
+    { bookClubId },
+    { onRefused: () => redirect(`/book-clubs/${bookClubId}`) }
+  );
 
   return (
     <>
@@ -36,27 +29,25 @@ export default async function SchedulePage({
         title="Schedule"
         description={`${meetings.length} ${meetings.length === 1 ? "meeting" : "meetings"}`}
         actions={
-          bookClub.currentUserIsMember && (
-            <>
-              {bookClub.currentUserIsAdmin && (
-                <>
-                  <CreateMeetingDialog
-                    bookClubId={bookClubId}
-                    pastMeetings={meetings.slice(0, 2).map((meeting) => ({
-                      meetingDate: meeting.meetingDate,
-                      nominationDeadline: meeting.nominationDeadline,
-                      votingDeadline: meeting.votingDeadline,
-                    }))}
-                  />
-                  <LogPastMeetingDialog bookClubId={bookClubId} />
-                </>
-              )}
-              <SubscribeCalendarDialog
-                bookClubId={bookClubId}
-                bookClubName={bookClub.name}
-              />
-            </>
-          )
+          <>
+            {canSchedule && (
+              <>
+                <CreateMeetingDialog
+                  bookClubId={bookClubId}
+                  pastMeetings={meetings.slice(0, 2).map((meeting) => ({
+                    meetingDate: meeting.meetingDate,
+                    nominationDeadline: meeting.nominationDeadline,
+                    votingDeadline: meeting.votingDeadline,
+                  }))}
+                />
+                <LogPastMeetingDialog bookClubId={bookClubId} />
+              </>
+            )}
+            <SubscribeCalendarDialog
+              bookClubId={bookClubId}
+              bookClubName={club.name}
+            />
+          </>
         }
       />
       <MeetingTimeline meetings={meetings} />

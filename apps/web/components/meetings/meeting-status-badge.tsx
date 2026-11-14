@@ -1,17 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import {
   getMeetingPhase,
+  MEETING_PHASE_LABELS,
+  type MeetingPhase,
   type MeetingSchedule,
 } from "@readers-choice/core/meeting-schedule";
 
-const PHASES = {
-  nominating: { label: "Nominations open", variant: "active" },
-  voting: { label: "Voting open", variant: "active" },
-  awaiting_finalization: { label: "Voting closed", variant: "default" },
-  finalized: { label: "Finalized", variant: "primary" },
-} as const;
+const VARIANTS = {
+  nominating: "active",
+  voting: "active",
+  awaiting_finalization: "default",
+  finalized: "primary",
+} as const satisfies Record<MeetingPhase, string>;
 
-/** A meeting's phase, as decided by lib/meeting-schedule. */
+/** A meeting's phase, as decided by packages/core/meeting-schedule. */
 export function MeetingStatusBadge({
   meeting,
   className,
@@ -19,10 +21,10 @@ export function MeetingStatusBadge({
   meeting: MeetingSchedule;
   className?: string;
 }) {
-  const { label, variant } = PHASES[getMeetingPhase(meeting)];
+  const phase = getMeetingPhase(meeting);
   return (
-    <Badge variant={variant} className={className}>
-      {label}
+    <Badge variant={VARIANTS[phase]} className={className}>
+      {MEETING_PHASE_LABELS[phase]}
     </Badge>
   );
 }
