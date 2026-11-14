@@ -1,9 +1,16 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 import Credentials from "next-auth/providers/credentials";
-import { verifyPassword } from "@/server/password";
 import { createAdminClient } from "@/server/db";
+import { checkPasswordSignIn } from "@/server/password-sign-in";
+import { consumeRateLimit, getClientIp } from "@/server/rate-limit";
 import { findAccountByEmail, upsertGoogleAccount } from "@/server/users";
+
+const WEB_SIGN_IN_IP_LIMIT = {
+  scope: "web-signin:ip",
+  limit: 20,
+  windowSeconds: 15 * 60,
+};
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -17,17 +24,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const { email, password } = credentials ?? {};
         if (typeof email !== "string" || typeof password !== "string") {
           return null;
         }
 
-        const account = await findAccountByEmail(createAdminClient(), email);
-        if (!account?.passwordHash) return null;
-        if (!(await verifyPassword(password, account.passwordHash))) {
+        // Same limits as the mobile sign-in (server/password-sign-in.ts).
+        // NextAuth shows one generic error for any null, so a limited
+        // attempt reads like a wrong password.
+        const db = createAdminClient();
+        if (
+          !(await consumeRateLimit(
+            db,
+            WEB_SIGN_IN_IP_LIMIT,
+            getClientIp(request.headers)
+          ))
+        ) {
           return null;
         }
+        const result = await checkPasswordSignIn(db, email, password);
+        if (result.kind !== "ok") return null;
+        const { account } = result;
 
         return {
           id: account.id,
@@ -39,12 +57,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       // Credentials users were already verified in authorize().
       if (account?.provider === "credentials") return true;
 
       const googleId = account?.providerAccountId;
       if (!user.email || !user.name || !googleId) return false;
+      // Accounts are matched by email, so only trust one Google has verified
+      // (the mobile sign-in checks the same, in google-id-token.ts).
+      if (profile?.email_verified !== true) return false;
 
       try {
         await upsertGoogleAccount(createAdminClient(), {

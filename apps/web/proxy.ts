@@ -36,7 +36,8 @@ export default auth((req) => {
   // If not authenticated and trying to access protected route, redirect to login
   if (!req.auth && !isPublicRoute) {
     const loginUrl = new URL("/login", req.nextUrl.origin);
-    loginUrl.searchParams.set("callbackUrl", pathname);
+    // Keep the query: the OAuth consent screen's request lives in it.
+    loginUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -58,7 +59,8 @@ export const config = {
      * - _next/image (image optimization files)
      * - favicon.ico, icon, apple-icon, manifest.webmanifest (app metadata,
      *   which browsers and home screens fetch without a session)
+     * - .well-known (OAuth metadata that MCP clients fetch without a session)
      */
-    "/((?!api/auth|api/calendar|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest).*)",
+    "/((?!api/auth|api/calendar|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|\\.well-known/).*)",
   ],
 };

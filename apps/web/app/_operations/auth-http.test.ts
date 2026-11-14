@@ -189,7 +189,9 @@ describe("googleSignIn", () => {
     };
     const { calls } = useDb([
       allowed,
-      bob(), // upsertGoogleAccount: existing account
+      bob(), // upsertGoogleAccount: existing password account
+      {}, // revoke mobile sessions
+      {}, // revoke connected apps
       {}, // ...linked
       bob(), // account lookup
       { data: { id: "session-2" } },
@@ -200,7 +202,32 @@ describe("googleSignIn", () => {
     );
     expect(status).toBe(200);
     expect(body.data.user.id).toBe("user-1");
-    expect(calls[2].join(" ")).toContain('"google_id":"g-1"');
+    // The pre-registered password's sessions and grants end on linking.
+    expect(calls[2].join(" ")).toContain('from("mobile_sessions")');
+    expect(calls[3].join(" ")).toContain('from("oauth_grants")');
+    expect(calls[2].join(" ")).toContain('eq("user_id", "user-1")');
+    expect(calls[4].join(" ")).toContain('"google_id":"g-1"');
+    expect(calls[4].join(" ")).toContain('"password_hash":null');
+  });
+
+  it("refuses an email already linked to a different Google account", async () => {
+    state.google = {
+      googleId: "g-other",
+      email: "bob@example.test",
+      name: "Bob",
+      image: null,
+    };
+    const { calls } = useDb([
+      allowed,
+      { data: { ...bob().data, google_id: "g-1", password_hash: null } },
+    ]);
+    const { status, body } = await send(
+      googleSignIn,
+      post({ idToken: "valid" })
+    );
+    expect(status).toBe(401);
+    expect(body.code).toBe("refused");
+    expect(calls).toHaveLength(2); // nothing written
   });
 });
 

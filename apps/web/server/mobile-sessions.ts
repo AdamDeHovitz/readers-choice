@@ -1,9 +1,9 @@
 import "server-only";
-import { createHash, randomBytes } from "crypto";
 import { jwtVerify, SignJWT } from "jose";
 import type { Session } from "@readers-choice/contract/auth";
 import { UserError } from "@readers-choice/core/user-error";
 import type { Db } from "./db";
+import { derivedKey, hashToken, newOpaqueToken } from "./tokens";
 
 /**
  * Mobile app sessions (#75): a short-lived signed access token, and a
@@ -28,19 +28,12 @@ const SIGNED_OUT = "Your session has ended. Please sign in again.";
 const JUST_REFRESHED =
   "This session was just refreshed. Use the newest refresh token.";
 
-function signingKey(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) throw new Error("AUTH_SECRET is not set");
-  return new TextEncoder().encode(secret);
-}
+// A key of its own rather than the raw AUTH_SECRET NextAuth uses. Changing it
+// made access tokens issued before then fail once; the app refreshes and
+// retries on `unauthenticated`, so nobody is signed out.
+const signingKey = () => derivedKey("mobile-access-token");
 
-export function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
-function newRefreshToken(): string {
-  return randomBytes(32).toString("base64url");
-}
+const newRefreshToken = newOpaqueToken;
 
 export interface SessionUser {
   id: string;

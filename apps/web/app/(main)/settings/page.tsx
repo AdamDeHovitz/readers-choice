@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
+import { isLocalPath } from "@readers-choice/core/local-path";
+import { loadPageData } from "@/app/_operations/page-data";
 import { getMyLibraries } from "@/server/libraries";
+import * as connectedApps from "@/server/operations/connected-apps";
 import { getViewer } from "@/server/viewer";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ConnectedApps } from "@/components/settings/connected-apps";
 import { LibraryPicker } from "@/components/libraries/library-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
@@ -13,7 +17,7 @@ export const metadata: Metadata = { title: "Settings" };
 
 /** Only same-site paths, so ?returnTo can't send people off-site. */
 function safeReturnTo(value: string | string[] | undefined): string | null {
-  return typeof value === "string" && /^\/(?![/\\])/.test(value) ? value : null;
+  return isLocalPath(value) ? value : null;
 }
 
 export default async function SettingsPage({
@@ -26,8 +30,13 @@ export default async function SettingsPage({
     redirect("/login");
   }
 
-  const [libraries, params] = await Promise.all([
+  const [libraries, { apps }, params] = await Promise.all([
     getMyLibraries(viewer),
+    loadPageData(
+      connectedApps.listConnectedApps,
+      {},
+      { onRefused: () => notFound() }
+    ),
     searchParams,
   ]);
   const returnTo = safeReturnTo(params.returnTo);
@@ -59,6 +68,21 @@ export default async function SettingsPage({
           </CardHeader>
           <CardContent>
             <LibraryPicker initialLibraries={libraries} />
+          </CardContent>
+        </Card>
+
+        <Card id="connected-apps">
+          <CardHeader>
+            <CardTitle>
+              <h2>Connected apps</h2>
+            </CardTitle>
+            <p className="text-muted-foreground text-sm">
+              AI assistants like Claude that you let use your account.
+              Disconnecting one stops its access right away.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <ConnectedApps apps={apps} />
           </CardContent>
         </Card>
 

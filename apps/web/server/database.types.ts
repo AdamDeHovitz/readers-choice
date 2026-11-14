@@ -590,6 +590,160 @@ export type Database = {
           },
         ];
       };
+      oauth_authorization_codes: {
+        Row: {
+          client_id: string;
+          code_challenge: string;
+          code_hash: string;
+          consumed_at: string | null;
+          created_at: string;
+          expires_at: string;
+          grant_id: string | null;
+          redirect_uri: string;
+          resource: string;
+          scope: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          client_id: string;
+          code_challenge: string;
+          code_hash: string;
+          consumed_at?: string | null;
+          created_at?: string;
+          expires_at: string;
+          grant_id?: string | null;
+          redirect_uri: string;
+          resource: string;
+          scope: string;
+          user_id: string;
+        };
+        Update: {
+          client_id?: string;
+          code_challenge?: string;
+          code_hash?: string;
+          consumed_at?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          grant_id?: string | null;
+          redirect_uri?: string;
+          resource?: string;
+          scope?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "oauth_authorization_codes_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "oauth_clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_grant_id_fkey";
+            columns: ["grant_id"];
+            isOneToOne: false;
+            referencedRelation: "oauth_grants";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "oauth_authorization_codes_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      oauth_clients: {
+        Row: {
+          client_name: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          metadata_fetched_at: string | null;
+          redirect_uris: string[];
+        };
+        ComputedFields: never;
+        Insert: {
+          client_name: string;
+          created_at?: string;
+          id: string;
+          kind: string;
+          metadata_fetched_at?: string | null;
+          redirect_uris: string[];
+        };
+        Update: {
+          client_name?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          metadata_fetched_at?: string | null;
+          redirect_uris?: string[];
+        };
+        Relationships: [];
+      };
+      oauth_grants: {
+        Row: {
+          client_id: string;
+          created_at: string;
+          id: string;
+          last_used_at: string;
+          previous_token_hash: string | null;
+          redirect_uri: string;
+          refresh_token_hash: string;
+          resource: string;
+          revoked_at: string | null;
+          rotated_at: string | null;
+          scope: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          client_id: string;
+          created_at?: string;
+          id?: string;
+          last_used_at?: string;
+          previous_token_hash?: string | null;
+          redirect_uri: string;
+          refresh_token_hash: string;
+          resource: string;
+          revoked_at?: string | null;
+          rotated_at?: string | null;
+          scope: string;
+          user_id: string;
+        };
+        Update: {
+          client_id?: string;
+          created_at?: string;
+          id?: string;
+          last_used_at?: string;
+          previous_token_hash?: string | null;
+          redirect_uri?: string;
+          refresh_token_hash?: string;
+          resource?: string;
+          revoked_at?: string | null;
+          rotated_at?: string | null;
+          scope?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "oauth_grants_client_id_fkey";
+            columns: ["client_id"];
+            isOneToOne: false;
+            referencedRelation: "oauth_clients";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "oauth_grants_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       personal_rankings: {
         Row: {
           book_club_id: string | null;

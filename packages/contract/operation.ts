@@ -14,6 +14,11 @@ export interface OperationContract<
 > {
   readonly name: Name;
   readonly kind: "query" | "mutation";
+  /**
+   * What it does and who may call it, for people and for AI clients: the
+   * MCP server (/api/mcp) offers it as the tool's description.
+   */
+  readonly description: string;
   /** Parsed on the server for every call; clients may reuse it for forms. */
   readonly input: Input;
   /**
@@ -53,6 +58,7 @@ export function defineContract<
 >(def: {
   name: Name;
   kind: "query" | "mutation";
+  description: string;
   input: Input;
   output: Output;
   cacheKey?: (input: z.output<Input>) => InvalidationKey;
