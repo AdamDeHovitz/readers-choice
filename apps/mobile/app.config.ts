@@ -9,6 +9,9 @@ import { colors } from "@readers-choice/tokens";
 const config: ExpoConfig = {
   name: "Readers' Choice",
   slug: "readers-choice",
+  // The EAS project (expo.dev/accounts/dehovitz/projects/readers-choice),
+  // which builds the app and submits it to TestFlight; see eas.json.
+  owner: "dehovitz",
   version: "1.0.0",
   scheme: "readerschoice",
   orientation: "portrait",
@@ -40,6 +43,7 @@ const config: ExpoConfig = {
     ],
   ],
   experiments: { typedRoutes: true },
+  extra: { eas: { projectId: "8038e2fc-fd2b-45ae-a2ef-679f3c1861cb" } },
 };
 
 export default config;
