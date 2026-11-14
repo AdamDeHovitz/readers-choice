@@ -40,6 +40,23 @@ npm run export:ios -w @readers-choice/mobile       # bundle for iOS (CI's Mobile
 npm run doctor -w @readers-choice/mobile           # dependency versions vs the latest Expo SDK release (weekly in CI: expo-health.yml)
 ```
 
+## Release (TestFlight)
+
+Builds run on EAS (Expo's build service) under the `dehovitz` Expo account;
+`eas.json` holds the profiles, and `app.config.ts` links the EAS project.
+The Apple side is Jake Saferstein's (individual) developer team, so signing
+goes through an App Store Connect API key stored in EAS: individual teams
+don't give other members access to certificates and identifiers.
+
+```bash
+cd apps/mobile
+npx eas-cli build -p ios --profile production --auto-submit   # build in the cloud, then upload to TestFlight
+```
+
+`production` builds point at `https://readers-choice.dehovitz.com`, and EAS
+bumps the build number (`appVersionSource: remote`); change `version` in
+`app.config.ts` for a new marketing version.
+
 ## Layout
 
 ```
