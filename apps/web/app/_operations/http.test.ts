@@ -207,7 +207,10 @@ describe("handleOperationRequest", () => {
       status: 200,
       body: { success: true, invalidate: [["club", CLUB, "themes"]] },
     });
-    expect(revalidatePath).toHaveBeenCalledWith(`/book-clubs/${CLUB}/themes`);
+    expect(revalidatePath).toHaveBeenCalledWith(
+      `/book-clubs/${CLUB}/themes`,
+      "layout"
+    );
   });
 });
 

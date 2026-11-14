@@ -40,6 +40,7 @@ export type Database = {
           created_by: string | null;
           description: string | null;
           id: string;
+          join_policy: Database["public"]["Enums"]["club_join_policy"];
           name: string;
           updated_at: string | null;
         };
@@ -49,6 +50,7 @@ export type Database = {
           created_by?: string | null;
           description?: string | null;
           id?: string;
+          join_policy?: Database["public"]["Enums"]["club_join_policy"];
           name: string;
           updated_at?: string | null;
         };
@@ -57,6 +59,7 @@ export type Database = {
           created_by?: string | null;
           description?: string | null;
           id?: string;
+          join_policy?: Database["public"]["Enums"]["club_join_policy"];
           name?: string;
           updated_at?: string | null;
         };
@@ -252,6 +255,62 @@ export type Database = {
           {
             foreignKeyName: "invite_links_created_by_fkey";
             columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      join_requests: {
+        Row: {
+          book_club_id: string;
+          created_at: string;
+          decided_at: string | null;
+          decided_by: string | null;
+          id: string;
+          message: string | null;
+          status: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          book_club_id: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          id?: string;
+          message?: string | null;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          book_club_id?: string;
+          created_at?: string;
+          decided_at?: string | null;
+          decided_by?: string | null;
+          id?: string;
+          message?: string | null;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "join_requests_book_club_id_fkey";
+            columns: ["book_club_id"];
+            isOneToOne: false;
+            referencedRelation: "book_clubs";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "join_requests_decided_by_fkey";
+            columns: ["decided_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "join_requests_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];
@@ -857,6 +916,10 @@ export type Database = {
       };
     };
     Functions: {
+      approve_join_request: {
+        Args: { p_book_club_id: string; p_user_id: string };
+        Returns: boolean;
+      };
       assert_meeting_voting_open: {
         Args: { p_meeting_id: string; p_user_id: string };
         Returns: string;
@@ -877,6 +940,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      join_or_request_club: {
+        Args: { p_book_club_id: string; p_message?: string; p_user_id: string };
+        Returns: string;
+      };
       remove_club_member: {
         Args: { p_book_club_id: string; p_user_id: string };
         Returns: boolean;
@@ -892,6 +959,13 @@ export type Database = {
           p_unread: string[];
           p_user_id: string;
           p_year: number;
+        };
+        Returns: undefined;
+      };
+      set_club_join_policy: {
+        Args: {
+          p_book_club_id: string;
+          p_policy: Database["public"]["Enums"]["club_join_policy"];
         };
         Returns: undefined;
       };
@@ -917,7 +991,7 @@ export type Database = {
       };
     };
     Enums: {
-      [_ in never]: never;
+      club_join_policy: "invite_only" | "request" | "open";
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1050,6 +1124,8 @@ export const Constants = {
     Enums: {},
   },
   public: {
-    Enums: {},
+    Enums: {
+      club_join_policy: ["invite_only", "request", "open"],
+    },
   },
 } as const;
