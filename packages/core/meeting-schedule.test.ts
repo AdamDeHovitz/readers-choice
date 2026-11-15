@@ -5,6 +5,8 @@ import {
   isVotingClosed,
   pickFeaturedMeeting,
   pickUpcomingMeeting,
+  splitMeetingTimeline,
+  upNextDeadline,
 } from "./meeting-schedule";
 
 const now = new Date("2026-05-01T12:00:00Z");
@@ -156,5 +158,56 @@ describe("pickUpcomingMeeting", () => {
 
   it("returns null when nothing is upcoming", () => {
     expect(pickUpcomingMeeting([meeting("past", before)], now)).toBeNull();
+  });
+});
+
+describe("upNextDeadline", () => {
+  const schedule = (
+    nominationDeadline: string | null,
+    votingDeadline: string | null,
+    isFinalized = false
+  ) => ({ isFinalized, nominationDeadline, votingDeadline });
+
+  it("names the deadline of the open phase", () => {
+    expect(upNextDeadline(schedule(after, after), now)).toEqual({
+      label: "Nominations close",
+      at: after,
+    });
+    expect(upNextDeadline(schedule(before, after), now)).toEqual({
+      label: "Voting closes",
+      at: after,
+    });
+  });
+
+  it("says the club is waiting once both deadlines pass", () => {
+    expect(upNextDeadline(schedule(before, before), now)).toEqual({
+      label: "Waiting for an admin to pick the book",
+      at: null,
+    });
+  });
+
+  it("has nothing to say without a deadline or once finalized", () => {
+    expect(upNextDeadline(schedule(null, null), now)).toBeNull();
+    expect(upNextDeadline(schedule(before, null), now)).toBeNull();
+    expect(upNextDeadline(schedule(after, after, true), now)).toBeNull();
+  });
+});
+
+describe("splitMeetingTimeline", () => {
+  const meeting = (id: string, meetingDate: string) => ({ id, meetingDate });
+
+  it("puts upcoming meetings soonest first and past ones latest first", () => {
+    const { upcoming, past } = splitMeetingTimeline(
+      [
+        meeting("old", "2026-01-01T00:00:00Z"),
+        meeting("later", "2026-07-01T00:00:00Z"),
+        meeting("now", at),
+        meeting("recent", before),
+        meeting("soon", after),
+      ],
+      now
+    );
+    expect(upcoming.map((m) => m.id)).toEqual(["now", "soon", "later"]);
+    expect(past.map((m) => m.id)).toEqual(["recent", "old"]);
   });
 });

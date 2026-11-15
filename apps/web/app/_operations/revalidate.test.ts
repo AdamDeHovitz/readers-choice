@@ -13,6 +13,10 @@ describe("pathsFor", () => {
       "/book-clubs/club-1",
       "/meetings",
     ]);
+    expect(pathsFor(keys.clubMeetings("club-1"))).toEqual([
+      "/book-clubs/club-1",
+      "/meetings",
+    ]);
     expect(pathsFor(keys.clubThemes("club-1"))).toEqual([
       "/book-clubs/club-1/themes",
     ]);

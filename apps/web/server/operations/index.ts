@@ -3,6 +3,7 @@ import type { Operation } from "../operation";
 import * as clubs from "./clubs";
 import * as connectedApps from "./connected-apps";
 import * as invites from "./invites";
+import * as meetings from "./meetings";
 import * as themes from "./themes";
 
 /**
@@ -11,7 +12,13 @@ import * as themes from "./themes";
  * actions, the HTTP API and the MCP server, app/_operations/) dispatch
  * through here.
  */
-export const operations = { clubs, connectedApps, invites, themes };
+export const operations = {
+  clubs,
+  connectedApps,
+  invites,
+  meetings,
+  themes,
+};
 
 /**
  * What the MCP server doesn't offer as tools:

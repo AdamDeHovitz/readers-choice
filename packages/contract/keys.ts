@@ -16,6 +16,8 @@ export const keys = {
   clubDirectory: () => ["clubs"] as const,
   /** Everything about one club: its details, members, requests, meetings. */
   club: (clubId: string) => ["club", clubId] as const,
+  /** A club's meetings: its home and schedule. */
+  clubMeetings: (clubId: string) => ["club", clubId, "meetings"] as const,
   /** A club's themes. */
   clubThemes: (clubId: string) => ["club", clubId, "themes"] as const,
 };

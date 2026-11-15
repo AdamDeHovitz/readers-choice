@@ -3,7 +3,8 @@
 import * as clubs from "./clubs";
 import * as connectedApps from "./connected-apps";
 import * as invites from "./invites";
+import * as meetings from "./meetings";
 import * as themes from "./themes";
 
 /** Every operation contract, by domain. server/operations/ implements each. */
-export const contracts = { clubs, connectedApps, invites, themes };
+export const contracts = { clubs, connectedApps, invites, meetings, themes };

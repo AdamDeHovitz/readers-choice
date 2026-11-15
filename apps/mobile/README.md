@@ -64,8 +64,15 @@ src/theme/         @readers-choice/tokens adapted for React Native: fonts, spaci
   Don't hard-code hex values or font names, and use `Text` from
   `@/components/text`, not React Native's `Text` (it defaults to the system font).
 - **Rules shared with the website live in `packages/core`**, not in a screen.
-  The themes filter and sort (`themesToShow`, `countThemes`) are used by both
-  apps' themes lists, so they can't drift.
+  The themes filter and sort (`themesToShow`, `countThemes`), meeting phases
+  and their labels (`meeting-schedule.ts`), date formats (`formatDate`), and
+  the book details line (`bookMetaLine`) are used by both apps, so they can't
+  drift. Book descriptions are HTML from outside sources: show them with
+  `descriptionToPlainText`, never as markup.
+- **Tappable cards and rows that open a screen use `PressableLink`**
+  (`@/components/pressable-link`), not `<Link asChild><Pressable>`: on the
+  web build, Link drops the Pressable's style function and the surface loses
+  its background and padding.
 - **Icons come from `@/components/icon`** (Ionicons, imported from its own
   entry point so only its font is bundled). Label the control, not the icon.
 - **Confirm destructive actions with `confirm()`** (`@/lib/confirm`): a native
