@@ -7,7 +7,12 @@ import {
 } from "@readers-choice/core/meeting-ballots";
 import { isVotingClosed } from "@readers-choice/core/meeting-schedule";
 import { UserError } from "@readers-choice/core/user-error";
-import { runHybridIRV } from "@readers-choice/core/voting-algorithm";
+import {
+  runHybridIRV,
+  type EliminationReason,
+  type TallyRules,
+  type TiebreakReason,
+} from "@readers-choice/core/voting-algorithm";
 import { requireMember } from "./authz";
 import type { Db } from "./db";
 import { throwIfDbError } from "./errors";
@@ -68,18 +73,11 @@ export async function getUserRankedVotes(
   return data.map((v) => ({ bookOptionId: v.book_option_id, rank: v.rank }));
 }
 
-export type EliminationReason =
-  | "lowest_support"
-  | "tiebreaker_first_choice"
-  | "tiebreaker_approval"
-  | "tiebreaker_random";
-
 export interface EliminationRound {
   round: number;
   bookSupport: {
     bookOptionId: string;
     support: number;
-    firstChoiceVotes: number;
   }[];
   eliminated: { bookOptionId: string; reason: EliminationReason } | null;
   transfers: {
@@ -91,6 +89,7 @@ export interface EliminationRound {
   activeVoters: number;
   majorityThreshold: number;
   winner: string | null;
+  winnerTiebreak: TiebreakReason | null;
 }
 
 export interface VotingResults {
@@ -113,6 +112,13 @@ export interface VotingResults {
     author: string;
     coverUrl: string | null;
   }[];
+  /** Tie-breaking rules this meeting is counted with */
+  tallyRules: TallyRules;
+}
+
+function toTallyRules(value: number): TallyRules {
+  if (value === 1 || value === 2) return value;
+  throw new Error(`Unknown tally rules: ${value}`);
 }
 
 /**
@@ -163,7 +169,8 @@ export async function calculateMeetingResults(
 
   const optionIds = bookDetails.map((b) => b.bookOptionId);
 
-  const [approvalRes, rankedRes, prefsRes] = await Promise.all([
+  const [rulesRes, approvalRes, rankedRes, prefsRes] = await Promise.all([
+    db.from("meetings").select("tally_rules").eq("id", meetingId).single(),
     db
       .from("votes")
       .select("user_id, book_option_id")
@@ -177,6 +184,8 @@ export async function calculateMeetingResults(
       .select("user_id, voting_method")
       .eq("meeting_id", meetingId),
   ]);
+  if (rulesRes.error) throw rulesRes.error;
+  const tallyRules = toTallyRules(rulesRes.data.tally_rules);
   if (approvalRes.error) throw approvalRes.error;
   if (rankedRes.error) throw rankedRes.error;
   if (prefsRes.error) throw prefsRes.error;
@@ -198,6 +207,7 @@ export async function calculateMeetingResults(
       rounds: [],
       voterBreakdown: { approvalVoters: 0, rankedVoters: 0, totalVoters: 0 },
       bookDetails,
+      tallyRules,
     };
   }
 
@@ -205,7 +215,8 @@ export async function calculateMeetingResults(
     optionIds,
     approvalBallots,
     rankedBallots,
-    seedFromString(meetingId)
+    seedFromString(meetingId),
+    tallyRules
   );
 
   const rounds: EliminationRound[] = result.rounds.map((r) => ({
@@ -213,7 +224,6 @@ export async function calculateMeetingResults(
     bookSupport: r.bookSupport.map((s) => ({
       bookOptionId: s.bookId,
       support: s.support,
-      firstChoiceVotes: s.firstChoiceVotes,
     })),
     eliminated: r.eliminated
       ? { bookOptionId: r.eliminated.bookId, reason: r.eliminated.reason }
@@ -227,6 +237,7 @@ export async function calculateMeetingResults(
     activeVoters: r.activeVoters,
     majorityThreshold: r.majorityThreshold,
     winner: r.winner,
+    winnerTiebreak: r.winnerTiebreak,
   }));
 
   const winnerId = result.winner;
@@ -248,6 +259,7 @@ export async function calculateMeetingResults(
     rounds,
     voterBreakdown: result.voterBreakdown,
     bookDetails,
+    tallyRules,
   };
 }
 

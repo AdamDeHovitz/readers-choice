@@ -31,6 +31,7 @@ function results(votingDeadline: string) {
     { data: meetingRow(votingDeadline) },
     { data: members },
     { data: [option] },
+    { data: { tally_rules: 1 } },
     { data: [{ user_id: "member", book_option_id: "o1" }] },
     { data: [] },
     { data: [] },
@@ -53,6 +54,12 @@ describe("calculateMeetingResults visibility", () => {
     const { db } = fakeDb(results(past));
     const tally = await calculateMeetingResults(db, "m1", "member");
     expect(tally?.winner?.bookOptionId).toBe("o1");
+  });
+
+  it("counts with the meeting's own tally rules", async () => {
+    const { db } = fakeDb(results(past));
+    const tally = await calculateMeetingResults(db, "m1", "member");
+    expect(tally?.tallyRules).toBe(1);
   });
 
   it("hides results from non-members", async () => {
