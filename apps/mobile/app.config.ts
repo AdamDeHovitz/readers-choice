@@ -40,6 +40,7 @@ const config: ExpoConfig = {
     ],
   ],
   experiments: { typedRoutes: true },
+  extra: { eas: { projectId: "7cfd7bf1-a9f2-46f1-987d-6947e714b8a9" } },
 };
 
 export default config;

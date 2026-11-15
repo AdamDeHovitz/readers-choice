@@ -6,8 +6,11 @@
  * Algorithm:
  * 1. Count "support" for each book = approvals + first-choice rankings
  * 2. If any book has support from >50% of non-exhausted voters, it wins
+ *    (approval voters can give several books a majority: the most support
+ *    wins, and a tie for most is broken as below)
  * 3. Otherwise, eliminate book with lowest support
- *    - Tiebreaker: fewest first-choice votes → fewest approvals → random
+ *    - Tiebreakers depend on the meeting's TallyRules (see breakTie and
+ *      breakTieV1)
  * 4. Transfer ranked voters whose top choice was eliminated to their next choice
  * 5. Approval voters whose book is eliminated lose that support (no transfer)
  * 6. Voters with no remaining approved/ranked books are "exhausted"
@@ -24,20 +27,34 @@ export interface RankedBallot {
   rankings: { bookId: string; rank: number }[];
 }
 
+/**
+ * Which tie-breaking rules a meeting is counted with. A meeting keeps the
+ * rules it was voted under, so changing them never rewrites a past result.
+ * - 1: ties for last are broken by approval votes (approval ballots only),
+ *   then at random; a tie for the most support goes to the first candidate.
+ * - 2: ties for last and for the most support are broken by whole ballots
+ *   from both pools (see breakTie).
+ */
+export type TallyRules = 1 | 2;
+export const CURRENT_TALLY_RULES: TallyRules = 2;
+
+export type TiebreakReason =
+  | "tiebreaker_head_to_head"
+  | "tiebreaker_ballot_mentions"
+  | "tiebreaker_approval"
+  | "tiebreaker_random";
+
+export type EliminationReason = "lowest_support" | TiebreakReason;
+
 export interface EliminationRound {
   round: number;
   bookSupport: {
     bookId: string;
     support: number;
-    firstChoiceVotes: number;
   }[];
   eliminated: {
     bookId: string;
-    reason:
-      | "lowest_support"
-      | "tiebreaker_first_choice"
-      | "tiebreaker_approval"
-      | "tiebreaker_random";
+    reason: EliminationReason;
   } | null;
   transfers: {
     fromBookId: string;
@@ -48,6 +65,8 @@ export interface EliminationRound {
   activeVoters: number;
   majorityThreshold: number;
   winner: string | null;
+  /** How the winner was chosen among books tied for the most support */
+  winnerTiebreak: TiebreakReason | null;
 }
 
 export interface VotingResult {
@@ -67,13 +86,15 @@ export interface VotingResult {
  * @param approvalBallots - Approval voting ballots (each voter approves multiple books)
  * @param rankedBallots - Ranked choice ballots (each voter ranks books in preference order)
  * @param randomSeed - Optional seed for deterministic tiebreaker (for testing)
+ * @param rules - Tie-breaking rules; defaults to the current ones
  * @returns VotingResult with winner and round-by-round breakdown
  */
 export function runHybridIRV(
   bookIds: string[],
   approvalBallots: ApprovalBallot[],
   rankedBallots: RankedBallot[],
-  randomSeed?: number
+  randomSeed?: number,
+  rules: TallyRules = CURRENT_TALLY_RULES
 ): VotingResult {
   // Position of each candidate; also used to break ties between equal ranks
   const bookOrder = new Map<string, number>();
@@ -113,6 +134,17 @@ export function runHybridIRV(
     rankedByVoter.set(ballot.odId, deduped);
   }
 
+  // Whole-ballot preferences used to break ties: every approved book is
+  // position 0 (approval voters like them equally), ranked books their index
+  const ballots: BallotPositions[] = [
+    ...[...approvalByVoter.values()].map(
+      (approved) => new Map([...approved].map((bookId) => [bookId, 0]))
+    ),
+    ...[...rankedByVoter.values()].map(
+      (rankings) => new Map(rankings.map((r, i) => [r.bookId, i]))
+    ),
+  ];
+
   const approvalVoterCount = approvalByVoter.size;
   const rankedVoterCount = rankedByVoter.size;
   const allVoterIds = new Set([
@@ -145,12 +177,9 @@ export function runHybridIRV(
     roundNumber++;
 
     // Calculate support for each active book
-    const bookSupport: Map<
-      string,
-      { support: number; firstChoiceVotes: number }
-    > = new Map();
+    const bookSupport: Map<string, { support: number }> = new Map();
     for (const bookId of activeBookIds) {
-      bookSupport.set(bookId, { support: 0, firstChoiceVotes: 0 });
+      bookSupport.set(bookId, { support: 0 });
     }
 
     // Count approval votes
@@ -165,11 +194,9 @@ export function runHybridIRV(
         continue;
       }
 
-      // Each active approved book gets +1 support and +1 first choice
+      // Each active approved book gets +1 support
       for (const bookId of activeApproved) {
-        const current = bookSupport.get(bookId)!;
-        current.support++;
-        current.firstChoiceVotes++;
+        bookSupport.get(bookId)!.support++;
       }
     }
 
@@ -185,10 +212,7 @@ export function runHybridIRV(
         continue;
       }
 
-      const topChoice = activeRankings[0].bookId;
-      const current = bookSupport.get(topChoice)!;
-      current.support++;
-      current.firstChoiceVotes++;
+      bookSupport.get(activeRankings[0].bookId)!.support++;
     }
 
     // Calculate majority threshold (>50% of non-exhausted voters)
@@ -200,7 +224,6 @@ export function runHybridIRV(
       .map(([bookId, s]) => ({
         bookId,
         support: s.support,
-        firstChoiceVotes: s.firstChoiceVotes,
       }))
       .sort((a, b) => b.support - a.support);
 
@@ -213,11 +236,22 @@ export function runHybridIRV(
       activeVoters,
       majorityThreshold,
       winner: null,
+      winnerTiebreak: null,
     };
 
     // Check for winner
-    if (supportArray[0].support >= majorityThreshold) {
-      winner = supportArray[0].bookId;
+    const topSupport = supportArray[0].support;
+    if (topSupport >= majorityThreshold) {
+      const tiedForTop = supportArray
+        .filter((s) => s.support === topSupport)
+        .map((s) => s.bookId);
+      if (tiedForTop.length === 1 || rules === 1) {
+        winner = tiedForTop[0];
+      } else {
+        const pick = breakTie(tiedForTop, ballots, seededRandom, "strongest");
+        winner = pick.bookId;
+        round.winnerTiebreak = pick.reason;
+      }
       round.winner = winner;
       rounds.push(round);
       break;
@@ -225,64 +259,15 @@ export function runHybridIRV(
 
     // No majority - eliminate lowest support book
     const lowestSupport = supportArray[supportArray.length - 1].support;
-    const tiedForLowest = supportArray.filter(
-      (s) => s.support === lowestSupport
-    );
-
-    let toEliminate: string;
-    let eliminationReason:
-      | "lowest_support"
-      | "tiebreaker_first_choice"
-      | "tiebreaker_approval"
-      | "tiebreaker_random" = "lowest_support";
-
-    if (tiedForLowest.length === 1) {
-      toEliminate = tiedForLowest[0].bookId;
-    } else {
-      // Tiebreaker 1: Fewest first-choice votes
-      const minFirstChoice = Math.min(
-        ...tiedForLowest.map((t) => t.firstChoiceVotes)
-      );
-      const tiedByFirstChoice = tiedForLowest.filter(
-        (t) => t.firstChoiceVotes === minFirstChoice
-      );
-
-      if (tiedByFirstChoice.length === 1) {
-        toEliminate = tiedByFirstChoice[0].bookId;
-        eliminationReason = "tiebreaker_first_choice";
-      } else {
-        // Tiebreaker 2: Fewest total approval votes (from original ballots)
-        const approvalCounts: Map<string, number> = new Map();
-        for (const t of tiedByFirstChoice) {
-          approvalCounts.set(t.bookId, 0);
-        }
-
-        for (const approvedBooks of approvalByVoter.values()) {
-          for (const bookId of approvedBooks) {
-            if (approvalCounts.has(bookId)) {
-              approvalCounts.set(bookId, approvalCounts.get(bookId)! + 1);
-            }
-          }
-        }
-
-        const minApproval = Math.min(...approvalCounts.values());
-        const tiedByApproval = tiedByFirstChoice.filter(
-          (t) => approvalCounts.get(t.bookId) === minApproval
-        );
-
-        if (tiedByApproval.length === 1) {
-          toEliminate = tiedByApproval[0].bookId;
-          eliminationReason = "tiebreaker_approval";
-        } else {
-          // Tiebreaker 3: Random (or seeded random for testing)
-          const randomIndex = Math.floor(
-            seededRandom() * tiedByApproval.length
-          );
-          toEliminate = tiedByApproval[randomIndex].bookId;
-          eliminationReason = "tiebreaker_random";
-        }
-      }
-    }
+    const tiedForLowest = supportArray
+      .filter((s) => s.support === lowestSupport)
+      .map((s) => s.bookId);
+    const { bookId: toEliminate, reason: eliminationReason } =
+      tiedForLowest.length === 1
+        ? { bookId: tiedForLowest[0], reason: "lowest_support" as const }
+        : rules === 1
+          ? breakTieV1(tiedForLowest, approvalByVoter, seededRandom)
+          : breakTie(tiedForLowest, ballots, seededRandom, "weakest");
 
     // Record transfers from ranked voters
     const transfers: Map<string, number> = new Map();
@@ -335,5 +320,94 @@ export function runHybridIRV(
       rankedVoters: rankedVoterCount,
       totalVoters,
     },
+  };
+}
+
+/** A voter's books by preference position (lower is better); absent = unlisted. */
+type BallotPositions = Map<string, number>;
+
+/** Whether a ballot prefers book a to book b. Any listed book beats an unlisted one. */
+function prefers(ballot: BallotPositions, a: string, b: string): boolean {
+  const pa = ballot.get(a);
+  if (pa === undefined) return false;
+  const pb = ballot.get(b);
+  return pb === undefined || pa < pb;
+}
+
+/**
+ * Choose the weakest (to eliminate) or strongest (to elect) of books tied on
+ * support, looking at whole ballots from both pools rather than the round's
+ * support counts:
+ * 1. Head-to-head record against the other tied books: matchups won minus
+ *    matchups lost, where a matchup is won when more voters prefer the book.
+ * 2. Number of ballots the book is on (approved, or ranked anywhere).
+ * 3. Random, among books still tied.
+ * Ties are kept in candidate order so the seeded draw is reproducible.
+ */
+function breakTie(
+  tied: string[],
+  ballots: BallotPositions[],
+  random: () => number,
+  pick: "weakest" | "strongest"
+): { bookId: string; reason: TiebreakReason } {
+  const sign = pick === "strongest" ? 1 : -1;
+  const best = (scores: number[]) => {
+    const target = Math.max(...scores.map((x) => sign * x));
+    return tied.filter((_, i) => sign * scores[i] === target);
+  };
+
+  const records = tied.map((a) =>
+    tied.reduce((record, b) => {
+      if (a === b) return record;
+      const forA = ballots.filter((v) => prefers(v, a, b)).length;
+      const forB = ballots.filter((v) => prefers(v, b, a)).length;
+      return record + Math.sign(forA - forB);
+    }, 0)
+  );
+  const byHeadToHead = best(records);
+  if (byHeadToHead.length === 1) {
+    return { bookId: byHeadToHead[0], reason: "tiebreaker_head_to_head" };
+  }
+
+  const mentions = tied.map((bookId) =>
+    byHeadToHead.includes(bookId)
+      ? ballots.filter((v) => v.has(bookId)).length
+      : // Out of the running: never best in either direction
+        -sign * Infinity
+  );
+  const byMentions = best(mentions);
+  if (byMentions.length === 1) {
+    return { bookId: byMentions[0], reason: "tiebreaker_ballot_mentions" };
+  }
+
+  return {
+    bookId: byMentions[Math.floor(random() * byMentions.length)],
+    reason: "tiebreaker_random",
+  };
+}
+
+/**
+ * Rules 1: eliminate the tied book with the fewest approvals on approval
+ * ballots, then at random. (These rules also had a "fewest first-choice
+ * votes" step, but that count always equalled support, so it never decided.)
+ */
+function breakTieV1(
+  tied: string[],
+  approvalByVoter: Map<string, Set<string>>,
+  random: () => number
+): { bookId: string; reason: TiebreakReason } {
+  const approvals = tied.map(
+    (bookId) =>
+      [...approvalByVoter.values()].filter((approved) => approved.has(bookId))
+        .length
+  );
+  const fewest = Math.min(...approvals);
+  const byApproval = tied.filter((_, i) => approvals[i] === fewest);
+  if (byApproval.length === 1) {
+    return { bookId: byApproval[0], reason: "tiebreaker_approval" };
+  }
+  return {
+    bookId: byApproval[Math.floor(random() * byApproval.length)],
+    reason: "tiebreaker_random",
   };
 }

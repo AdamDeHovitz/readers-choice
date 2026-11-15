@@ -264,45 +264,138 @@ describe("Hybrid IRV Voting Algorithm", () => {
   });
 
   describe("Tiebreakers", () => {
-    it("should use fewest first-choice votes as first tiebreaker", () => {
-      const bookIds = ["A", "B", "C"];
-      // Set up so B and C tie on support but B has fewer first-choice votes
-      const approvalBallots: ApprovalBallot[] = [
-        { odId: "voter1", approvedBookIds: ["A"] },
-        { odId: "voter2", approvedBookIds: ["A"] },
-        { odId: "voter3", approvedBookIds: ["A"] },
-        { odId: "voter4", approvedBookIds: ["B"] },
-        { odId: "voter5", approvedBookIds: ["C"] },
-      ];
-      const rankedBallots: RankedBallot[] = [];
+    it("should eliminate the tied book that loses the most head-to-head matchups", () => {
+      // B and C tie on support (1 each). The approval voters approve neither,
+      // but the ranked voter for A prefers B to C, so C loses head-to-head.
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [
+          { odId: "v1", approvedBookIds: ["A"] },
+          { odId: "v2", approvedBookIds: ["B"] },
+          { odId: "v3", approvedBookIds: ["C"] },
+        ],
+        [
+          {
+            odId: "v4",
+            rankings: [
+              { bookId: "A", rank: 1 },
+              { bookId: "B", rank: 2 },
+              { bookId: "C", rank: 3 },
+            ],
+          },
+        ],
+        1
+      );
 
-      const result = runHybridIRV(bookIds, approvalBallots, rankedBallots);
-
-      // A=3 (majority with 5 voters, need 3). A wins immediately.
-      expect(result.winner).toBe("A");
-      expect(result.rounds.length).toBe(1);
+      expect(result.rounds[0].eliminated).toEqual({
+        bookId: "C",
+        reason: "tiebreaker_head_to_head",
+      });
     });
 
-    it("should use fewest approval votes as second tiebreaker", () => {
-      const bookIds = ["A", "B", "C"];
-      // All have same support and same first-choice, but different total approvals
-      const approvalBallots: ApprovalBallot[] = [
-        { odId: "voter1", approvedBookIds: ["A", "B", "C"] }, // Approves all
-        { odId: "voter2", approvedBookIds: ["A", "B"] }, // Approves A and B
-        { odId: "voter3", approvedBookIds: ["A"] }, // Only A
-      ];
-      const rankedBallots: RankedBallot[] = [];
+    it("should judge ties on whole ballots, not approval counts alone", () => {
+      // A, B and C tie on support (2 each) behind D. C has the fewest
+      // approvals, but every ranked voter prefers it, so it wins both of its
+      // matchups and A, which loses both, is eliminated instead.
+      const result = runHybridIRV(
+        ["A", "B", "C", "D"],
+        [
+          { odId: "a1", approvedBookIds: ["A", "B"] },
+          { odId: "a2", approvedBookIds: ["A", "B"] },
+          { odId: "a3", approvedBookIds: ["C"] },
+          { odId: "a4", approvedBookIds: ["D"] },
+        ],
+        [
+          {
+            odId: "r1",
+            rankings: [
+              { bookId: "C", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+          ...["r2", "r3"].map((odId) => ({
+            odId,
+            rankings: [
+              { bookId: "D", rank: 1 },
+              { bookId: "C", rank: 2 },
+              { bookId: "B", rank: 3 },
+            ],
+          })),
+        ],
+        1
+      );
 
-      const result = runHybridIRV(bookIds, approvalBallots, rankedBallots);
+      expect(result.rounds[0].bookSupport.map((s) => s.support)).toEqual([
+        3, 2, 2, 2,
+      ]);
+      expect(result.rounds[0].eliminated).toEqual({
+        bookId: "A",
+        reason: "tiebreaker_head_to_head",
+      });
+    });
 
-      // Round 1: Each voter approves different amounts
-      // A: 3 approvals (all three voters)
-      // B: 2 approvals (voter1, voter2)
-      // C: 1 approval (voter1)
-      // Support in round 1: A=3, B=2, C=1
-      // 3 voters, need 2 for majority. A wins immediately!
+    it("should fall back to the book on the fewest ballots", () => {
+      // B and C tie on support and split head-to-head 2-2, but B is on three
+      // ballots and C on two.
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [
+          { odId: "x", approvedBookIds: ["B"] },
+          { odId: "y", approvedBookIds: ["C"] },
+        ],
+        [
+          {
+            odId: "p",
+            rankings: [
+              { bookId: "A", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+          {
+            odId: "q",
+            rankings: [
+              { bookId: "A", rank: 1 },
+              { bookId: "C", rank: 2 },
+              { bookId: "B", rank: 3 },
+            ],
+          },
+        ],
+        1
+      );
 
+      expect(result.rounds[0].eliminated).toEqual({
+        bookId: "C",
+        reason: "tiebreaker_ballot_mentions",
+      });
       expect(result.winner).toBe("A");
+    });
+
+    it("should break a tie between books that both reach a majority", () => {
+      // A and B both have 3 of 4 voters. The approval voters like them
+      // equally; the ranked voter prefers B, so B wins rather than whichever
+      // book is listed first.
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [
+          { odId: "v1", approvedBookIds: ["A", "B"] },
+          { odId: "v2", approvedBookIds: ["A", "B"] },
+          { odId: "v3", approvedBookIds: ["A", "B"] },
+        ],
+        [
+          {
+            odId: "r1",
+            rankings: [
+              { bookId: "C", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+        ],
+        1
+      );
+
+      expect(result.winner).toBe("B");
+      expect(result.rounds).toHaveLength(1);
+      expect(result.rounds[0].winnerTiebreak).toBe("tiebreaker_head_to_head");
     });
 
     it("should use random tiebreaker when all else equal (with seed for determinism)", () => {
@@ -361,8 +454,7 @@ describe("Hybrid IRV Voting Algorithm", () => {
     });
 
     it("should not fall back to random when an earlier tiebreaker decides", () => {
-      // A and B tie on support; first-choice and approval counts also tie, but
-      // only between A and B. C is clearly lowest, so no random draw is needed.
+      // A and B tie on support, but C is clearly lowest, so no tiebreak runs.
       const result = runHybridIRV(
         ["A", "B", "C"],
         [
@@ -378,6 +470,71 @@ describe("Hybrid IRV Voting Algorithm", () => {
         bookId: "C",
         reason: "lowest_support",
       });
+    });
+  });
+
+  describe("Tally rules 1 (meetings voted before the current rules)", () => {
+    it("should break a tie for last by approvals on approval ballots only", () => {
+      // Same ballots as the whole-ballot test above: rules 2 eliminate A,
+      // rules 1 eliminate C, which has the fewest approvals.
+      const result = runHybridIRV(
+        ["A", "B", "C", "D"],
+        [
+          { odId: "a1", approvedBookIds: ["A", "B"] },
+          { odId: "a2", approvedBookIds: ["A", "B"] },
+          { odId: "a3", approvedBookIds: ["C"] },
+          { odId: "a4", approvedBookIds: ["D"] },
+        ],
+        [
+          {
+            odId: "r1",
+            rankings: [
+              { bookId: "C", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+          ...["r2", "r3"].map((odId) => ({
+            odId,
+            rankings: [
+              { bookId: "D", rank: 1 },
+              { bookId: "C", rank: 2 },
+              { bookId: "B", rank: 3 },
+            ],
+          })),
+        ],
+        1,
+        1
+      );
+
+      expect(result.rounds[0].eliminated).toEqual({
+        bookId: "C",
+        reason: "tiebreaker_approval",
+      });
+    });
+
+    it("should give a tie for the most support to the first candidate", () => {
+      const result = runHybridIRV(
+        ["A", "B", "C"],
+        [
+          { odId: "v1", approvedBookIds: ["A", "B"] },
+          { odId: "v2", approvedBookIds: ["A", "B"] },
+          { odId: "v3", approvedBookIds: ["A", "B"] },
+        ],
+        [
+          {
+            odId: "r1",
+            rankings: [
+              { bookId: "C", rank: 1 },
+              { bookId: "B", rank: 2 },
+            ],
+          },
+        ],
+        1,
+        1
+      );
+
+      expect(result.winner).toBe("A");
+      expect(result.rounds[0].winnerTiebreak).toBeNull();
     });
   });
 
