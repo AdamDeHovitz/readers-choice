@@ -11,7 +11,7 @@ import { MeetingRankedVoting } from "./meeting-ranked-voting";
 import { VotingResultsDisplay } from "./voting-results";
 import { AdminFinalizeSection } from "./admin-finalize-section";
 import { BookOptionCard } from "./book-option-card";
-import { FinalizedVotingResults } from "./finalized-voting-results";
+import { VotingResultsDropdown } from "./voting-results-dropdown";
 import type { MeetingBookOptionWithVotes } from "@/server/meetings";
 
 interface BookOptionsListProps {
@@ -61,6 +61,11 @@ export function BookOptionsList({
 
   // Determine current voting method (default to approval if not set)
   const currentMethod = userVotingMethod || "approval";
+
+  // Admins can watch the tally while voting is open.
+  const liveResults = canVote && currentUserIsAdmin && (
+    <VotingResultsDropdown meetingId={meetingId} live />
+  );
 
   if (bookOptions.length === 0) {
     return (
@@ -163,6 +168,8 @@ export function BookOptionsList({
           </section>
         )}
 
+        {liveResults}
+
         {/* Admin finalize section */}
         {currentUserIsAdmin && (
           <AdminFinalizeSection
@@ -234,7 +241,8 @@ export function BookOptionsList({
         />
       ))}
 
-      {isFinalized && <FinalizedVotingResults meetingId={meetingId} />}
+      {liveResults}
+      {isFinalized && <VotingResultsDropdown meetingId={meetingId} />}
     </div>
   );
 }

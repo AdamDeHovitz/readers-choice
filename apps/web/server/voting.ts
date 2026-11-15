@@ -121,7 +121,8 @@ export interface VotingResults {
  * Only current members' ballots count, each in the pool matching the voter's
  * voting preference. Random tie-breaks are seeded from the meeting ID so the
  * outcome is stable across requests. Returns null when the meeting has no
- * options or the user isn't a member.
+ * options, the user isn't a member, or voting is still open and the user
+ * isn't an admin (only admins may watch the tally live).
  */
 export async function calculateMeetingResults(
   db: Db,
@@ -132,14 +133,17 @@ export async function calculateMeetingResults(
 
   const { data: members, error: membersError } = await db
     .from("members")
-    .select("user_id")
+    .select("user_id, is_admin")
     .eq("book_club_id", meeting.bookClubId);
   if (membersError) throw membersError;
+
+  const viewer = members.find((m) => m.user_id === userId);
+  if (!viewer) return null;
+  if (!isVotingClosed(meeting) && viewer.is_admin !== true) return null;
 
   const memberIds = new Set(
     members.flatMap((m) => (m.user_id ? [m.user_id] : []))
   );
-  if (!memberIds.has(userId)) return null;
 
   const { data: options, error: optionsError } = await db
     .from("book_options")

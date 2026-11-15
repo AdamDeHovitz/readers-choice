@@ -48,7 +48,7 @@ export function VotingResultsDisplay({
   if (!winner && rounds.length === 0) {
     return (
       <div className="text-dark-500 py-6 text-center">
-        <p>No votes were cast.</p>
+        <p>No votes have been cast.</p>
       </div>
     );
   }
@@ -66,7 +66,8 @@ export function VotingResultsDisplay({
           </div>
           <p className="text-dark-900 font-semibold">{winner.bookTitle}</p>
           <p className="text-dark-600 mt-1 text-sm">
-            Won in round {winner.wonInRound} with {winner.finalSupport} votes
+            Reached a majority in round {winner.wonInRound} with{" "}
+            {winner.finalSupport} {winner.finalSupport === 1 ? "vote" : "votes"}
           </p>
         </div>
       )}
@@ -75,7 +76,7 @@ export function VotingResultsDisplay({
       <div className="bg-cream-100 border-border rounded-lg border p-3">
         <p className="text-dark-700 text-sm">
           <span className="font-semibold">{voterBreakdown.totalVoters}</span>{" "}
-          members voted
+          {voterBreakdown.totalVoters === 1 ? "member" : "members"} voted
           {voterBreakdown.approvalVoters > 0 &&
             voterBreakdown.rankedVoters > 0 && (
               <span className="text-dark-500">
