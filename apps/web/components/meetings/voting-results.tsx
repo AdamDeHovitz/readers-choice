@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type {
+  EliminationReason,
+  TiebreakReason,
+} from "@readers-choice/core/voting-algorithm";
 import type { VotingResults } from "@/server/voting";
 
 interface VotingResultsDisplayProps {
@@ -9,24 +13,31 @@ interface VotingResultsDisplayProps {
   winnerLabel?: string;
 }
 
-function getEliminationReasonText(
-  reason:
-    | "lowest_support"
-    | "tiebreaker_first_choice"
-    | "tiebreaker_approval"
-    | "tiebreaker_random"
-): string {
+function getEliminationReasonText(reason: EliminationReason): string {
   switch (reason) {
     case "lowest_support":
       return "lowest support";
-    case "tiebreaker_first_choice":
-      return "fewest first-choice votes (tiebreaker)";
+    case "tiebreaker_head_to_head":
+      return "worst head-to-head record (tiebreaker)";
+    case "tiebreaker_ballot_mentions":
+      return "on the fewest ballots (tiebreaker)";
     case "tiebreaker_approval":
       return "fewest approval votes (tiebreaker)";
     case "tiebreaker_random":
       return "random selection (tiebreaker)";
-    default:
-      return "eliminated";
+  }
+}
+
+function getWinnerTiebreakText(reason: TiebreakReason): string {
+  switch (reason) {
+    case "tiebreaker_head_to_head":
+      return "best head-to-head record";
+    case "tiebreaker_ballot_mentions":
+      return "on the most ballots";
+    case "tiebreaker_approval":
+      return "most approval votes";
+    case "tiebreaker_random":
+      return "random selection";
   }
 }
 
@@ -36,7 +47,7 @@ export function VotingResultsDisplay({
 }: VotingResultsDisplayProps) {
   const [showDetails, setShowDetails] = useState(false);
 
-  const { winner, rounds, voterBreakdown, bookDetails } = results;
+  const { winner, rounds, voterBreakdown, bookDetails, tallyRules } = results;
 
   function getBookTitle(bookOptionId: string): string {
     return (
@@ -128,6 +139,11 @@ export function VotingResultsDisplay({
                 <li>If a book has &gt;50% of active voters, it wins</li>
                 <li>Otherwise, eliminate the book with lowest support</li>
                 <li>
+                  {tallyRules === 1
+                    ? "Ties for lowest are broken by fewest approval votes, then at random"
+                    : "Ties are broken by head-to-head record across every ballot (how many books each one beats), then by how many ballots include it, then at random"}
+                </li>
+                <li>
                   Ranked voters whose top choice was eliminated transfer to
                   their next choice
                 </li>
@@ -191,6 +207,13 @@ export function VotingResultsDisplay({
                   {round.winner ? (
                     <p className="text-rust-700 text-sm font-medium">
                       ✓ {getBookTitle(round.winner)} reached majority!
+                      {round.winnerTiebreak && (
+                        <span className="text-dark-500 font-normal">
+                          {" "}
+                          (won a tie for most votes:{" "}
+                          {getWinnerTiebreakText(round.winnerTiebreak)})
+                        </span>
+                      )}
                     </p>
                   ) : round.eliminated ? (
                     <div className="text-dark-600 text-sm">

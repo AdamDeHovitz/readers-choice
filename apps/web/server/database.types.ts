@@ -432,6 +432,7 @@ export type Database = {
           meeting_date: string;
           nomination_deadline: string | null;
           selected_book_id: string | null;
+          tally_rules: number;
           theme_id: string | null;
           updated_at: string | null;
           voting_deadline: string | null;
@@ -448,6 +449,7 @@ export type Database = {
           meeting_date: string;
           nomination_deadline?: string | null;
           selected_book_id?: string | null;
+          tally_rules?: number;
           theme_id?: string | null;
           updated_at?: string | null;
           voting_deadline?: string | null;
@@ -463,6 +465,7 @@ export type Database = {
           meeting_date?: string;
           nomination_deadline?: string | null;
           selected_book_id?: string | null;
+          tally_rules?: number;
           theme_id?: string | null;
           updated_at?: string | null;
           voting_deadline?: string | null;
