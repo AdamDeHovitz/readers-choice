@@ -1,3 +1,4 @@
+import { isLocalPath } from "@readers-choice/core/local-path";
 import { LoginForm } from "@/components/auth/login-form";
 
 interface LoginPageProps {
@@ -10,12 +11,7 @@ function getSafeCallbackUrl(
   callbackUrl: string | string[] | undefined
 ): string {
   const value = Array.isArray(callbackUrl) ? callbackUrl[0] : callbackUrl;
-
-  if (value?.startsWith("/") && !value.startsWith("//")) {
-    return value;
-  }
-
-  return "/dashboard";
+  return isLocalPath(value) ? value : "/dashboard";
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {

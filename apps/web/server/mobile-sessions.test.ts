@@ -3,11 +3,11 @@ import { decodeJwt } from "jose";
 import { fakeDb } from "@/test/fake-db";
 import {
   endSession,
-  hashToken,
   refreshSession,
   startSession,
   verifyAccessToken,
 } from "./mobile-sessions";
+import { hashToken } from "./tokens";
 
 const user = { id: "user-1", name: "Bob", email: "bob@example.test" };
 const NOW = new Date("2026-11-11T12:00:00Z");

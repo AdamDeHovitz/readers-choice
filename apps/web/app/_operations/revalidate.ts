@@ -17,7 +17,7 @@ export function revalidateKeys(keys: readonly InvalidationKey[]): void {
 export function pathsFor(key: InvalidationKey): string[] {
   switch (key[0]) {
     case "me":
-      return ["/dashboard"];
+      return key[1] === "connectedApps" ? ["/settings"] : ["/dashboard"];
     case "clubs":
       return ["/browse"];
     case "club":

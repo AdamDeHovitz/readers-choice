@@ -23,9 +23,10 @@ it("matches the committed contract snapshot", async () => {
   const operations = Object.values(contracts)
     .flatMap((domain) => Object.values(domain) as OperationContract[])
     .sort((a, b) => a.name.localeCompare(b.name))
-    .map(({ name, kind, input, output, cacheKey }) => ({
+    .map(({ name, kind, description, input, output, cacheKey }) => ({
       name,
       kind,
+      description,
       ...(cacheKey && { cacheKey: cacheKey(placeholderInput) }),
       input: z.toJSONSchema(input, { io: "input", unrepresentable: "any" }),
       output: z.toJSONSchema(output, { io: "output", unrepresentable: "any" }),

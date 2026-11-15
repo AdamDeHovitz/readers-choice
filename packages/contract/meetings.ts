@@ -24,6 +24,8 @@ export type ClubMeeting = z.output<typeof clubMeeting>;
 export const listClubMeetings = defineContract({
   name: "meetings.list",
   kind: "query",
+  description:
+    "List a club's meetings, newest first, with dates, deadlines, theme, the chosen book and whether each is finalized. Club members only.",
   input: z.object({ bookClubId: rowId }),
   output: z.object({
     club: z.object({ id: z.string(), name: z.string() }),

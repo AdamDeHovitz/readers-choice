@@ -2,14 +2,13 @@ import "server-only";
 import type { z } from "zod";
 import * as auth from "@readers-choice/contract/auth";
 import type { ActionResult, ErrorCode } from "@readers-choice/contract/result";
-import { normalizeEmail } from "@readers-choice/core/credentials";
 import { UserError } from "@readers-choice/core/user-error";
 import { createAdminClient, type Db } from "@/server/db";
 import { corsJson } from "./cors";
 import { settle } from "@/server/errors";
 import { verifyGoogleIdToken } from "@/server/google-id-token";
 import * as sessions from "@/server/mobile-sessions";
-import { verifyPassword } from "@/server/password";
+import { checkPasswordSignIn } from "@/server/password-sign-in";
 import {
   consumeRateLimit,
   getClientIp,
@@ -105,18 +104,14 @@ export const passwordSignIn = endpoint({
   ipLimit: rule("mobile-signin:ip", 20),
   fallbackError: "Sign-in failed. Please try again.",
   async run(db, { email, password, deviceName }) {
-    const normalized = normalizeEmail(email);
-    const emailLimit = rule("mobile-signin:email", 10);
-    if (!(await consumeRateLimit(db, emailLimit, normalized))) {
-      throw new RateLimited();
-    }
-    const account = await findAccountByEmail(db, normalized);
+    const result = await checkPasswordSignIn(db, email, password);
+    if (result.kind === "rate_limited") throw new RateLimited();
     // Same message whether the account is missing, Google-only or the
     // password is wrong, so the endpoint doesn't reveal who has an account.
-    if (!account?.passwordHash) throw new UserError(BAD_CREDENTIALS);
-    if (!(await verifyPassword(password, account.passwordHash))) {
+    if (result.kind === "bad_credentials") {
       throw new UserError(BAD_CREDENTIALS);
     }
+    const { account } = result;
     return sessions.startSession(
       db,
       { id: account.id, name: account.name, email: account.email },

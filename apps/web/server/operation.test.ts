@@ -10,6 +10,7 @@ import type { Viewer } from "./viewer";
 const contract = defineContract({
   name: "test.double",
   kind: "mutation",
+  description: "Double a number.",
   input: z.object({ n: z.number({ error: "n must be a number" }) }),
   output: z.object({ doubled: z.number() }),
 });

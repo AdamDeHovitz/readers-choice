@@ -12,6 +12,19 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: workspaceRoot,
   // Shared workspace packages ship TypeScript source.
   transpilePackages: ["@readers-choice/core", "@readers-choice/contract"],
+  async headers() {
+    return [
+      {
+        // The OAuth consent screen must never be framed, or another site
+        // could overlay it and trick a click on Allow (clickjacking).
+        source: "/oauth/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

@@ -10,6 +10,8 @@
 export const keys = {
   /** The signed-in member's clubs. */
   myClubs: () => ["me", "clubs"] as const,
+  /** Apps the signed-in user connected through the MCP server. */
+  connectedApps: () => ["me", "connectedApps"] as const,
   /** The clubs anyone can find and join or ask to join. */
   clubDirectory: () => ["clubs"] as const,
   /** Everything about one club: its details, members, requests, meetings. */

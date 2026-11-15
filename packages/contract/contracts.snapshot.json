@@ -4,6 +4,10 @@
       "me",
       "clubs"
     ],
+    "connectedApps": [
+      "me",
+      "connectedApps"
+    ],
     "clubDirectory": [
       "clubs"
     ],
@@ -26,6 +30,7 @@
     {
       "name": "clubs.approveJoinRequest",
       "kind": "mutation",
+      "description": "Admit someone who asked to join a club. Club admins only.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -53,6 +58,7 @@
     {
       "name": "clubs.cancelJoinRequest",
       "kind": "mutation",
+      "description": "Withdraw the user's own pending request to join a club.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -74,6 +80,7 @@
     {
       "name": "clubs.create",
       "kind": "mutation",
+      "description": "Create a new book club with the user as its admin. Returns the new club's id.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -112,6 +119,7 @@
     {
       "name": "clubs.declineJoinRequest",
       "kind": "mutation",
+      "description": "Turn down a request to join a club. Club admins only. The requester isn't told, and can't ask again until a cooldown passes.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -139,6 +147,7 @@
     {
       "name": "clubs.delete",
       "kind": "mutation",
+      "description": "Permanently delete a club and everything in it. Site super admins only; confirmationName must be the club's exact name.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -164,6 +173,7 @@
     {
       "name": "clubs.join",
       "kind": "mutation",
+      "description": "Join an open club, or ask to join a club that takes requests, with an optional note to the admins. Asking again while a request is pending replaces its note.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -210,6 +220,7 @@
     {
       "name": "clubs.mine",
       "kind": "query",
+      "description": "List the book clubs the user belongs to, most recently joined first, with each club's id and whether the user is an admin there.",
       "cacheKey": [
         "me",
         "clubs"
@@ -270,6 +281,7 @@
     {
       "name": "clubs.removeMember",
       "kind": "mutation",
+      "description": "Remove a member from a club. Admins can remove anyone; anyone can remove themselves, which leaves the club.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -297,6 +309,7 @@
     {
       "name": "clubs.setJoinPolicy",
       "kind": "mutation",
+      "description": "Set who can join a club: anyone, by request, or invite only. Club admins only. Opening a club admits everyone with a pending request.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -327,6 +340,7 @@
     {
       "name": "clubs.setMemberAdmin",
       "kind": "mutation",
+      "description": "Make a club member an admin, or remove their admin role. Club admins only; the last admin can't be demoted.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -356,8 +370,93 @@
       }
     },
     {
+      "name": "connectedApps.list",
+      "kind": "query",
+      "description": "List the apps the user has connected to their account, most recently used first.",
+      "cacheKey": [
+        "me",
+        "connectedApps"
+      ],
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {}
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "grantId": {
+                  "type": "string"
+                },
+                "clientName": {
+                  "type": "string"
+                },
+                "clientHost": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "scope": {
+                  "type": "string"
+                },
+                "connectedAt": {
+                  "type": "string"
+                },
+                "lastUsedAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "grantId",
+                "clientName",
+                "clientHost",
+                "scope",
+                "connectedAt",
+                "lastUsedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "apps"
+        ],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "connectedApps.revoke",
+      "kind": "mutation",
+      "description": "Disconnect an app: its access stops at once and it must ask again.",
+      "input": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "grantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$"
+          }
+        },
+        "required": [
+          "grantId"
+        ]
+      },
+      "output": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema"
+      }
+    },
+    {
       "name": "invites.create",
       "kind": "mutation",
+      "description": "Get a club's invite code, creating one if it has none. Club admins only. Anyone with the code can join at /join/<code>.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -389,6 +488,7 @@
     {
       "name": "invites.deactivate",
       "kind": "mutation",
+      "description": "Turn off a club's invite code so it no longer admits anyone. Club admins only.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -414,6 +514,7 @@
     {
       "name": "invites.join",
       "kind": "mutation",
+      "description": "Join the club an invite code belongs to. An invite admits its holder whatever the club's join policy, and replaces any pending request.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -449,6 +550,7 @@
     {
       "name": "meetings.list",
       "kind": "query",
+      "description": "List a club's meetings, newest first, with dates, deadlines, theme, the chosen book and whether each is finalized. Club members only.",
       "cacheKey": [
         "club",
         "<bookClubId>",
@@ -639,6 +741,7 @@
     {
       "name": "themes.delete",
       "kind": "mutation",
+      "description": "Delete a theme no meeting has used. Allowed for whoever suggested it and for club admins.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -660,6 +763,7 @@
     {
       "name": "themes.list",
       "kind": "query",
+      "description": "List every theme in a club, newest first, with upvotes, who suggested it, the meetings that used it, and whether the user may delete it. Club members only.",
       "cacheKey": [
         "club",
         "<bookClubId>",
@@ -794,6 +898,7 @@
     {
       "name": "themes.suggest",
       "kind": "mutation",
+      "description": "Suggest a reading theme for a club (e.g. 'Books set in Japan'). Club members only. Returns the new theme's id.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -832,6 +937,7 @@
     {
       "name": "themes.suggestions",
       "kind": "query",
+      "description": "List the names of a club's themes, for picking one when planning a meeting. Club members only.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",
@@ -857,6 +963,7 @@
     {
       "name": "themes.toggleUpvote",
       "kind": "mutation",
+      "description": "Upvote a theme, or remove the user's upvote if they already gave one. Club members only. Returns whether the theme is now upvoted.",
       "input": {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
         "type": "object",

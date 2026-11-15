@@ -1,5 +1,6 @@
 import "server-only";
 import { normalizeEmail } from "@readers-choice/core/credentials";
+import { UserError } from "@readers-choice/core/user-error";
 import type { Db } from "./db";
 
 export interface Account {
@@ -40,7 +41,11 @@ export async function findAccountByEmail(
  * On the first Google sign-in for an account created with a password, Google
  * has now proven ownership of the email, but the password was set without
  * verification and may belong to someone who pre-registered this address.
- * Drop it so only the verified owner keeps access.
+ * Drop it, and end every mobile session and connected app that password
+ * could have started, so only the verified owner keeps access.
+ *
+ * An account already linked to a different Google account (a recycled
+ * address, say) is refused rather than handed over.
  */
 export async function upsertGoogleAccount(
   db: Db,
@@ -65,6 +70,13 @@ export async function upsertGoogleAccount(
     return;
   }
 
+  if (existing.googleId && existing.googleId !== profile.googleId) {
+    throw new UserError(
+      "This email is already linked to a different Google account."
+    );
+  }
+  if (!existing.googleId) await revokeAppAccess(db, existing.id);
+
   const linking = existing.googleId
     ? {}
     : { google_id: profile.googleId, password_hash: null };
@@ -73,4 +85,17 @@ export async function upsertGoogleAccount(
     .update({ name: profile.name, avatar_url: profile.image, ...linking })
     .eq("id", existing.id);
   if (error) throw error;
+}
+
+/** End all of a user's mobile sessions and connected-app grants. */
+async function revokeAppAccess(db: Db, userId: string): Promise<void> {
+  const now = new Date().toISOString();
+  for (const table of ["mobile_sessions", "oauth_grants"] as const) {
+    const { error } = await db
+      .from(table)
+      .update({ revoked_at: now })
+      .eq("user_id", userId)
+      .is("revoked_at", null);
+    if (error) throw error;
+  }
 }
