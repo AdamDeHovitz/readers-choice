@@ -9,6 +9,7 @@ import { colors } from "@readers-choice/tokens";
 const config: ExpoConfig = {
   name: "Readers' Choice",
   slug: "readers-choice",
+  owner: "readers-choice-llc",
   version: "1.0.0",
   scheme: "readerschoice",
   orientation: "portrait",
